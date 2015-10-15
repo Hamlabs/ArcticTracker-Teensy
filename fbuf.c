@@ -393,10 +393,72 @@ void fbuf_removeLast(FBUF* x)
 
 
 
-FBUF* fbq_get(FBQ* fbq)
+/* 
+ *  FBQ: QUEUE OF BUFFER-CHAINS
+ */   
+
+/*******************************************************
+ *    initialise a queue
+ *******************************************************/
+
+void _fbq_init(FBQ* q, FBUF* buf, const uint16_t sz)
 {
-   FBUF* result; 
-   if ( chMBFetch(fbq, (msg_t*) &result, TIME_INFINITE) != MSG_OK)
-     return NULL;
-   return result; 
+  q->size = sz;
+  q->buf = buf;
+  q->index = 0;
+  chSemObjectInit(&q->length, 0);
+  chSemObjectInit(&q->capacity, sz);
 }
+
+
+void fbq_clear(FBQ* q)
+{
+  register uint16_t i;
+  for (i = q->index;  i < q->index + chSemGetCounterI(&q->length);  i++)
+    fbuf_release(&q->buf[(uint8_t) (i % q->size)]);
+  chSemReset(&q->length, 0);
+  chSemReset(&q->capacity, q->size);    
+  q->index = 0;
+}
+
+
+
+/********************************************************
+ *   put a buffer chain into the queue
+ ********************************************************/
+
+void fbq_put(FBQ* q, FBUF b)
+{
+  chSemWait(&q->capacity); 
+  register uint16_t i = q->index + chSemGetCounterI(&q->length);
+  if (i >= q->size)
+    i -= q->size; 
+  q->buf[(uint8_t) i] = b; 
+  chSemSignal(&q->length);
+}
+
+
+
+/*********************************************************
+ *   get a buffer chain from the queue (block if empty)
+ *********************************************************/
+
+FBUF fbq_get(FBQ* q)
+{
+  chSemWait(&q->length);
+  register uint8_t i = q->index;
+  if (++q->index >= q->size) 
+    q->index = 0; 
+  chSemSignal(&q->capacity); 
+  return q->buf[i];
+}
+
+
+
+
+
+
+
+
+
+

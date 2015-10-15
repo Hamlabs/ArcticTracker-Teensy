@@ -51,26 +51,31 @@ uint16_t fbuf_freeMem(void);
 
 
 /*********************************
-   Queue of packet buffer chains
+ *   Queue of packet buffer chains
  *********************************/
 
-typedef mailbox_t FBQ;
+typedef struct _fbq
+{
+  uint8_t size, index; 
+  semaphore_t length, capacity; 
+  FBUF* buf; 
+} FBQ;
 
-#define FBQ_DECL(name, buffer, size) FBQ name = _MAILBOX_DATA(name, buffer, size)
 
 
 /************************************************
    Operations for queue of packet buffer chains
  ************************************************/
 
-FBUF* fbq_get(FBQ* fbq);
+void  _fbq_init (FBQ* q, FBUF* buf, const uint16_t size); 
+void  fbq_clear (FBQ* q);
+void  fbq_put   (FBQ* q, FBUF b); 
+FBUF  fbq_get   (FBQ* q);
 
-#define fbq_length(q) chMBGetUsedCountI(q)
-#define fbq_eof(q)    (chMBGetUsedCountI(q) <= 0)
-#define fbq_clear(q)  chMBReset(q)
-#define fbq_put(q, b) chMBPost(q, (msg_t) b, TIME_INFINITE)
+#define fbq_eof(q)    ( chSemGetCounterI(&((q)->capacity)) >= (q)->size)
 
-#define FBQ_INIT(name,size)  static msg_t name##_fbqbuf[(size)*sizeof(msg_t*)];    \
-    chMBObjectInit(&(name), (name##_fbqbuf), (size))
+#define FBQ_INIT(name,size)   static FBUF name##_fbqbuf[(size)];    \
+    _fbq_init(&(name), (name##_fbqbuf), (size));
+
 
 #endif /* __FBUF_H__ */

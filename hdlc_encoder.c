@@ -15,9 +15,9 @@
 output_queue_t *outqueue; 
 FBQ encoder_queue; 
 FBQ *mqueue = NULL;
-static FBUF *buffer = NULL; 
+static FBUF buffer; 
 
-#define BUFFER_EMPTY (fbuf_eof(buffer))            
+#define BUFFER_EMPTY (fbuf_eof(&buffer))            
 
 
 /* FIXME: Those should be parameters stored in EEPROM ! */
@@ -134,7 +134,6 @@ static THD_FUNCTION(hdlc_txencoder, arg)
            break;
       } 
       hdlc_encode_frames();
-      buffer = NULL;
       hdlc_idle = true; 
  //   notifyAll(&hdlc_idle_sig);  WHAT IS THIS??
       sleep(500);
@@ -185,12 +184,12 @@ static void hdlc_encode_frames()
 
    for (i=0;i<maxfr;i++) 
    { 
-      fbuf_reset(buffer);
+      fbuf_reset(&buffer);
       crc = 0xffff;
 
       while(!BUFFER_EMPTY)
       {
-         txbyte = fbuf_getChar(buffer);
+         txbyte = fbuf_getChar(&buffer);
          crc = _crc_ccitt_update (crc, txbyte);
          hdlc_encode_byte(txbyte, false);
       }
@@ -201,7 +200,7 @@ static void hdlc_encode_frames()
           fbq_put(mqueue, buffer);
       }
       else 
-          fbuf_release(buffer);   
+          fbuf_release(&buffer);   
     
       hdlc_encode_byte(crc^0xFF, false);       // Send FCS, LSB first
       hdlc_encode_byte((crc>>8)^0xFF, false);  // MSB

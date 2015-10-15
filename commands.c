@@ -190,7 +190,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   ax25_encode_header(&packet, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3); 
   fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
   chprintf(chp, "Sending (AX25 UI) test packet....\r\n");       
-  fbq_put(outframes, &packet); 
+  fbq_put(outframes, packet); 
 //  radio_release(); 
 }
 
