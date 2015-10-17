@@ -21,19 +21,6 @@ static uint32_t _txfreq;       // TX frequency in 100 Hz units
 static uint32_t _rxfreq;       // RX frequency in 100 Hz units
 static uint8_t  _squelch;      // Squelch level (0-8 where 0 is open)
 static Stream*  _serial;
-  
-  
-/* 0 = 12.5 KHz, 1 = 25 KHz */
-#define RADIO_BW 0
-  
-  
-// Move to config/header file
-#define PTT_PORT  IOPORT4
-#define PTT_PIN   PORTD_TEENSY_PIN6
-#define PD_PORT   IOPORT4  
-#define PD_PIN    PORTD_TEENSY_PIN5
-#define HL_PORT   IOPORT1
-#define HL_PIN    PORTA_TEENSY_PIN4
 
   
 static bool _handshake(void);
@@ -57,7 +44,7 @@ void radio_init(SerialDriver* sd)
    _serial = (Stream*) sd;
    palSetPadMode(IOPORT4, PORTD_TEENSY_PIN7, PAL_MODE_ALTERNATIVE_3);
    palSetPadMode(IOPORT4, PORTD_TEENSY_PIN8, PAL_MODE_ALTERNATIVE_3);
-   palSetPad(PTT_PORT, PTT_PIN);
+   palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
    sdStart(sd, &_serialConfig);   
    radio_on(true);  
 }
@@ -74,7 +61,9 @@ static void _initialize()
    GET_PARAM(TRX_TX_FREQ, &_txfreq);
    GET_PARAM(TRX_RX_FREQ, &_rxfreq);
    _squelch = GET_BYTE_PARAM(TRX_SQUELCH);
-//  _setGroupParm();
+   _flags = 0x00;
+   _widebw = TRX_BANDWIDTH;
+   _setGroupParm();
 }
   
   
@@ -113,11 +102,11 @@ void radio_on(bool on)
    if (on == _on)
       return; 
    if (on) {
-      palSetPad(PD_PORT, PD_PIN);
+      palSetPad(TRX_PD_PORT, TRX_PD_PIN);
       _initialize();
    }
    else
-      palClearPad(PD_PORT, PD_PIN);
+      palClearPad(TRX_PD_PORT, TRX_PD_PIN);
    _on = on; 
 }
 
@@ -129,12 +118,13 @@ void radio_on(bool on)
 void radio_PTT(bool on)
 {
     if (!_on)
-      return;
+       return;
     if (on)
-      palClearPad(PTT_PORT, PTT_PIN);
+       palClearPad(TRX_PTT_PORT, TRX_PTT_PIN);
     else
-      palSetPad(PTT_PORT, PTT_PIN);
+       palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
 }
+
 
 
 /************************************************
@@ -172,11 +162,26 @@ bool radio_setMicLevel(uint8_t level)
 }
 
 
+/*************************************************
+ * If on=true, TX power is set to 0.5W. 
+ * else it is set to 1W
+ *************************************************/
+
+bool radio_setLowTxPower(bool on)
+{
+  if (on)
+    _flags ^= FLAG_LO_POWER;
+  else
+    _flags |= FLAG_LO_POWER;
+  return _setGroupParm();
+}
+
+
 /************************************************
  * Auto powersave on/off. 
  ************************************************/
 
-bool radio_powerSave(bool on)
+bool radio_setPowerSave(bool on)
 {
    if (!_on)
       return true;
@@ -185,6 +190,7 @@ bool radio_powerSave(bool on)
    readline(_serial, reply, 16);
    return (reply[13] == '0');
 }
+
 
 
 static bool _handshake()
@@ -197,13 +203,15 @@ static bool _handshake()
 }
 
 
+/***************************************************
+ * Set a group of parameters 
+ ***************************************************/
 
 static bool _setGroupParm()
 {
    if (!_on)
       return true;
    char txbuf[16], rxbuf[16], reply[16];
-   palSetPad(IOPORT3, PORTC_TEENSY_PIN13);
    sprintf(txbuf, "%lu.%04lu", _txfreq/10000, _txfreq%10000);
    sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 

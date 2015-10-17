@@ -12,50 +12,24 @@
 #include "hdlc.h"
 #include "afsk.h"
 #include "defines.h"
+#include "ui.h"
 
 
-THREAD_STACK(Thread1, 164);
-extern SerialUSBDriver SDU1;
-
-
-
-__attribute__((noreturn))
-static THD_FUNCTION(Thread1, arg)
-{
-    (void)arg;
-    
-    chRegSetThreadName("LEDBlinker");
-    while (TRUE) {
-        palSetPad(IOPORT3, PORTC_TEENSY_PIN13);
-        sleep(50);
-        palClearPad(IOPORT3, PORTC_TEENSY_PIN13);
-        sleep(950);
-    }
-}
-
-
-
-
-
-#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(700)
 /*
  * Application entry point.
  */
-int main(void) {   
-  
+int main(void) 
+{     
    thread_t *shelltp = NULL;
+   
    halInit();
    chSysInit();
    eeprom_initialize(); 
-   usb_initialize();
-   shellInit();
- //  radio_init(&RADIO_SERIAL); 
-
    hdlc_init_encoder(afsk_tx_init());
    afsk_tx_start(); // Call this only when needed and stop it when not needed??
-
-   
-   THREAD_START(Thread1, NORMALPRIO+1, NULL);
+   ui_init();
+   usb_initialize();
+   shellInit();
 
    while (!chThdShouldTerminateX()) {
      if (!shelltp && usb_active())
@@ -64,7 +38,6 @@ int main(void) {
         chThdRelease(shelltp);    
         shelltp = NULL;   
      }       
-     
      chThdSleepMilliseconds(1000);
    }
 
