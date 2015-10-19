@@ -15,45 +15,47 @@
  
  static void chandler()
  {  
+     register bool loop;
      if (cstate == -1) 
         return;
-     if (cstate==1) {
-        if (_red > 0) {
-          rgb_led_on(true, false, false);
-          chVTSetI(&vt, MS2ST(_red), chandler, NULL);
-        } else cstate=2;
+     do {
+       loop=false;
+       if (cstate==1) {
+          if (_red > 0) {
+            rgb_led_on(true, false, false);
+            chVTSetI(&vt, MS2ST(_red), chandler, NULL);
+          } else cstate=2;
+       }
+       if (cstate==2) {
+          if (_green > 0) {
+            rgb_led_on(false, true, false);
+            chVTSetI(&vt, MS2ST(_green), chandler, NULL);
+          } else cstate=3;
+       }   
+       if (cstate==3) {
+          if (_blue > 0) {
+            rgb_led_on(false, false, true);
+            chVTSetI(&vt, MS2ST(_blue), chandler, NULL);
+          } else cstate=0;
+       }
+       if (cstate==0) {
+         if (_off > 0) {
+           _rgb_led_off();
+           chVTSetI(&vt, MS2ST(_off), chandler, NULL);   
+         } else {loop=true; cstate=1; }
+       }
      }
-     if (cstate==2) {
-        if (_green > 0) {
-          rgb_led_on(false, true, false);
-          chVTSetI(&vt, MS2ST(_green), chandler, NULL);
-        } else cstate=3;
-     }   
-     if (cstate==3) {
-        if (_blue > 0) {
-          rgb_led_on(false, false, true);
-          chVTSetI(&vt, MS2ST(_blue), chandler, NULL);
-        } else cstate=0;
-     }
-     if (cstate==0) {
-         _rgb_led_off();
-         chVTSetI(&vt, MS2ST(_off), chandler, NULL);    
-     }
+     while (loop);
      cstate = (cstate+1) % 4;  
  }
  
  
- void rgb_led_mix(uint8_t red, uint8_t green, uint8_t blue)
+ void rgb_led_mix(uint8_t red, uint8_t green, uint8_t blue, uint8_t off)
  {
-    _red=red; _green=green; _blue=blue; 
-    if (_red + _green + _blue > 15)
-       rgb_led_on(true, true, true); 
-    else {
-       cstate = 1; 
-       _off = 15 - _red - _green - _blue; 
-       if (_off==0) _off=1;
-       chVTSet( &vt, MS2ST(_off), chandler, NULL);
-    }
+    _red=red; _green=green; _blue=blue; _off=off;
+   
+     cstate = 1; 
+     chVTSet( &vt, MS2ST(_off==0 ? 1 : _off), chandler, NULL);
  }
  
  
