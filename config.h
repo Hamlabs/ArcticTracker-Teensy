@@ -40,7 +40,7 @@ typedef addr_t __digilist_t[7];
 
 /***************************************************************
  * Define parameters:
- *         Name  address  Type      
+ *         Name  address  Type        
  ***************************************************************/ 
 
 DEFINE_PARAM ( VERSION_KEY,    0,     Word );
@@ -54,7 +54,9 @@ DEFINE_PARAM ( MAXFRAME,       21,    Byte );
 DEFINE_PARAM ( MYCALL,         23,    addr_t );
 DEFINE_PARAM ( DEST,           33,    addr_t );
 DEFINE_PARAM ( NDIGIS,         43,    Byte ); 
-DEFINE_PARAM ( DIGIS,          45,   __digilist_t );
+DEFINE_PARAM ( DIGIS,          45,    __digilist_t );
+DEFINE_PARAM ( SYMBOL,        100,    Byte );
+DEFINE_PARAM ( SYMBOL_TAB,    102,    Byte ); 
 
 
 #if defined __CONFIG_C__
@@ -70,13 +72,16 @@ DEFAULT_PARAM( TRX_TX_FREQ )  = 1448000;
 DEFAULT_PARAM( TRX_RX_FREQ )  = 1448000;
 DEFAULT_PARAM( TRX_SQUELCH )  = 4;
 DEFAULT_PARAM( TRX_VOLUME )   = 4;
-DEFAULT_PARAM( TXDELAY )      = 100;
+DEFAULT_PARAM( TXDELAY )      = 20;
 DEFAULT_PARAM( TXTAIL )       = 10;
 DEFAULT_PARAM( MAXFRAME )     = 2;
 DEFAULT_PARAM( MYCALL )       = {"LA7ECA",0,0};
 DEFAULT_PARAM( DEST )         = {"APAT01",0,0};
 DEFAULT_PARAM( NDIGIS )       = 2;
 DEFAULT_PARAM( DIGIS )        = {{"WIDE1",1,0}, {"WIDE2",2,0}};
+DEFAULT_PARAM( SYMBOL )       = '[';
+DEFAULT_PARAM( SYMBOL_TAB )   = '/';
+
 
 #endif
 

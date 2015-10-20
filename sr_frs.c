@@ -8,6 +8,7 @@
 #include "config.h"
 #include "commands.h"
 #include "radio.h"
+#include "ui.h"
 
 #define FLAG_BUSY_LOCK  0x01
 #define FLAG_COMP_EXP   0x02
@@ -33,27 +34,26 @@ static const SerialConfig _serialConfig = {
 };
 
 
-// Stream* shell = (Stream*) &SHELL_SERIAL; 
 
 /***********************************************
  * Initiialize
  ***********************************************/
 
 void radio_init(SerialDriver* sd)
-{ return; 
+{  
    _serial = (Stream*) sd;
    palSetPadMode(IOPORT4, PORTD_TEENSY_PIN7, PAL_MODE_ALTERNATIVE_3);
    palSetPadMode(IOPORT4, PORTD_TEENSY_PIN8, PAL_MODE_ALTERNATIVE_3);
    palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
    sdStart(sd, &_serialConfig);   
-   radio_on(true);  
+//   radio_on(true);  
 }
   
   
 static void _initialize()
 {  
    radio_PTT(false);
-   sleep(1600);
+   sleep(1500);
    _handshake();
    sleep (100);
   
@@ -63,7 +63,9 @@ static void _initialize()
    _squelch = GET_BYTE_PARAM(TRX_SQUELCH);
    _flags = 0x00;
    _widebw = TRX_BANDWIDTH;
-   _setGroupParm();
+   _setGroupParm();  
+   sleep(100);
+   radio_setMicLevel(8);
 }
   
   
@@ -101,13 +103,13 @@ void radio_on(bool on)
 {
    if (on == _on)
       return; 
+   _on = on;
    if (on) {
       palSetPad(TRX_PD_PORT, TRX_PD_PIN);
       _initialize();
    }
    else
       palClearPad(TRX_PD_PORT, TRX_PD_PIN);
-   _on = on; 
 }
 
 
@@ -119,10 +121,14 @@ void radio_PTT(bool on)
 {
     if (!_on)
        return;
-    if (on)
+    if (on) {
        palClearPad(TRX_PTT_PORT, TRX_PTT_PIN);
-    else
+       rgb_led_on(true, false, false);
+    }
+    else {
        palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
+       rgb_led_off();
+    }
 }
 
 
@@ -140,7 +146,6 @@ bool radio_setVolume(uint8_t vol)
       vol = 8;
    chprintf(_serial, "AT+DMOSETVOLUME=%1d\r\n", vol);
    readline(_serial, reply, 16);
-//   chprintf(shell, "REPLY='%s'\r\n", reply);
    return (reply[13] == '0');
 }
 
@@ -198,7 +203,6 @@ static bool _handshake()
    char reply[16];
    chprintf(_serial, "AT+DMOCONNECT\r\n");
    readline(_serial, reply, 16);
-//   chprintf(shell, "REPLY='%s'\r\n", reply);
    return (reply[14] == '0');
 }
 
@@ -215,9 +219,8 @@ static bool _setGroupParm()
    sprintf(txbuf, "%lu.%04lu", _txfreq/10000, _txfreq%10000);
    sprintf(rxbuf, "%lu.%04lu", _rxfreq/10000, _rxfreq%10000);
 
-   chprintf(_serial, "AT+DMOSETGROUP=%1d,%s,%s,0000,%1d,0000,%1d\r\n",
+   chprintf(_serial, "AT+DMOSETGROUP=%1d,%s,%s,00,%1d,00,%1d\r\n",
             _widebw, txbuf, rxbuf, _squelch, _flags);
    readline(_serial, reply, 16);
-//   chprintf(shell, "REPLY='%s'\r\n", reply);
    return (reply[15] == '0');
 }

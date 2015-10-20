@@ -29,6 +29,7 @@ int main(void)
    afsk_tx_start(); // Call this only when needed and stop it when not needed??
    ui_init();
    usb_initialize();
+   radio_init(&TRX_SERIAL);
    shellInit();
 
    while (!chThdShouldTerminateX()) {
