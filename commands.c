@@ -1,20 +1,115 @@
+/* 
+ * Command shell 
+ * Use modified version of ChibiOS shell (see util/shell.c)
+ */
+
 #include "ch.h"
 #include "hal.h"
 #include "chprintf.h"
-#include "shell.h"
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "radio.h"
 #include "config.h"
 #include "afsk.h"
 #include "hdlc.h"
 #include "string.h"
+#include "ui.h"
 #include "defines.h"
+#include "util/shell.h"
+#include "commands.h"
+
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
 extern SerialUSBDriver SDU1;
 
+static void cmd_mem(Stream *chp, int argc, char *argv[]);
+static void cmd_threads(Stream *chp, int argc, char *argv[]);
+static void cmd_setfreq(Stream *chp, int argc, char *argv[]);
+static void cmd_setsquelch(Stream *chp, int argc, char *argv[]);
+static void cmd_setmiclevel(Stream *chp, int argc, char *argv[]);
+static void cmd_setvolume(Stream *chp, int argc, char *argv[]);
+static void cmd_ptt(Stream *chp, int argc, char *argv[]);
+static void cmd_radio(Stream *chp, int argc, char *argv[]);
+static void cmd_txtone(Stream *chp, int argc, char *argv[]);
+static void cmd_testpacket(Stream *chp, int argc, char *argv[]);
+static void cmd_teston(Stream *chp, int argc, char* argv[]);
+static void cmd_adc(Stream *chp, int argc, char* argv[]);
+static void cmd_led(Stream *chp, int argc, char* argv[]);
+
+
+
+
+/*********************************************************************************
+ * Shell config
+ *********************************************************************************/
+
+static const ShellCommand shell_commands[] = 
+{
+  { "mem",        "Memory status",                        3, cmd_mem },
+  { "threads",    "Thread information",                   3, cmd_threads },
+  { "freq",       "Set/get freguency of radio",           4, cmd_setfreq },
+  { "squelch",    "Set/get squelch level of receiver",    2, cmd_setsquelch },
+  { "volume",     "Set/get volume level of receiver",     3, cmd_setvolume },
+  { "miclevel",   "Set mic sensitivity level (1-8)",      4, cmd_setmiclevel }, 
+  { "ptt",        "Turn on/off transmitter",              3, cmd_ptt },
+  { "radio",      "Turn on/off radio",                    5, cmd_radio },
+  { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone", 3, cmd_txtone },
+  { "testpacket", "Send test APRS packet",                5, cmd_testpacket },
+  { "teston",     "Generate test signal with data byte",  6, cmd_teston },
+  { "adc",        "Get test samples from ADC",            3, cmd_adc },
+  { "led",        "Test RGB LED",                         3, cmd_led },
+  {NULL, NULL, 0, NULL}
+};
+
+
+
+static const ShellConfig shell_cfg = {
+  (Stream *)&SHELL_SERIAL,
+  shell_commands
+};
+
+
+/**********************************************
+ * Shell start
+ **********************************************/
+
+thread_t* myshell_start()
+{  
+    streamGet(shell_cfg.sc_channel);
+    chprintf(shell_cfg.sc_channel, "\r\n\r\nWelcome to Polaric Hacker v. 2.0\r\n"); 
+    return shellCreate(&shell_cfg, SHELL_WA_SIZE, NORMALPRIO);
+}
+
+
+
+/****************************************************************************
+ * readline from input stream
+ ****************************************************************************/
+
+void readline(Stream * cbp, char* buf, const uint16_t max) {
+  char x;
+  uint16_t i=0; 
+  
+  for (i=0; i<max; i++) {
+    x = streamGet(cbp);
+    if (x == '\r') {
+      /* Get LINEFEED */
+      streamGet(cbp); 
+      break; 
+    }
+    if (x == '\n')
+      break;
+    buf[i]=x;
+  }
+  buf[i] = '\0';
+}
+
+
+/****************************************************************************
+ * Memory status
+ ****************************************************************************/
 
 static void cmd_mem(Stream *chp, int argc, char *argv[]) {
   size_t n, size;
@@ -33,7 +128,9 @@ static void cmd_mem(Stream *chp, int argc, char *argv[]) {
 }
 
 
-
+/****************************************************************************
+ * Thread information
+ ****************************************************************************/
 
 static void cmd_threads(Stream *chp, int argc, char *argv[]) {
   static const char *states[] = {CH_STATE_NAMES};
@@ -59,6 +156,10 @@ static void cmd_threads(Stream *chp, int argc, char *argv[]) {
 
 
 
+/****************************************************************************
+ * Set/get freguency of radio
+ ****************************************************************************/
+
 static void cmd_setfreq(Stream *chp, int argc, char *argv[]) {
   uint32_t txf=0, rxf=0;
   if (argc == 0) {
@@ -79,8 +180,10 @@ static void cmd_setfreq(Stream *chp, int argc, char *argv[]) {
 }
 
 
+/****************************************************************************
+ * Set/get squelch level of receiver
+ ****************************************************************************/
 
-/* Probably not necessary in a production version, but ok for testing */
 static void cmd_setsquelch(Stream *chp, int argc, char *argv[]) {
    uint8_t sq=0;
    if (argc == 0)
@@ -93,11 +196,34 @@ static void cmd_setsquelch(Stream *chp, int argc, char *argv[]) {
       SET_BYTE_PARAM(TRX_SQUELCH, sq);
       radio_setSquelch(sq);
    }
-   chprintf(chp, "SQUELCH: %hhu\r\n", sq); 
+   chprintf(chp, "SQUELCH: %d\r\n", sq); 
 }
 
 
-/* Probably not necessary in a production version, but ok for testing */
+
+/****************************************************************************
+ * Set/get volume level of receiver
+ ****************************************************************************/
+
+static void cmd_setmiclevel(Stream *chp, int argc, char *argv[]) {
+  uint8_t vol=0;
+  if (argc==0)
+    chprintf(chp, "ERRROR\r\n");
+  else {
+    if (argc > 0) 
+      sscanf(argv[0], "%hhu", &vol);
+    if (vol>8) vol=8;
+    radio_setMicLevel(vol);
+  }
+  chprintf(chp, "MICLEVEL: %d\r\n", vol);
+}
+
+
+
+/****************************************************************************
+ * Set/get volume level of receiver
+ ****************************************************************************/
+
 static void cmd_setvolume(Stream *chp, int argc, char *argv[]) {
   uint8_t vol=0;
   if (argc==0)
@@ -110,14 +236,18 @@ static void cmd_setvolume(Stream *chp, int argc, char *argv[]) {
      SET_BYTE_PARAM(TRX_VOLUME, vol);
      radio_setVolume(vol);
   }
-  chprintf(chp, "VOLUME: %hhu\r\n", vol);
+  chprintf(chp, "VOLUME: %d\r\n", vol);
 }
 
 
 
+/****************************************************************************
+ * Keyup transmitter
+ ****************************************************************************/
+
 static void cmd_ptt(Stream *chp, int argc, char *argv[]) {
     if (argc < 1) {
-       chprintf(chp, "Usage: tx on|off\r\n");
+       chprintf(chp, "Usage: ptt on|off\r\n");
        return;
     }
     if (strncmp(argv[0], "on", 2) == 0)
@@ -127,6 +257,9 @@ static void cmd_ptt(Stream *chp, int argc, char *argv[]) {
 }
 
 
+/****************************************************************************
+ * Turn on/off radio
+ ****************************************************************************/
 
 static void cmd_radio(Stream *chp, int argc, char *argv[]) {
     if (argc < 1) {
@@ -141,6 +274,10 @@ static void cmd_radio(Stream *chp, int argc, char *argv[]) {
 
 
 
+/****************************************************************************
+ * Send 1200Hz (lo) or 2200Hz (hi) tone
+ ****************************************************************************/
+
 static bool txtone_on = false; 
 static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
    if (argc < 1) {
@@ -152,7 +289,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
       chprintf(chp, "***** TEST TONE HIGH *****\r\n");
       tone_setHigh(true);
       if (!txtone_on) {
-//         radio_PTT(true); 
+         radio_PTT(true); 
          tone_start();
          txtone_on = true;
       } 
@@ -161,7 +298,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
       chprintf(chp, "***** TEST TONE LOW *****\r\n");
       tone_setHigh(false);
       if (!txtone_on) {
-//         radio_PTT(true);
+         radio_PTT(true);
          tone_start();
          txtone_on = true;
       }
@@ -173,6 +310,10 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
    }
 }
 
+
+/****************************************************************************
+ * Send test APRS packet
+ ****************************************************************************/
 
 static void cmd_testpacket(Stream *chp, int argc, char *argv[]) 
 { 
@@ -195,6 +336,10 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
 }
 
 
+/****************************************************************************
+ * Generate test signal with data byte
+ ****************************************************************************/
+
 static void cmd_teston(Stream *chp, int argc, char* argv[])
 {
   int ch = 0;
@@ -213,6 +358,12 @@ static void cmd_teston(Stream *chp, int argc, char* argv[])
 //  radio_release();
 }
 
+
+
+/****************************************************************************
+ * Get test samples from ADC
+ ****************************************************************************/
+
 static void cmd_adc(Stream *chp, int argc, char* argv[])
 {
    adc_start_sampling();
@@ -221,56 +372,28 @@ static void cmd_adc(Stream *chp, int argc, char* argv[])
 }
 
 
-static const ShellCommand shell_commands[] = {
-  {"mem", cmd_mem},
-  {"threads", cmd_threads},
-  {"freq", cmd_setfreq},
-  {"squelch", cmd_setsquelch},
-  {"volume", cmd_setvolume},
-  {"ptt", cmd_ptt},
-  {"radio", cmd_radio},
-  {"txtone", cmd_txtone},
-  {"testpacket", cmd_testpacket},
-  {"teston", cmd_teston},
-  {"adc", cmd_adc},
-  {NULL, NULL}
-};
 
+/****************************************************************************
+ * Test RGB LED
+ ****************************************************************************/
 
-
-static const ShellConfig shell_cfg = {
-  (Stream *)&SHELL_SERIAL,
-  shell_commands
-};
-
-
-
-thread_t* myshell_start()
-{  
-    streamGet(shell_cfg.sc_channel);
-    chprintf(shell_cfg.sc_channel, "\r\n\r\nWelcome to Polaric Hacker v. 2.0\r\n"); 
-    return shellCreate(&shell_cfg, SHELL_WA_SIZE, NORMALPRIO);
-}
-
-
-
-
-void readline(Stream * cbp, char* buf, const uint16_t max) {
-  char x;
-  uint16_t i=0; 
-  
-  for (i=0; i<max; i++) {
-    x = streamGet(cbp);
-    if (x == '\r') {
-      /* Get LINEFEED */
-      streamGet(cbp); 
-      break; 
+static void cmd_led(Stream *chp, int argc, char* argv[])
+{
+  if (argc < 4) {
+    if (strncasecmp("off", argv[0], 2) == 0)
+      rgb_led_off();
+    else {
+       chprintf(chp, "Usage: LED <R> <G> <B> <off>\r\n");
+       chprintf(chp, "       LED OFF \r\n");
     }
-    if (x == '\n')
-      break;
-    buf[i]=x;
+    return;
   }
-  buf[i] = '\0';
+  int r,g,b,off;
+  r=atoi(argv[0]);
+  g=atoi(argv[1]);
+  b=atoi(argv[2]);
+  off=atoi(argv[3]);
+  rgb_led_mix((uint8_t) r, (uint8_t) g, (uint8_t) b, (uint8_t) off);
 }
 
 

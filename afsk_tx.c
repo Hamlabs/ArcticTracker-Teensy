@@ -29,13 +29,17 @@ output_queue_t* afsk_tx_init()
 }
 
 
+/*********************************************************************
+ * Turn on/off transmitter and tone generator
+ *********************************************************************/
+
 void afsk_PTT(bool on) {
    transmit = on; 
-//   sa818_PTT(on);
+   radio_PTT(on);
    if (on) 
-     tone_start();
+      tone_start();
    else
-     tone_stop();
+      tone_stop();
 }
 
 

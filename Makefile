@@ -114,9 +114,10 @@ CSRC = $(STARTUPSRC) \
        $(BOARDSRC) \
        $(TESTSRC) \
        util/eeprom.c util/DAC.c config.c fbuf.c ax25.c sr_frs.c adc_input.c \
-       tone.c afsk_tx.c hdlc_encoder.c hdlc_decoder.c usbsetup.c commands.c ui.c main.c \
-       $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
-       $(CHIBIOS)/os/various/shell.c
+       tone.c afsk_tx.c hdlc_encoder.c hdlc_decoder.c usbsetup.c shell.c commands.c ui.c main.c \
+       $(CHIBIOS)/os/hal/lib/streams/chprintf.c 
+#       \
+#       $(CHIBIOS)/os/various/shell.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
