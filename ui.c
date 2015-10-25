@@ -8,9 +8,10 @@
  *****************************************************************/
  
  static uint8_t _red, _green, _blue, _off; 
- static uint8_t cstate = -1; 
+ static int8_t cstate = -1; 
  static virtual_timer_t vt; 
- static void _rgb_led_off();
+ 
+ static void _rgb_led_off(void);
  
  
  static void chandler()
@@ -92,6 +93,18 @@
  }
  
  
+ /*********************************************************************
+  * DCD LED
+  *********************************************************************/
+ 
+ void dcd_led_on() {
+    palSetPad(LED_DCD_PORT, LED_DCD_PIN);
+ }
+ 
+ void dcd_led_off() {
+   palClearPad(LED_DCD_PORT, LED_DCD_PIN);
+ }
+ 
  
  /*********************************************************************
   * Main UI thread. LED blinking to indicate that it is alive
@@ -114,6 +127,10 @@
    rgb_led_on(false, false, true);
    sleep(300);
    rgb_led_off();
+   sleep(300);
+   dcd_led_on();
+   sleep(1000);
+   dcd_led_off();
    
    /* Blink LED every 2 second */
    while (TRUE) {
@@ -122,6 +139,23 @@
      palClearPad(IOPORT3, PORTC_TEENSY_PIN13);
      sleep(1950);
    }
+ }
+ 
+ 
+ /*************************************************************
+  * Pushbutton handler
+  *************************************************************/
+ 
+ static bool buttpushed; 
+ void button_handler(EXTDriver *extp, expchannel_t channel) {
+   (void)extp;
+   (void)channel;
+   buttpushed = (buttpushed ? false : true); 
+   if (buttpushed)
+      rgb_led_on(false, true, false);
+   else
+      rgb_led_off();
+  
  }
  
  

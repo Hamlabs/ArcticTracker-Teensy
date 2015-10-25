@@ -15,9 +15,28 @@
 #include "ui.h"
 
 
-/*
+/*************************************************************
+ * Set up interrupt driven GPIO
+ *************************************************************/
+
+static const EXTConfig extcfg = {
+  {
+    BUTTON_EXTCFG // , TRX_SQ_EXTCFG
+  }
+};
+
+static void ext_init() {
+   palSetPadMode(BUTTON_PORT, BUTTON_PIN, BUTTON_MODE);
+   extStart(&EXTD1, &extcfg);
+   extChannelEnable(&EXTD1, 0);
+//   extChannelEnable(&EXTD1, 1);
+}
+
+
+/******************************************************
  * Application entry point.
- */
+ ******************************************************/
+
 int main(void) 
 {     
    thread_t *shelltp = NULL;
@@ -27,9 +46,10 @@ int main(void)
    eeprom_initialize(); 
    hdlc_init_encoder(afsk_tx_init());
    afsk_tx_start(); // Call this only when needed and stop it when not needed??
-   ui_init();
+   ext_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
+   ui_init();
    shellInit();
 
    while (!chThdShouldTerminateX()) {
