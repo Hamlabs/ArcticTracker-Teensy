@@ -51,4 +51,21 @@
 #define KINETIS_GPT_USE_PIT2 TRUE 
 #define KINETIS_GPT_USE_PIT3 TRUE 
 
+#define KINETIS_EXTI_NUM_CHANNELS 1
 
+/*
+ * EXT driver system settings.
+ */
+#define KINETIS_EXTI_NUM_CHANNELS         1
+#define KINETIS_EXT_PORTA_IRQ_PRIORITY          12
+#define KINETIS_EXT_PORTB_IRQ_PRIORITY          12
+#define KINETIS_EXT_PORTC_IRQ_PRIORITY          12
+#define KINETIS_EXT_PORTD_IRQ_PRIORITY          12
+#define KINETIS_EXT_PORTE_IRQ_PRIORITY          12
+
+/* K20 64pin  */
+#define KINETIS_EXT_PORTA_WIDTH                 20
+#define KINETIS_EXT_PORTB_WIDTH                 20
+#define KINETIS_EXT_PORTC_WIDTH                 12
+#define KINETIS_EXT_PORTD_WIDTH                 8
+#define KINETIS_EXT_PORTE_WIDTH                 2
