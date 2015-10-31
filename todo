@@ -1,0 +1,43 @@
+* Integrate changes to ChibiOS from GITHUB
+       DONE.
+       
+* Use serial over USB for shell 
+       DONE. Need debugging of ChibiOS code??
+       
+* Command shell
+       DONE.
+    
+* Write sa818 functions and test using shell commands. 
+       DONE. 
+       
+* Write sr_frs functions and test using shell commands. 
+       DONE
+    
+* Implement EEPROM storage of settings. Store radio settings in EEPROM. Test. 
+       DONE.
+     
+* Packet generation, encoding, transmitting
+       DONE. 
+
+* Packet receiving, decoding
+     - Set up sampling on ADC. In progress.
+     - AFSK RX decoding based on samples. MOSTLY DONE. Need testing. 
+     - HDLC decoding. Queue interface for receiving packets. DONE. Need testing.
+     - Test on radio using SR-FRS.
+     - Document on hamlabs
+     - Credit the orgiginal author of decoding code!!!
+     
+
+* KISS TNC? 
+
+* GPS data decoding. 
+
+* Tracker function
+
+* SD card driver, implement storage of files. Packet logs.. 
+
+* Battery charging conrol? 
+
+* NodeMCU testing. ESP-12. 
+
+
