@@ -1,8 +1,16 @@
 
 /* Application configuration macros */
  
+
+/* ADC ports for Teensy 3.1 */
+#define ADC_TEENSY_PIN10 ADC_DAD0
+#define ADC_TEENSY_PIN11 ADC_DAD1
+
+
+/* Queues for AFSK encoder/decoder */
 #define AFSK_RX_QUEUE_SIZE 128 
 #define AFSK_TX_QUEUE_SIZE 128
+
 
 /* Hardware timers */
 #define AFSK_RX_GPT      GPTD1
@@ -20,35 +28,35 @@
 /* Radio transceiver module */
 /* 0 = 12.5 KHz, 1 = 25 KHz */
 #define TRX_BANDWIDTH  0
-#define TRX_PTT_PORT   IOPORT4
-#define TRX_PTT_PIN    PORTD_TEENSY_PIN6
-#define TRX_PD_PORT    IOPORT4  
-#define TRX_PD_PIN     PORTD_TEENSY_PIN5
-#define TRX_SQ_PORT    PORTB_TEENSY_PIN19
-#define TRX_SQ_PIN     IOPORT2
-#define TRX_SQ_MODE    PAL_MODE_INPUT
-#define TRX_SQ_EXTCFG  {EXT_CH_MODE_BOTH_EDGES, trx_sq_handler, PORTB, TRX_SQ_PIN}
+#define TRX_PTT_IOPORT   TEENSY_PIN6_IOPORT
+#define TRX_PTT          TEENSY_PIN6
+#define TRX_PD_IOPORT    TEENSY_PIN5_IOPORT  
+#define TRX_PD           TEENSY_PIN5
+#define TRX_SQ_IOPORT    TEENSY_PIN19_IOPORT
+#define TRX_SQ           TEENSY_PIN19_IOPORT
+#define TRX_SQ_MODE      PAL_MODE_INPUT
+#define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, trx_sq_handler, PORTB, TRX_SQ}
 
 
 /* RGB LED */
-#define LED_R_PIN      PORTD_TEENSY_PIN2
-#define LED_G_PIN      PORTA_TEENSY_PIN3
-#define LED_B_PIN      PORTA_TEENSY_PIN4
-#define LED_R_PORT     IOPORT4
-#define LED_G_PORT     IOPORT1
-#define LED_B_PORT     IOPORT1
+#define LED_R            TEENSY_PIN2
+#define LED_G            TEENSY_PIN3
+#define LED_B            TEENSY_PIN4
+#define LED_R_IOPORT     TEENSY_PIN2_IOPORT
+#define LED_G_IOPORT     TEENSY_PIN3_IOPORT
+#define LED_B_IOPORT     TEENSY_PIN4_IOPORT
 
 
 /* DCD LED */
-#define LED_DCD_PIN    PORTB_TEENSY_PIN17       
-#define LED_DCD_PORT   IOPORT2
+#define LED_DCD          TEENSY_PIN17       
+#define LED_DCD_IOPORT   TEENSY_PIN17_IOPORT
 
 
 /* Pushbutton */
-#define BUTTON_PIN     PORTB_TEENSY_PIN16
-#define BUTTON_PORT    IOPORT2
-#define BUTTON_MODE    PAL_MODE_INPUT_PULLUP
-#define BUTTON_EXTCFG  {EXT_CH_MODE_FALLING_EDGE, button_handler, PORTB, BUTTON_PIN}
+#define BUTTON           TEENSY_PIN16
+#define BUTTON_IOPORT    TEENSY_PIN16_IOPORT
+#define BUTTON_MODE      PAL_MODE_INPUT_PULLUP
+#define BUTTON_EXTCFG    {EXT_CH_MODE_FALLING_EDGE, button_handler, PORTB, BUTTON}
 
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)
@@ -65,4 +73,6 @@
 #define putch(s, ch) streamPut(s, ch)
 #define getch(s) streamGet(s)
 
-
+#define setPin(x)           palSetPad(x##_IOPORT, x)
+#define clearPin(x)         palClearPad(x##_IOPORT, x)
+#define setPinMode(x, mode) palSetPadMode(x##_IOPORT, x, mode)

@@ -68,11 +68,11 @@
  {
    _rgb_led_off();
    if (red)
-     palSetPad(LED_R_PORT, LED_R_PIN);
+     setPin(LED_R);
    if (green)
-     palSetPad(LED_G_PORT, LED_G_PIN);
+     setPin(LED_G);
    if (blue)
-     palSetPad(LED_B_PORT, LED_B_PIN);
+     setPin(LED_B);
  }
  
  
@@ -82,9 +82,9 @@
  
  static void _rgb_led_off()
  {
-   palClearPad(LED_R_PORT, LED_R_PIN);
-   palClearPad(LED_G_PORT, LED_G_PIN);
-   palClearPad(LED_B_PORT, LED_B_PIN);
+   clearPin(LED_R);
+   clearPin(LED_G);
+   clearPin(LED_B);
  }
  
  void rgb_led_off() {
@@ -98,11 +98,11 @@
   *********************************************************************/
  
  void dcd_led_on() {
-    palSetPad(LED_DCD_PORT, LED_DCD_PIN);
+    setPin(LED_DCD);
  }
  
  void dcd_led_off() {
-   palClearPad(LED_DCD_PORT, LED_DCD_PIN);
+    clearPin(LED_DCD);
  }
  
  
@@ -134,9 +134,9 @@
    
    /* Blink LED every 2 second */
    while (TRUE) {
-     palSetPad(IOPORT3, PORTC_TEENSY_PIN13);
+     setPin(TEENSY_PIN13);
      sleep(50);
-     palClearPad(IOPORT3, PORTC_TEENSY_PIN13);
+     clearPin(TEENSY_PIN13);
      sleep(1950);
    }
  }

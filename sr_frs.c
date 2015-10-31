@@ -42,9 +42,9 @@ static const SerialConfig _serialConfig = {
 void radio_init(SerialDriver* sd)
 {  
    _serial = (Stream*) sd;
-   palSetPadMode(IOPORT4, PORTD_TEENSY_PIN7, PAL_MODE_ALTERNATIVE_3);
-   palSetPadMode(IOPORT4, PORTD_TEENSY_PIN8, PAL_MODE_ALTERNATIVE_3);
-   palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
+   setPinMode(TEENSY_PIN7, PAL_MODE_ALTERNATIVE_3);
+   setPinMode(TEENSY_PIN8, PAL_MODE_ALTERNATIVE_3);
+   setPin(TRX_PTT);
    sdStart(sd, &_serialConfig);   
 //   radio_on(true);  
 }
@@ -105,11 +105,11 @@ void radio_on(bool on)
       return; 
    _on = on;
    if (on) {
-      palSetPad(TRX_PD_PORT, TRX_PD_PIN);
+      setPin(TRX_PD);
       _initialize();
    }
    else
-      palClearPad(TRX_PD_PORT, TRX_PD_PIN);
+      clearPin(TRX_PD);
 }
 
 
@@ -122,11 +122,11 @@ void radio_PTT(bool on)
     if (!_on)
        return;
     if (on) {
-       palClearPad(TRX_PTT_PORT, TRX_PTT_PIN);
+       clearPin(TRX_PTT);
        rgb_led_on(true, false, false);
     }
     else {
-       palSetPad(TRX_PTT_PORT, TRX_PTT_PIN);
+       setPin(TRX_PTT);
        rgb_led_off();
     }
 }

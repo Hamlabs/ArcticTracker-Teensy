@@ -26,7 +26,7 @@ static const EXTConfig extcfg = {
 };
 
 static void ext_init() {
-   palSetPadMode(BUTTON_PORT, BUTTON_PIN, BUTTON_MODE);
+   setPinMode(BUTTON, BUTTON_MODE);
    extStart(&EXTD1, &extcfg);
    extChannelEnable(&EXTD1, 0);
 //   extChannelEnable(&EXTD1, 1);

@@ -39,12 +39,13 @@
 #define KINETIS_ADC_USE_ADC1                  TRUE
 #define KINETIS_ADC_USE_ADC0                  TRUE
 
-// Must define
-#define KINETIS_HAS_SERIAL1         TRUE
-#define KINETIS_SERIAL1_IRQ_VECTOR  VectorFC
-#define KINETIS_HAS_SERIAL2         TRUE
-#define KINETIS_SERIAL2_IRQ_VECTOR  Vector104
 
+
+// Must define
+#define KINETIS_HAS_SERIAL1                   TRUE
+//#define KINETIS_SERIAL1_IRQ_VECTOR            VectorFC
+#define KINETIS_HAS_SERIAL2                   TRUE
+//#define KINETIS_SERIAL2_IRQ_VECTOR            Vector104
 
 #define KINETIS_GPT_USE_PIT0 TRUE 
 #define KINETIS_GPT_USE_PIT1 TRUE 
