@@ -24,8 +24,9 @@ typedef struct _slot {
    uint8_t   length; 
    fbindex_t next; 
    char      buf[FBUF_SLOTSIZE]; 
-}; 
-static struct _slot _pool[FBUF_SLOTS]; 
+} fbslot_t; 
+
+static fbslot_t _pool[FBUF_SLOTS]; 
 
 
 static fbindex_t _free_slots = FBUF_SLOTS; 

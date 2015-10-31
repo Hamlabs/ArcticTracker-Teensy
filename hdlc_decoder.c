@@ -12,13 +12,14 @@
 #include "hdlc.h"
 #include "ax25.h"
 #include "hal.h"
+#include "fbuf.h"
+
 
 static input_queue_t *inq;
 static fbuf_t fbuf;
 static fbq_t* mqueue[3];
-static bool monitor = false;
 
-static void hdlc_decode (void);
+static uint8_t get_bit (void);
 static bool crc_match(FBUF*, uint8_t);
 
 THREAD_STACK(hdlc_rxdecoder, 400);

@@ -28,18 +28,19 @@ FBUF;
    Operations for packet buffer chain
  ****************************************/
 
-void  fbuf_new      (FBUF* b);
-FBUF  fbuf_newRef   (FBUF* b);
-void  fbuf_release  (FBUF* b);
-void  fbuf_reset    (FBUF* b);
-void  fbuf_rseek    (FBUF* b, const uint8_t pos);
-void  fbuf_putChar  (FBUF* b, const char c);
-void  fbuf_write    (FBUF* b, const char* data, const uint8_t size);
-void  fbuf_putstr   (FBUF* b, const char *data);
-char  fbuf_getChar  (FBUF* b);
-char* fbuf_read     (FBUF* b, uint8_t size, char *buf);
-void  fbuf_insert   (FBUF* b, FBUF* x, uint8_t pos);
-void  fbuf_connect  (FBUF* b, FBUF* x, uint8_t pos);
+void  fbuf_new       (FBUF* b);
+FBUF  fbuf_newRef    (FBUF* b);
+void  fbuf_release   (FBUF* b);
+void  fbuf_reset     (FBUF* b);
+void  fbuf_rseek     (FBUF* b, const uint8_t pos);
+void  fbuf_putChar   (FBUF* b, const char c);
+void  fbuf_write     (FBUF* b, const char* data, const uint8_t size);
+void  fbuf_putstr    (FBUF* b, const char *data);
+char  fbuf_getChar   (FBUF* b);
+char* fbuf_read      (FBUF* b, uint8_t size, char *buf);
+void  fbuf_insert    (FBUF* b, FBUF* x, uint8_t pos);
+void  fbuf_connect   (FBUF* b, FBUF* x, uint8_t pos);
+void  fbuf_removeLast(FBUF* b);
 
 fbindex_t fbuf_freeSlots(void);
 uint16_t fbuf_freeMem(void);

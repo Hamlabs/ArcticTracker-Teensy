@@ -23,6 +23,9 @@
 #define USBD1_DATA_AVAILABLE_EP         1
 #define USBD1_INTERRUPT_REQUEST_EP      2
 
+bool usb_active(void);
+
+
 /*
  * Serial over USB Driver structure.
  */
@@ -235,16 +238,16 @@ static USBOutEndpointState ep1outstate;
  * @brief   EP1 initialization structure (both IN and OUT).
  */
 static const USBEndpointConfig ep1config = {
-  USB_EP_MODE_TYPE_BULK,
-  NULL,
-  sduDataTransmitted,
-  sduDataReceived,
-  0x0040,
-  0x0040,
-  &ep1instate,
-  &ep1outstate,
-  2,
-  NULL
+   USB_EP_MODE_TYPE_BULK,
+   NULL,
+   sduDataTransmitted,
+   sduDataReceived,
+   0x0040,
+   0x0040,
+   &ep1instate,
+   &ep1outstate,
+   2,
+   NULL
 };
 
 /**
@@ -256,17 +259,18 @@ static USBInEndpointState ep2instate;
  * @brief   EP2 initialization structure (IN only).
  */
 static const USBEndpointConfig ep2config = {
-  USB_EP_MODE_TYPE_INTR,
-  NULL,
-  sduInterruptTransmitted,
-  NULL,
-  0x0010,
-  0x0000,
-  &ep2instate,
-  NULL,
-  1,
-  NULL
+   USB_EP_MODE_TYPE_INTR,
+   NULL,
+   sduInterruptTransmitted,
+   NULL,
+   0x0010,
+   0x0000,
+   &ep2instate,
+   NULL,
+   1,
+   NULL
 };
+
 
 /*
  * Handles the USB driver global events.
@@ -274,57 +278,55 @@ static const USBEndpointConfig ep2config = {
 static void usb_event(USBDriver *usbp, usbevent_t event) 
 {
   switch (event) {
-  case USB_EVENT_RESET:
-    return;
-  case USB_EVENT_ADDRESS:
-    return;
-  case USB_EVENT_CONFIGURED:
-    chSysLockFromISR();
+     case USB_EVENT_RESET:
+        return;
+     case USB_EVENT_ADDRESS:
+        return;
+     case USB_EVENT_CONFIGURED:
+        chSysLockFromISR();
 
-    /* Enables the endpoints specified into the configuration.
-       Note, this callback is invoked from an ISR so I-Class functions
-       must be used.*/
-    usbInitEndpointI(usbp, USBD1_DATA_REQUEST_EP, &ep1config);
-    usbInitEndpointI(usbp, USBD1_INTERRUPT_REQUEST_EP, &ep2config);
+       /* Enables the endpoints specified into the configuration.
+          Note, this callback is invoked from an ISR so I-Class functions
+          must be used.*/
+        usbInitEndpointI(usbp, USBD1_DATA_REQUEST_EP, &ep1config);
+        usbInitEndpointI(usbp, USBD1_INTERRUPT_REQUEST_EP, &ep2config);
 
-    /* Resetting the state of the CDC subsystem.*/
-    sduConfigureHookI(&SDU1);
+       /* Resetting the state of the CDC subsystem.*/
+        sduConfigureHookI(&SDU1);
 
-    chSysUnlockFromISR();
-    return;
-  case USB_EVENT_SUSPEND:
-    return;
-  case USB_EVENT_WAKEUP:
-    return;
-  case USB_EVENT_STALLED:
-    return;
+        chSysUnlockFromISR();
+        return;
+     case USB_EVENT_SUSPEND:
+        return;
+     case USB_EVENT_WAKEUP:
+        return;
+     case USB_EVENT_STALLED:
+        return;
   }
   return;
 }
+
 
 /*
  * USB driver configuration.
  */
 static const USBConfig usbcfg = {
-  usb_event,
-  get_descriptor,
-  sduRequestsHook,
-  NULL
+   usb_event,
+   get_descriptor,
+   sduRequestsHook,
+   NULL
 };
+
 
 /*
  * Serial over USB driver configuration.
  */
 static const SerialUSBConfig serusbcfg = {
-  &USBD1,
-  USBD1_DATA_REQUEST_EP,
-  USBD1_DATA_AVAILABLE_EP,
-  USBD1_INTERRUPT_REQUEST_EP
+   &USBD1,
+   USBD1_DATA_REQUEST_EP,
+   USBD1_DATA_AVAILABLE_EP,
+   USBD1_INTERRUPT_REQUEST_EP
 };
-
-
-bool usb_active()
-  { return (serusbcfg.usbp->state == USB_ACTIVE); }
 
   
   
@@ -333,20 +335,27 @@ bool usb_active()
  */
 int usb_initialize(void) {
 
-  /*
-   * Initializes a serial-over-USB CDC driver.
-   */
-  sduObjectInit(&SDU1);
-  sduStart(&SDU1, &serusbcfg);
+   /*
+    * Initializes a serial-over-USB CDC driver.
+    */
+   sduObjectInit(&SDU1);
+   sduStart(&SDU1, &serusbcfg);
 
-  /*
-   * Activates the USB driver and then the USB bus pull-up on D+.
-   * Note, a delay is inserted in order to not have to disconnect the cable
-   * after a reset.
-   */
-  usbDisconnectBus(serusbcfg.usbp);
-  chThdSleepMilliseconds(1000);
-  usbStart(serusbcfg.usbp, &usbcfg);
-  usbConnectBus(serusbcfg.usbp);
-  return 0;
+   /*
+    * Activates the USB driver and then the USB bus pull-up on D+.
+    * Note, a delay is inserted in order to not have to disconnect the cable
+    * after a reset.
+    */
+   usbDisconnectBus(serusbcfg.usbp);
+   chThdSleepMilliseconds(1000);
+   usbStart(serusbcfg.usbp, &usbcfg);
+   usbConnectBus(serusbcfg.usbp);
+   return 0;
 }
+
+
+/*
+ * Return true if usb is active 
+ */
+bool usb_active()
+   { return (serusbcfg.usbp->state == USB_ACTIVE); }

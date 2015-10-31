@@ -11,7 +11,8 @@
 #include "fifo.h"       
 #include <string.h>
 #include "defines.h"
-
+#include "afsk.h"
+#include "ui.h"
 
 
 #define SAMPLERATE 9600                             // The rate at which we are sampling 

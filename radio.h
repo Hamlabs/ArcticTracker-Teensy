@@ -1,4 +1,6 @@
- 
+ #if !defined __RADIO_H__
+ #define __RADIO_H__
+  
  #include <stdint.h>
  
  
@@ -11,3 +13,4 @@
  bool radio_setMicLevel(uint8_t level);
  bool radio_powerSave(bool on);
  
+#endif

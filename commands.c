@@ -14,11 +14,12 @@
 #include "afsk.h"
 #include "hdlc.h"
 #include "string.h"
-#include "ui.h"
 #include "defines.h"
 #include "util/shell.h"
 #include "commands.h"
-
+#include "adc_input.h"
+#include "afsk.h"
+#include "ui.h"
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)

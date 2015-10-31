@@ -7,6 +7,7 @@
 #include "hal.h"
 #include "defines.h"
 #include "chprintf.h"
+#include "adc_input.h"
 
 
 #define RADIO_ADC_SAMPLE_FREQ    9600 
@@ -24,7 +25,7 @@
  static adcsample_t samples[RADIO_ADC_NUM_CHANNELS * RADIO_ADC_BUFSIZE];
  static adcsample_t samples2[TEMP_NUM_CHANNELS * TEMP_NUM_BUFSIZE]; 
  
- 
+ extern void afsk_process_sample(int8_t curr_sample);
  static void adc_sample(GPTDriver *gptp);
  static void adc_sample_cb(ADCDriver *adcp, adcsample_t *buffer, size_t n);
  
@@ -181,7 +182,7 @@ void adc_start_sampling() {
  ***************************************************/
 
 void adc_stop_sampling() {
-   gptStopContinuous(&RADIO_ADC_GPT);
+   gptStopTimer(&RADIO_ADC_GPT);
 }
 
 
@@ -198,6 +199,6 @@ static void adc_sample_cb(ADCDriver *adcp, adcsample_t *buffer, size_t n) {
     (void)adcp;
     (void)n;
     
-    afsk_process_sample((int8_t) samples[0] - 128);
+    afsk_process_sample((int8_t) buffer[0] - 128);
 }
 

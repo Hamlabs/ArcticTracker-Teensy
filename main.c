@@ -14,6 +14,10 @@
 #include "defines.h"
 #include "ui.h"
 
+static void ext_init(void);
+extern void usb_initialize(void);
+extern bool usb_active(void);
+
 
 /*************************************************************
  * Set up interrupt driven GPIO

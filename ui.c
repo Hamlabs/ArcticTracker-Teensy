@@ -2,6 +2,9 @@
 #include "defines.h"
 #include "ui.h"
 
+static void chandler(void *p);
+static void _rgb_led_off(void);
+
 
 /*****************************************************************
  * Mix three parts of RGB LED by using virtual timer.
@@ -11,11 +14,12 @@
  static int8_t cstate = -1; 
  static virtual_timer_t vt; 
  
- static void _rgb_led_off(void);
  
  
- static void chandler()
+ static void chandler(void *p)
  {  
+     (void)p;
+     
      register bool loop;
      if (cstate == -1) 
         return;

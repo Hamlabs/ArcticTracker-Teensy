@@ -125,9 +125,10 @@ static ShellCommand local_commands[] = {
 };
 
 
-static ShellCommand*  findcommand( ShellCommand *scp, char* name)
+
+static const ShellCommand* findcommand( const ShellCommand *scp, char* name)
 {
-  unsigned len=strlen(name);
+  unsigned len = strlen(name);
   while (scp->sc_name != NULL) 
   {
     if ( len >= scp->sc_minchars && 
@@ -142,7 +143,7 @@ static ShellCommand*  findcommand( ShellCommand *scp, char* name)
 
 
 
-static void cmdhelp( ShellCommand *scp, BaseSequentialStream *chp, char *name) 
+static void cmdhelp( const ShellCommand *scp, BaseSequentialStream *chp, char *name) 
 {
    if (strcasecmp(name, "exit")==0)
       chprintf(chp, "exit: Leave the shell");
@@ -162,7 +163,7 @@ static void cmdhelp( ShellCommand *scp, BaseSequentialStream *chp, char *name)
 
 
 
-static bool cmdexec(ShellCommand *scp, BaseSequentialStream *chp,
+static bool cmdexec(const ShellCommand *scp, BaseSequentialStream *chp,
                       char *name, int argc, char *argv[]) 
 {    
   scp = findcommand(scp, name);
@@ -233,7 +234,7 @@ static THD_FUNCTION(shell_thread, p) {
         }
         else if (n == 1) {
            cmdhelp(scp, chp, args[0]);
-          continue;
+           continue;
         }
         chprintf(chp, "Commands: help exit ");
         list_commands(chp, local_commands);

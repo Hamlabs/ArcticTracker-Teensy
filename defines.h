@@ -1,4 +1,7 @@
-
+ #if !defined __DEFINES_H__
+ #define __DEFINES_H__
+ 
+ 
 /* Application configuration macros */
  
 
@@ -76,3 +79,5 @@
 #define setPin(x)           palSetPad(x##_IOPORT, x)
 #define clearPin(x)         palClearPad(x##_IOPORT, x)
 #define setPinMode(x, mode) palSetPadMode(x##_IOPORT, x, mode)
+
+#endif

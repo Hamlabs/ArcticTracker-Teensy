@@ -3,6 +3,9 @@
  * By LA7ECA, ohanssen@acm.org
  */
 
+#if !defined __AFSK_H__
+#define __AFSK_H__
+
  #include "ch.h"
  #include "hal.h"
  
@@ -18,3 +21,8 @@
  void afsk_tx_start(void);
  void afsk_tx_stop(void);
  void afsk_PTT(bool on);
+ void afsk_rx_init(void);
+ 
+ void trx_sq_handler(EXTDriver *extp, expchannel_t channel);
+ 
+#endif
