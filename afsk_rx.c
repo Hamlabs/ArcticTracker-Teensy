@@ -13,13 +13,12 @@
 #include "defines.h"
 
 
+
 #define SAMPLERATE 9600                             // The rate at which we are sampling 
 #define BITRATE    1200                             // The actual bitrate at baseband. This is the baudrate.
 #define SAMPLESPERBIT (SAMPLERATE / BITRATE)        // How many DAC/ADC samples constitute one bit (8).
 
 /* Important: Sample rate must be divisible by bitrate */
-
-
 
 /* Phase sync constants */
 #define PHASE_BITS   8                              // How much to increment phase counter each sample
@@ -57,6 +56,7 @@ typedef struct AfskRx
   
 } AfskRx;
 
+static AfskRx afsk;
 
 
 static void add_bit(bool bit);
@@ -66,12 +66,28 @@ static void add_bit(bool bit);
   Modem Initialization                             
  *******************************************/
 
-void afsk_rx_init(AfskRx *afsk, int _adcPin) {
+void afsk_rx_init() {
   /* Allocate memory for struct */
-  memset(afsk, 0, sizeof(*afsk));
+  memset(&afsk, 0, sizeof(afsk));
 }
 
 
+
+/*********************************************
+ * Handler for squelch on/off signal
+ *********************************************/
+
+void trx_sq_handler(EXTDriver *extp, expchannel_t channel) {
+   (void) extp;
+   (void) channel;
+  
+}  
+  
+  
+  
+  
+  
+  
 /*******************************************
  *  FIR filters
  *******************************************/ 
@@ -140,7 +156,7 @@ static int8_t fir_filter(int8_t s, enum fir_filters f)
 
 
 
-
+#define ABS(x) (x < 0 ? -x : x)
 
 /***************************************************************
   This routine should be called 9600
@@ -148,30 +164,33 @@ static int8_t fir_filter(int8_t s, enum fir_filters f)
   the physical medium. 
 ****************************************************************/
 
-static void afsk_process_sample(AfskRx *afsk, int8_t currentSample) {
- 
+void afsk_process_sample(int8_t curr_sample) 
+{ 
 #define DCD_LEVEL 5
 
     /* Use FIR filtering on samples */
-    afsk->iirX[0] = ABS(fir_filter(curr_sample, FIR_1200_BP));
-    afsk->iirY[1] = ABS(fir_filter(curr_sample, FIR_2200_BP));
+    afsk.iirX[0] = ABS(fir_filter(curr_sample, FIR_1200_BP));
+    afsk.iirY[1] = ABS(fir_filter(curr_sample, FIR_2200_BP));
 
-    afsk->sampled_bits <<= 1;
-    afsk->sampled_bits |= fir_filter(afsk->iirY[1] - afsk->iirY[0], FIR_1200_LP) > 0;
+    afsk.sampled_bits <<= 1;
+    afsk.sampled_bits |= fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0;
 
     /* Digital DCD */
-    if (afsk->iirY[1] > DCD_LEVEL || afsk->iirY[0] > DCD_LEVEL) {
-        afsk->cd_state++;
-        if (afsk->cd_state > 30) {
-            afsk->cd_state = 30;
-            afsk->cd = true;
+    if (afsk.iirY[1] > DCD_LEVEL || afsk.iirY[0] > DCD_LEVEL) {
+        afsk.cd_state++;
+        if (afsk.cd_state > 30) {
+            afsk.cd_state = 30;
+            afsk.cd = true;
+            dcd_led_on();
         }
     } else {
-        if (afsk->cd_state > 0) {
-            afsk->cd_state --;
+        if (afsk.cd_state > 0) {
+            afsk.cd_state --;
 
-            if (afsk->cd_state == 0) 
-                afsk->cd = false;
+            if (afsk.cd_state == 0) {
+                afsk.cd = false;
+                dcd_led_off();
+            }
         }
     }   
     
@@ -179,25 +198,25 @@ static void afsk_process_sample(AfskRx *afsk, int8_t currentSample) {
      * If there is a transition, adjust the phase of our sampler
      * to stay in sync with the transmitter. 
      */ 
-    if (TRANSITION_FOUND(afsk->sampled_bits)) {
-        if (afsk->curr_phase < PHASE_THRESHOLD) {
-            afsk->curr_phase += PHASE_INC;
+    if (TRANSITION_FOUND(afsk.sampled_bits)) {
+        if (afsk.curr_phase < PHASE_THRESHOLD) {
+            afsk.curr_phase += PHASE_INC;
         } else {
-            afsk->curr_phase -= PHASE_INC;
+            afsk.curr_phase -= PHASE_INC;
         }
     }
 
-    afsk->curr_phase += PHASE_BITS;
+    afsk.curr_phase += PHASE_BITS;
 
     /* Check if we have reached the end of
      * our sampling window.
      */ 
-    if (afsk->curr_phase >= PHASE_MAX) 
+    if (afsk.curr_phase >= PHASE_MAX) 
     { 
-        afsk->curr_phase %= PHASE_MAX;
+        afsk.curr_phase %= PHASE_MAX;
 
         /* Shift left to make room for the next bit */
-        afsk->found_bits <<= 1;
+        afsk.found_bits <<= 1;
 
         /*
          * Determine bit value by reading the last 3 sampled bits.
@@ -205,13 +224,13 @@ static void afsk_process_sample(AfskRx *afsk, int8_t currentSample) {
          * otherwise is a 0.
          * This algorithm presumes that there are 8 samples per bit.
          */
-        uint8_t bits = afsk->sampled_bits & 0x07;
+        uint8_t bits = afsk.sampled_bits & 0x07;
         if ( bits == 0x07     // 111, 3 bits set to 
               || bits == 0x06 // 110, 2 bits
               || bits == 0x05 // 101, 2 bits
               || bits == 0x03 // 011, 2 bits
            )
-           afsk->found_bits |= 1;
+           afsk.found_bits |= 1;
 
         /* 
          * Now we can pass the actual bit to the HDLC parser.
@@ -219,7 +238,7 @@ static void afsk_process_sample(AfskRx *afsk, int8_t currentSample) {
          * have the same value, we have a 1, otherwise a 0.
          * We use the TRANSITION_FOUND function to determine this.
          */
-        add_bit( !TRANSITION_FOUND(afsk->found_bits) );
+        add_bit( !TRANSITION_FOUND(afsk.found_bits) );
     }
 }
 

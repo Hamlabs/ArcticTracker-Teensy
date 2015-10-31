@@ -133,10 +133,12 @@ static void cmd_mem(Stream *chp, int argc, char *argv[]) {
  ****************************************************************************/
 
 static void cmd_threads(Stream *chp, int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
+  
   static const char *states[] = {CH_STATE_NAMES};
   thread_t *tp;
-  
-  (void)argv;
+
   if (argc > 0) {
     chprintf(chp, "Usage: threads\r\n");
     return;
@@ -317,6 +319,9 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
 
 static void cmd_testpacket(Stream *chp, int argc, char *argv[]) 
 { 
+  (void)argc;
+  (void)argv;
+  
   static FBUF packet;    
   fbq_t* outframes = hdlc_get_encoder_queue();
   addr_t from, to; 
@@ -366,9 +371,17 @@ static void cmd_teston(Stream *chp, int argc, char* argv[])
 
 static void cmd_adc(Stream *chp, int argc, char* argv[])
 {
-   adc_start_sampling();
-   while (true)
-     chprintf(chp,"ADC sample = %d\r\n", adc_getSample());
+   (void)argc;
+   (void)argv;
+   adc_init();
+   
+   int32_t temp = adc_read_temp();
+   chprintf(chp,"Temperature = %d\r\n", temp);
+   int32_t inp = adc_read_input();
+   chprintf(chp,"Input = %d\r\n", inp);
+//   adc_start_sampling();
+//   while (true)
+//     chprintf(chp,"ADC sample = %d\r\n", (int) adc_getSample());
 }
 
 
