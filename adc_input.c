@@ -87,8 +87,8 @@
    ADCx_CFG1_MODE( ADCx_CFG1_MODE_8_OR_9_BITS ),
    
    /* SC3 Register - Average 4 readings per sample */
-   ADCx_SC3_AVGE |
-   ADCx_SC3_AVGS(ADCx_SC3_AVGS_AVERAGE_4_SAMPLES)
+   0 //ADCx_SC3_AVGE |
+   // ADCx_SC3_AVGS(ADCx_SC3_AVGS_AVERAGE_4_SAMPLES)
  };
  
  
@@ -173,7 +173,7 @@ int8_t adc_read_input()
  ***************************************************/
 
 void adc_start_sampling() {
-   gptStartContinuous(&RADIO_ADC_GPT, 960);  
+   gptStartContinuous(&RADIO_ADC_GPT, 1);  
 }
 
 

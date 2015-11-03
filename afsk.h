@@ -21,8 +21,12 @@
  void afsk_tx_start(void);
  void afsk_tx_stop(void);
  void afsk_PTT(bool on);
- void afsk_rx_init(void);
+ 
+ input_queue_t* afsk_rx_init(void);
+ void afsk_rx_enable(void); 
+ void afsk_rx_disable(void);
  
  void trx_sq_handler(EXTDriver *extp, expchannel_t channel);
+
  
 #endif

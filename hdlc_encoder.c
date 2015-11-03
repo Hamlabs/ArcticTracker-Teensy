@@ -24,7 +24,7 @@ static FBUF buffer;
 #define PERSISTENCE 80 /* p = x/255 */
 #define SLOTTIME    10 /* Milliseconds/10 */
 
-THREAD_STACK(hdlc_txencoder, 400);
+THREAD_STACK(hdlc_txencoder, 500);
 
 
 
@@ -40,7 +40,8 @@ static void wait_channel_ready(void);
 
 extern Stream* shell; 
 
-
+void hdlc_monitor_tx(FBQ* m)
+   { mqueue = m; }
 
 fbq_t* hdlc_get_encoder_queue()
    { return &encoder_queue; }
@@ -106,7 +107,7 @@ void hdlc_test_off()
  * This function gets a frame from buffer-queue, and starts the transmitter
  * as soon as the channel is free.   
  *******************************************************************************/
-
+extern SerialUSBDriver SDU1;
 __attribute__((noreturn))
 static THD_FUNCTION(hdlc_txencoder, arg)
 { 
@@ -156,7 +157,7 @@ static void wait_channel_ready()
 FBQ* hdlc_init_encoder(output_queue_t *oq) 
 {
   outqueue = oq;
-  FBQ_INIT(encoder_queue, 8);
+  FBQ_INIT(encoder_queue, HDLC_ENCODER_QUEUE_SIZE);
   THREAD_START(hdlc_txencoder, NORMALPRIO, NULL);
   return &encoder_queue; 
 }
@@ -193,7 +194,7 @@ static void hdlc_encode_frames()
          crc = _crc_ccitt_update (crc, txbyte);
          hdlc_encode_byte(txbyte, false);
       }
-      if (mqueue) {
+      if (mqueue != NULL) {
          /* 
           * Put packet on monitor queue, if active
           */

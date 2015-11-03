@@ -3,7 +3,6 @@
  * 
  * Based on code from BertOS AFSK decoder. 
  * Originally by Develer S.r.l. (http://www.develer.com/), GPLv2 licensed.
- * FIR filtering added by OM5AMX, Michal
  * 
  */
 
@@ -13,6 +12,9 @@
 #include "defines.h"
 #include "afsk.h"
 #include "ui.h"
+#include "fifo.h"
+#include "adc_input.h"
+
 
 
 #define SAMPLERATE 9600                             // The rate at which we are sampling 
@@ -31,6 +33,7 @@
 /* Detect transition */
 #define BITS_DIFFER(bits1, bits2) (((bits1)^(bits2)) & 0x01)
 #define TRANSITION_FOUND(bits) BITS_DIFFER((bits), (bits) >> 1)
+
 
 /* Qeue of decoded bits. To be used by HDLC packet decoder */
 static uint8_t _buf[AFSK_RX_QUEUE_SIZE];
@@ -62,16 +65,38 @@ static AfskRx afsk;
 
 static void add_bit(bool bit);
 
+int8_t delay_buf[100];
+fifo_t fifo; 
+
+
 
 /*******************************************
   Modem Initialization                             
  *******************************************/
 
-void afsk_rx_init() {
+input_queue_t* afsk_rx_init() {
   /* Allocate memory for struct */
   memset(&afsk, 0, sizeof(afsk));
+  
+  fifo_init(&fifo, delay_buf, sizeof(delay_buf));
+  
+  /* Fill sample FIFO with 0 */
+  for (int i = 0; i < SAMPLESPERBIT / 2; i++)
+    fifo_push(&fifo, 0);
+  
+  return &iq;
 }
 
+
+/*********************************************
+ * Turn receiving on and off
+ *********************************************/
+
+void afsk_rx_enable() 
+   { adc_start_sampling(); }
+   
+void afsk_rx_disable() 
+   { adc_stop_sampling(); }
 
 
 /*********************************************
@@ -81,83 +106,10 @@ void afsk_rx_init() {
 void trx_sq_handler(EXTDriver *extp, expchannel_t channel) {
    (void) extp;
    (void) channel;
-  
 }  
   
   
-  
-  
-  
-  
-/*******************************************
- *  FIR filters
- *******************************************/ 
-
-#define FIR_MAX_TAPS 16
-typedef struct FIR
-{
-    int8_t  taps;
-    int8_t  coef[FIR_MAX_TAPS];
-    int16_t mem[FIR_MAX_TAPS];
-} FIR;
-
-enum fir_filters
-{
-    FIR_1200_BP=0,
-    FIR_2200_BP=1,
-    FIR_1200_LP=2
-};
-
-
-static FIR fir_table[] =
-{
-    [FIR_1200_BP] = {
-        .taps = 11,
-        .coef = { -12, -16, -15, 0, 20, 29, 20, 0, -15, -16, -12 },
-        .mem  = { 0, },
-    },
-    [FIR_2200_BP] = {
-        .taps = 11,
-        .coef = { 11, 15, -8, -26, 4, 30, 4, -26, -8, 15, 11 },
-        .mem = { 0, },
-    },
-    [FIR_1200_LP] = {
-        .taps = 8,
-        .coef = { -9, 3, 26, 47, 47, 26, 3, -9 },
-        .mem = { 0, },
-    },
-};
-
-
-/********************************************************************
- * This implements the FIR filtering method. 
- * It operates on 8 bit samples. And have a choice of three
- * filters: FIR_1200_BP, FIR_2200_BP or FIR_1200_LP. These
- * are defined in fir_table above. 
- ********************************************************************/
-
-static int8_t fir_filter(int8_t s, enum fir_filters f)
-{
-    int8_t Q = fir_table[f].taps - 1;
-    int8_t *B = fir_table[f].coef;
-    int16_t *Bmem = fir_table[f].mem;
-    int8_t i;
-    int16_t y;
-
-    Bmem[0] = s;
-    y = 0;
-
-    for (i = Q; i >= 0; i--)
-    {
-        y += Bmem[i] * B[i];
-        Bmem[i + 1] = Bmem[i];
-    }
-    return (int8_t) (y / 128);
-}
-
-
-
-#define ABS(x) (x < 0 ? -x : x)
+#define ABS(x) ((x) < 0 ? -(x) : (x))
 
 /***************************************************************
   This routine should be called 9600
@@ -169,31 +121,18 @@ void afsk_process_sample(int8_t curr_sample)
 { 
 #define DCD_LEVEL 5
 
-    /* Use FIR filtering on samples */
-    afsk.iirX[0] = ABS(fir_filter(curr_sample, FIR_1200_BP));
-    afsk.iirY[1] = ABS(fir_filter(curr_sample, FIR_2200_BP));
-
+    /* Butterworth filter */
+    afsk.iirX[0] = afsk.iirX[1];
+    afsk.iirX[1] = (fifo_pop(&fifo) * curr_sample) >> 2;
+    afsk.iirY[0] = afsk.iirY[1];
+    afsk.iirY[1] = afsk.iirX[0] + afsk.iirX[1] + (afsk.iirY[0] >> 1) + (afsk.iirY[0] >> 3) + (afsk.iirY[0] >> 5);
+    
+    /* Save this sampled bit in a delay line */
     afsk.sampled_bits <<= 1;
-    afsk.sampled_bits |= fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0;
-
-    /* Digital DCD */
-    if (afsk.iirY[1] > DCD_LEVEL || afsk.iirY[0] > DCD_LEVEL) {
-        afsk.cd_state++;
-        if (afsk.cd_state > 30) {
-            afsk.cd_state = 30;
-            afsk.cd = true;
-            dcd_led_on();
-        }
-    } else {
-        if (afsk.cd_state > 0) {
-            afsk.cd_state --;
-
-            if (afsk.cd_state == 0) {
-                afsk.cd = false;
-                dcd_led_off();
-            }
-        }
-    }   
+    afsk.sampled_bits |= (afsk.iirY[1] > 0) ? 1 : 0;
+    /* Store current ADC sample in the af->delay_fifo */
+    fifo_push(&fifo, curr_sample);
+    
     
     /* 
      * If there is a transition, adjust the phase of our sampler

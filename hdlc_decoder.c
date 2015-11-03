@@ -1,7 +1,7 @@
 
 /*
  * Adapted from Polaric Tracker code. 
- * By LA7ECA, ohanssen@acm.org and LA3T
+ * By LA7DJA, LA7ECA and LA3T
  */
 
 #include "ch.h"
@@ -13,6 +13,7 @@
 #include "ax25.h"
 #include "hal.h"
 #include "fbuf.h"
+#include "ui.h"
 
 
 static input_queue_t *inq;
@@ -83,7 +84,8 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
 {  
    (void)arg;
    uint8_t bit;
-
+   chRegSetThreadName("HDLC RX Decoder");
+   
    /* Sync to next flag */
    flag_sync:
    do {      
@@ -135,22 +137,26 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
 
    if (crc_match(&fbuf, length)) 
    {     
+      rgb_led_on(false, true, false);
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 
        * Note also that receiver queues should not share the fbuf, use newRef to create a new reference
        */
       fbuf_removeLast(&fbuf);
       fbuf_removeLast(&fbuf);
+
       if (mqueue[0] || mqueue[1] || mqueue[2]) { 
          if (mqueue[0]) fbq_put( mqueue[0], fbuf);               /* Monitor */
          if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf)); /* Digipeater */
          if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf));
       }
-      if (!mqueue[0])
+      if (mqueue[0]==NULL)
          fbuf_release(&fbuf); 
       fbuf_new(&fbuf);
    }
-  
+   else
+     rgb_led_on(false, false, true);
+   
    goto frame_sync; // Two consecutive frames may share the same flag
 }
 

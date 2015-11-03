@@ -11,12 +11,13 @@
 
 
 /* Queues for AFSK encoder/decoder */
-#define AFSK_RX_QUEUE_SIZE 128 
-#define AFSK_TX_QUEUE_SIZE 128
-
+#define AFSK_RX_QUEUE_SIZE      128 
+#define AFSK_TX_QUEUE_SIZE      128
+#define HDLC_DECODER_QUEUE_SIZE   8
+#define HDLC_ENCODER_QUEUE_SIZE   8
 
 /* Hardware timers */
-#define AFSK_RX_GPT      GPTD1
+#define AFSK_RX_GPT      GPTD4
 #define AFSK_TX_GPT      GPTD2
 #define AFSK_TONEGEN_GPT GPTD3
 
@@ -78,6 +79,7 @@
 
 #define setPin(x)           palSetPad(x##_IOPORT, x)
 #define clearPin(x)         palClearPad(x##_IOPORT, x)
+#define togglePin(x)        palTogglePad(x##_IOPORT, x)
 #define setPinMode(x, mode) palSetPadMode(x##_IOPORT, x, mode)
 
 #endif

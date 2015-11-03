@@ -13,10 +13,14 @@
 #include "afsk.h"
 #include "defines.h"
 #include "ui.h"
+#include "adc_input.h"
 
 static void ext_init(void);
 extern void usb_initialize(void);
 extern bool usb_active(void);
+extern void mon_init(Stream*);
+
+extern SerialUSBDriver SDU1;
 
 
 /*************************************************************
@@ -49,11 +53,14 @@ int main(void)
    chSysInit();
    eeprom_initialize(); 
    hdlc_init_encoder(afsk_tx_init());
-   afsk_tx_start(); // Call this only when needed and stop it when not needed??
+   afsk_tx_start(); // Call this only when needed and stop it when not needed?? FIXME: Rename to afsk_tx_enable
    ext_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
    ui_init();
+   adc_init();
+   hdlc_init_decoder(afsk_rx_init());
+   mon_init((Stream*) &SHELL_SERIAL);
    shellInit();
 
    while (!chThdShouldTerminateX()) {

@@ -57,9 +57,9 @@ uint16_t fbuf_freeMem(void);
 
 typedef struct _fbq
 {
-  uint8_t size, index; 
+  uint8_t size, index, cnt; 
   semaphore_t length, capacity; 
-  FBUF* buf; 
+  FBUF *buf; 
 } FBQ;
 
 
@@ -72,6 +72,8 @@ void  _fbq_init (FBQ* q, FBUF* buf, const uint16_t size);
 void  fbq_clear (FBQ* q);
 void  fbq_put   (FBQ* q, FBUF b); 
 FBUF  fbq_get   (FBQ* q);
+void  fbq_signal(FBQ* q);
+
 
 #define fbq_eof(q)    ( chSemGetCounterI(&((q)->capacity)) >= (q)->size)
 

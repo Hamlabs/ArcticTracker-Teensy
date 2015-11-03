@@ -407,6 +407,7 @@ void _fbq_init(FBQ* q, FBUF* buf, const uint16_t sz)
   q->size = sz;
   q->buf = buf;
   q->index = 0;
+  q->cnt = 0;
   chSemObjectInit(&q->length, 0);
   chSemObjectInit(&q->capacity, sz);
 }
@@ -414,12 +415,15 @@ void _fbq_init(FBQ* q, FBUF* buf, const uint16_t sz)
 
 void fbq_clear(FBQ* q)
 {
-  register uint16_t i;
+  chSysLock();
+  uint16_t i;
   for (i = q->index;  i < q->index + chSemGetCounterI(&q->length);  i++)
     fbuf_release(&q->buf[(uint8_t) (i % q->size)]);
-  chSemReset(&q->length, 0);
-  chSemReset(&q->capacity, q->size);    
+  chSemResetI(&q->length, 0);
+  chSemResetI(&q->capacity, q->size);    
   q->index = 0;
+  q->cnt = 0;
+  chSysUnlock();
 }
 
 
@@ -430,12 +434,16 @@ void fbq_clear(FBQ* q)
 
 void fbq_put(FBQ* q, FBUF b)
 {
-  chSemWait(&q->capacity); 
-  register uint16_t i = q->index + chSemGetCounterI(&q->length);
-  if (i >= q->size)
-    i -= q->size; 
-  q->buf[(uint8_t) i] = b; 
-  chSemSignal(&q->length);
+  chSysLock();
+  if (chSemWaitS(&q->capacity) == MSG_OK) {
+    q->cnt++;
+    uint8_t i = (q->index + q->cnt) % q->size; 
+    q->buf[i] = b; 
+
+    chSemSignalI(&q->length);
+    chSchRescheduleS();
+  }
+  chSysUnlock();
 }
 
 
@@ -446,16 +454,33 @@ void fbq_put(FBQ* q, FBUF b)
 
 FBUF fbq_get(FBQ* q)
 {
-  chSemWait(&q->length);
-  register uint8_t i = q->index;
-  if (++q->index >= q->size) 
-    q->index = 0; 
-  chSemSignal(&q->capacity); 
-  return q->buf[i];
+  FBUF x; 
+  chSysLock();
+  if (chSemWaitS(&q->length) == MSG_OK) {  
+    q->index = (q->index + 1) % q->size;
+    x = q->buf[q->index];
+    q->cnt--;
+  
+    chSemSignalI(&q->capacity);
+  }
+  chSchRescheduleS();
+  chSysUnlock();
+  return x;
 }
 
 
 
+
+/**********************************************************
+ * put an empty buffer onto the queue. 
+ **********************************************************/
+ 
+void fbq_signal(FBQ* q)
+{
+   FBUF b; 
+   fbuf_new(&b);
+   fbq_put(q, b);
+}
 
 
 

@@ -24,6 +24,7 @@
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
 extern SerialUSBDriver SDU1;
+extern void mon_activate(bool);
 
 static void cmd_mem(Stream *chp, int argc, char *argv[]);
 static void cmd_threads(Stream *chp, int argc, char *argv[]);
@@ -38,8 +39,8 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[]);
 static void cmd_teston(Stream *chp, int argc, char* argv[]);
 static void cmd_adc(Stream *chp, int argc, char* argv[]);
 static void cmd_led(Stream *chp, int argc, char* argv[]);
-
-
+static void cmd_listen(Stream *chp, int argc, char* argv[]);
+static void cmd_converse(Stream *chp, int argc, char* argv[]);
 
 
 /*********************************************************************************
@@ -61,6 +62,8 @@ static const ShellCommand shell_commands[] =
   { "teston",     "Generate test signal with data byte",  6, cmd_teston },
   { "adc",        "Get test samples from ADC",            3, cmd_adc },
   { "led",        "Test RGB LED",                         3, cmd_led },
+  { "listen",     "Listen to radio",                      3, cmd_listen },
+  { "converse",   "Converse mode",                        4, cmd_converse },
   {NULL, NULL, 0, NULL}
 };
 
@@ -86,15 +89,18 @@ thread_t* myshell_start()
 
 
 /****************************************************************************
- * readline from input stream
+ * readline from input stream. 
+ * Typing ctrl-C will immediately return false
  ****************************************************************************/
 
-void readline(Stream * cbp, char* buf, const uint16_t max) {
+bool readline(Stream * cbp, char* buf, const uint16_t max) {
   char x;
   uint16_t i=0; 
   
   for (i=0; i<max; i++) {
-    x = streamGet(cbp);
+    x = streamGet(cbp);     
+    if (x == 0x03)     /* CTRL-C */
+      return false;
     if (x == '\r') {
       /* Get LINEFEED */
       streamGet(cbp); 
@@ -105,6 +111,7 @@ void readline(Stream * cbp, char* buf, const uint16_t max) {
     buf[i]=x;
   }
   buf[i] = '\0';
+  return true;
 }
 
 
@@ -380,9 +387,6 @@ static void cmd_adc(Stream *chp, int argc, char* argv[])
    chprintf(chp,"Temperature = %d\r\n", temp);
    int32_t inp = adc_read_input();
    chprintf(chp,"Input = %d\r\n", inp);
-//   adc_start_sampling();
-//   while (true)
-//     chprintf(chp,"ADC sample = %d\r\n", (int) adc_getSample());
 }
 
 
@@ -412,7 +416,55 @@ static void cmd_led(Stream *chp, int argc, char* argv[])
 
 
 
+/****************************************************************************
+ * Listen on radio
+ ****************************************************************************/
+
+static void cmd_listen(Stream *chp, int argc, char* argv[])
+{
+  (void) argv;
+  (void) argc; 
+  
+  afsk_rx_enable();
+  mon_activate(true);
+  getch(chp);
+  mon_activate(false);
+  afsk_rx_disable();
+}
 
 
+#define BUFSIZE 90
+static char buf[BUFSIZE]; 
 
+
+/****************************************************************************
+ * Converse mode
+ ****************************************************************************/
+
+static void cmd_converse(Stream *chp, int argc, char* argv[])
+{
+  (void) argc;
+  (void) argv; 
+  
+  static FBUF packet; 
+  chprintf(chp, "***** CONVERSE MODE. Ctrl-D to exit *****\r\n");
+  afsk_rx_enable();
+  mon_activate(true); 
+  fbq_t* outframes = hdlc_get_encoder_queue();
+  
+  while (!shellGetLine(chp, buf, BUFSIZE)) { 
+    addr_t from, to; 
+    GET_PARAM(MYCALL, &from);
+    GET_PARAM(DEST, &to);       
+    addr_t digis[7];
+    uint8_t ndigis = GET_BYTE_PARAM(NDIGIS); 
+    GET_PARAM(DIGIS, &digis);  
+    fbuf_new(&packet);
+    ax25_encode_header(&packet, &from, &to, digis, ndigis, FTYPE_UI, PID_NO_L3);
+    fbuf_putstr(&packet, buf);                        
+    fbq_put(outframes, packet);
+  }
+  mon_activate(false);
+  afsk_rx_disable(); 
+}
 
