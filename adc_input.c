@@ -20,6 +20,7 @@
 #define TEMP_NUM_BUFSIZE         1
 #define ADC_TEMP_ERROR           300000
 
+static int8_t offset = 0; 
 
  /* Buffer */
  static adcsample_t samples[RADIO_ADC_NUM_CHANNELS * RADIO_ADC_BUFSIZE];
@@ -109,6 +110,8 @@ void adc_init()
 {
    adcStart(&ADCD1, &adc_cfg);
    gptStart(&RADIO_ADC_GPT, &radio_gpt_cfg);
+   if (adcConvert(&ADCD1, &adc_grpcfg, samples, 1) == MSG_OK)
+     offset = samples[0];
 }
 
 
@@ -162,7 +165,7 @@ int8_t adc_read_input()
 {
   if (adcConvert(&ADCD1, &adc_grpcfg, samples, 1) != MSG_OK)
     return 0;
-  return (int8_t) samples[0]-128;
+  return (int8_t) samples[0] - offset;
 }
 
 
@@ -199,6 +202,6 @@ static void adc_sample_cb(ADCDriver *adcp, adcsample_t *buffer, size_t n) {
     (void)adcp;
     (void)n;
     
-    afsk_process_sample((int8_t) buffer[0] - 128);
+    afsk_process_sample((int8_t) buffer[0] - offset);
 }
 
