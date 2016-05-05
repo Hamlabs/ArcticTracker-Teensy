@@ -20,24 +20,42 @@
        DONE. 
 
 * Packet receiving, decoding
-     - Set up sampling on ADC. In progress.
-     - AFSK RX decoding based on samples. MOSTLY DONE. Need testing. 
-     - HDLC decoding. Queue interface for receiving packets. DONE. Need testing.
-     - Test on radio using SR-FRS.
-     - Document on hamlabs
+     - Set up sampling on ADC. In progress. DONE.
+     - AFSK RX decoding based on samples. DONE 
+     - HDLC decoding. Queue interface for receiving packets. DONE.
+     - Test on radio using SR-FRS. DONE.
+     - Document on hamlabs. DONE. 
      - Credit the orgiginal author of decoding code!!!
-     
+
+* NodeMCU testing. Decide on ESP-12 platform. 
+     In progress. 
+
+* Design a PCB, get parts and make a lab model (first prototype). 
+        IN PROGRESS (First PCB design ready and in production)      
+    - Document on hamlabs
 
 * KISS TNC? 
+
+* Digipeater
 
 * GPS data decoding. 
 
 * Tracker function
 
-* SD card driver, implement storage of files. Packet logs.. 
+* Packet logs. Store in ESP-12. 
 
 * Battery charging conrol? 
 
-* NodeMCU testing. ESP-12. 
+
+
+-------------------------
+
+LATER: 
+
+* Filtering to make receiving better. 
+
+* Receive commands... 
+
+* Consider using flash card for storage. 
 
 
