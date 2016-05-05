@@ -79,7 +79,7 @@ static THD_FUNCTION(hdlc_testsignal, arg)
    hdlc_idle = false;
   
    while(test_active) 
-     chOQPut(outqueue, testbyte);
+     oqPut(outqueue, testbyte);
    
    hdlc_idle = true; 
    return;
@@ -90,7 +90,7 @@ void hdlc_test_on(uint8_t b)
 { 
    testbyte = b;
    test_active = true;
-   testt = THREAD_DSTART(hdlc_testsignal, 256, NORMALPRIO, NULL);
+   testt = THREAD_DSTART(hdlc_testsignal, "hdlc testsignal", 256, NORMALPRIO, NULL);
 }
 
 void hdlc_test_off()
@@ -242,7 +242,7 @@ static void hdlc_encode_frames()
        }
      
        if (++outbits == 8) {
-          chOQPut(outqueue, outbyte);
+          oqPut(outqueue, outbyte);
           outbits = 0;
        }
        outbyte >>= 1;      

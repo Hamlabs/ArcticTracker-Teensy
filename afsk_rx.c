@@ -37,8 +37,7 @@
 
 /* Qeue of decoded bits. To be used by HDLC packet decoder */
 static uint8_t _buf[AFSK_RX_QUEUE_SIZE];
-INPUTQUEUE_DECL(iq, _buf, AFSK_RX_QUEUE_SIZE, NULL, NULL);
-
+static input_queue_t iq;
 
 
 /*********************************************************
@@ -84,6 +83,7 @@ input_queue_t* afsk_rx_init() {
   for (int i = 0; i < SAMPLESPERBIT / 2; i++)
     fifo_push(&fifo, 0);
   
+  iqObjectInit(&iq, _buf,  AFSK_RX_QUEUE_SIZE, NULL, NULL);
   return &iq;
 }
 
@@ -198,8 +198,8 @@ static void add_bit(bool bit)
   
   if (bit_count == 8) 
   {        
-    if  (!chIQIsFullI(&iq)) 
-       chIQPutI(&iq, octet);
+    if  (!iqIsFullI(&iq)) 
+       iqPutI(&iq, octet);
  
     bit_count = 0;
   }

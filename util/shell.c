@@ -249,6 +249,8 @@ static THD_FUNCTION(shell_thread, p) {
   shellExit(MSG_OK);
 }
 
+
+
 /**
  * @brief   Shell manager initialization.
  *
@@ -258,6 +260,9 @@ void shellInit(void) {
 
   chEvtObjectInit(&shell_terminated);
 }
+
+
+
 
 /**
  * @brief   Terminates the shell.
@@ -292,7 +297,7 @@ void shellExit(msg_t msg) {
 #if CH_CFG_USE_HEAP && CH_CFG_USE_DYNAMIC
 thread_t *shellCreate(const ShellConfig *scp, size_t size, tprio_t prio) {
 
-  return chThdCreateFromHeap(NULL, size, prio, shell_thread, (void *)scp);
+  return chThdCreateFromHeap(NULL, size, "shell", prio, shell_thread, (void *)scp);
 }
 #endif
 
@@ -331,7 +336,7 @@ bool shellGetLine(BaseSequentialStream *chp, char *line, unsigned size) {
   while (true) {
     char c;
 
-    if (chSequentialStreamRead(chp, (uint8_t *)&c, 1) == 0)
+    if (streamRead(chp, (uint8_t *)&c, 1) == 0)
       return true;
     if (c == 4) {
       chprintf(chp, "^D");
@@ -339,9 +344,9 @@ bool shellGetLine(BaseSequentialStream *chp, char *line, unsigned size) {
     }
     if ((c == 8) || (c == 127)) {
       if (p != line) {
-        chSequentialStreamPut(chp, c);
-        chSequentialStreamPut(chp, 0x20);
-        chSequentialStreamPut(chp, c);
+        streamPut(chp, c);
+        streamPut(chp, 0x20);
+        streamPut(chp, c);
         p--;
       }
       continue;
@@ -354,7 +359,7 @@ bool shellGetLine(BaseSequentialStream *chp, char *line, unsigned size) {
     if (c < 0x20)
       continue;
     if (p < line + size - 1) {
-      chSequentialStreamPut(chp, c);
+      streamPut(chp, c);
       *p++ = (char)c;
     }
   }

@@ -1,5 +1,5 @@
 /*
-    ChibiOS/RT - Copyright (C) 2006-2014 Giovanni Di Sirio
+    ChibiOS - (C) 2015 RedoX https://github.com/RedoXyde
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
 */
 
 /**
- * @file    templates/chconf.h
- * @brief   Configuration file template.
- * @details A copy of this file must be placed in each project directory, it
- *          contains the application specific kernel settings.
+ * @file    TEENSY3_x/SERIAL/chconf.h
+ * @brief   Configuration file.
  *
  * @addtogroup config
  * @details Kernel related settings and hooks.
@@ -27,6 +25,8 @@
 
 #ifndef _CHCONF_H_
 #define _CHCONF_H_
+
+#define _CHIBIOS_RT_CONF_
 
 /*===========================================================================*/
 /**
@@ -99,7 +99,8 @@
  * @details When this option is activated the function @p chSysInit()
  *          does not spawn the idle thread. The application @p main()
  *          function becomes the idle thread and must implement an
- *          infinite loop. */
+ *          infinite loop.
+ */
 #define CH_CFG_NO_IDLE_THREAD               FALSE
 
 /** @} */
@@ -260,14 +261,6 @@
  * @note    Requires @p CH_CFG_USE_SEMAPHORES.
  */
 #define CH_CFG_USE_MAILBOXES                TRUE
-
-/**
- * @brief   I/O Queues APIs.
- * @details If enabled then the I/O queues APIs are included in the kernel.
- *
- * @note    The default is @p TRUE.
- */
-#define CH_CFG_USE_QUEUES                   TRUE
 
 /**
  * @brief   Core Memory Manager APIs.
@@ -440,7 +433,21 @@
  * @details This hook is invoked just before switching between threads.
  */
 #define CH_CFG_CONTEXT_SWITCH_HOOK(ntp, otp) {                              \
-  /* System halt code here.*/                                               \
+  /* Context switch code here.*/                                            \
+}
+
+/**
+ * @brief   ISR enter hook.
+ */
+#define CH_CFG_IRQ_PROLOGUE_HOOK() {                                        \
+  /* IRQ prologue code here.*/                                              \
+}
+
+/**
+ * @brief   ISR exit hook.
+ */
+#define CH_CFG_IRQ_EPILOGUE_HOOK() {                                        \
+  /* IRQ epilogue code here.*/                                              \
 }
 
 /**
@@ -449,7 +456,7 @@
  *          should be invoked from here.
  * @note    This macro can be used to activate a power saving mode.
  */
-#define CH_CFG_IDLE_ENTER_HOOK() {                                         \
+#define CH_CFG_IDLE_ENTER_HOOK() {                                          \
 }
 
 /**
@@ -458,7 +465,7 @@
  *          should be invoked from here.
  * @note    This macro can be used to deactivate a power saving mode.
  */
-#define CH_CFG_IDLE_LEAVE_HOOK() {                                         \
+#define CH_CFG_IDLE_LEAVE_HOOK() {                                          \
 }
 
 /**
@@ -485,6 +492,15 @@
  */
 #define CH_CFG_SYSTEM_HALT_HOOK(reason) {                                   \
   /* System halt code here.*/                                               \
+}
+
+/**
+ * @brief   Trace hook.
+ * @details This hook is invoked each time a new record is written in the
+ *          trace buffer.
+ */
+#define CH_CFG_TRACE_HOOK(tep) {                                            \
+  /* Trace code here.*/                                                     \
 }
 
 /** @} */

@@ -2,7 +2,7 @@
 #include "ch.h"
 #include "hal.h"
 #include "chprintf.h"
-#include "shell.h"
+#include "util/shell.h"
 #include <math.h>
 #include <stdio.h>
 #include "util/eeprom.h"

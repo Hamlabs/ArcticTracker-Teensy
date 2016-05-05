@@ -7,7 +7,6 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "chqueues.h"
 #include "radio.h"
 #include "afsk.h"
 #include "defines.h"
@@ -18,13 +17,15 @@
 
 
 static uint8_t _buf[AFSK_TX_QUEUE_SIZE];
-OUTPUTQUEUE_DECL(oq, _buf, AFSK_TX_QUEUE_SIZE, NULL, NULL);
+static output_queue_t oq; 
+
 
 static bool transmit = false; 
 
 
 output_queue_t* afsk_tx_init()
 {
+  oqObjectInit(&oq, _buf, AFSK_TX_QUEUE_SIZE, NULL, NULL);
   return &oq;
 }
 
@@ -70,11 +71,11 @@ static void next_byte(void)
    if (bit_count == 0) 
    {
       /* Turn off TX if queue is empty (have reached end of frame) */
-      if (chOQIsEmptyI(&oq)) { 
+      if (oqIsEmptyI(&oq)) { 
          afsk_PTT(false);  
          return;
       }
-      bits = chOQGetI(&oq); 
+      bits = oqGetI(&oq); 
       bit_count = 8;    
    } 
 }
@@ -93,7 +94,7 @@ static void afsk_txBitClock(GPTDriver *gptp) {
      (void)gptp;
      
      if (!transmit) {
-       if (chOQIsEmptyI(&oq))
+       if (oqIsEmptyI(&oq))
          return;
        else {
          /* If bytes in queue, start transmitting */

@@ -41,6 +41,9 @@ static void cmd_adc(Stream *chp, int argc, char* argv[]);
 static void cmd_led(Stream *chp, int argc, char* argv[]);
 static void cmd_listen(Stream *chp, int argc, char* argv[]);
 static void cmd_converse(Stream *chp, int argc, char* argv[]);
+static void cmd_txpower(Stream *chp, int argc, char *argv[]);
+static void cmd_txdelay(Stream *chp, int argc, char *argv[]);
+
 
 
 /*********************************************************************************
@@ -55,6 +58,8 @@ static const ShellCommand shell_commands[] =
   { "squelch",    "Set/get squelch level of receiver",    2, cmd_setsquelch },
   { "volume",     "Set/get volume level of receiver",     3, cmd_setvolume },
   { "miclevel",   "Set mic sensitivity level (1-8)",      4, cmd_setmiclevel }, 
+  { "txpower",    "Set TX power (hi=1W, lo=0.5W)",        4, cmd_txpower },
+  { "txdelay",    "Set TX delay (flags)",                 3, cmd_txdelay },
   { "ptt",        "Turn on/off transmitter",              3, cmd_ptt },
   { "radio",      "Turn on/off radio",                    5, cmd_radio },
   { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone", 3, cmd_txtone },
@@ -120,17 +125,19 @@ bool readline(Stream * cbp, char* buf, const uint16_t max) {
  ****************************************************************************/
 
 static void cmd_mem(Stream *chp, int argc, char *argv[]) {
-  size_t n, size;
+  size_t n, total, largest;
   
   (void)argv;
   if (argc > 0) {
     chprintf(chp, "Usage: mem\r\n");
     return;
   }
-  n = chHeapStatus(NULL, &size);
+  n = chHeapStatus(NULL, &total, &largest);
   chprintf(chp, "core free memory : %u bytes\r\n", chCoreGetStatusX());
   chprintf(chp, "heap fragments   : %u\r\n", n);
-  chprintf(chp, "heap free total  : %u bytes\r\n\r\n", size);
+  chprintf(chp, "heap free total  : %u bytes\r\n", total);
+  chprintf(chp, "heap free largest: %u bytes\r\n\r\n", largest);
+  
   chprintf(chp, "fbuf free slots  : %u\r\n", fbuf_freeSlots());
   chprintf(chp, "fbuf free total  : %u bytes\r\n", fbuf_freeMem());
 }
@@ -138,30 +145,35 @@ static void cmd_mem(Stream *chp, int argc, char *argv[]) {
 
 /****************************************************************************
  * Thread information
+ * (borrowed from ChibiOS code by Giovanni Di Sirio. 
+ *  os/various/shell/shell_cmd.c)
  ****************************************************************************/
 
 static void cmd_threads(Stream *chp, int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  
   static const char *states[] = {CH_STATE_NAMES};
   thread_t *tp;
-
+  
+  (void)argv;
   if (argc > 0) {
     chprintf(chp, "Usage: threads\r\n");
     return;
   }
-  chprintf(chp, "    addr   prio  refs    state  name\r\n");
+  chprintf(chp, "stklimit    stack     addr refs prio     state         name\r\n\r\n");
   tp = chRegFirstThread();
   do {
-    chprintf(chp, "%08lx %4lu %4lu   %9s  %s\r\n",
-             (uint32_t)tp, 
-             (uint32_t)tp->p_prio, 
-             (uint32_t)(tp->p_refs - 1),
-             states[tp->p_state], tp->p_name );
+    #if (CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE)
+    uint32_t stklimit = (uint32_t)tp->wabase;
+    #else
+    uint32_t stklimit = 0U;
+    #endif
+    chprintf(chp, "%08lx %08lx %08lx %4lu %4lu %9s %12s\r\n",
+             stklimit, (uint32_t)tp->ctx.sp, (uint32_t)tp,
+             (uint32_t)tp->refs - 1, (uint32_t)tp->prio, states[tp->state],
+             tp->name == NULL ? "" : tp->name);
     tp = chRegNextThread(tp);
-  } while (tp != NULL); 
+  } while (tp != NULL);
 }
+
 
 
 
@@ -249,6 +261,42 @@ static void cmd_setvolume(Stream *chp, int argc, char *argv[]) {
   chprintf(chp, "VOLUME: %d\r\n", vol);
 }
 
+
+/****************************************************************************
+ * Set/get volume level of receiver
+ ****************************************************************************/
+
+static void cmd_txdelay(Stream *chp, int argc, char *argv[]) {
+  uint8_t txd=0;
+  if (argc == 0)
+     txd = GET_BYTE_PARAM(TXDELAY);
+  else {
+     sscanf(argv[0], "%hhu", &txd);
+     SET_BYTE_PARAM(TXDELAY, txd);
+  }
+  chprintf(chp, "TXDELAY: %d\r\n", txd); 
+}
+
+
+
+/****************************************************************************
+ * Set/get TX power level (hi/lo)
+ ****************************************************************************/
+
+static void cmd_txpower(Stream *chp, int argc, char *argv[]) {
+  if (argc==0)
+     ; // TBD
+  else {
+     if (strncasecmp("hi", argv[0], 2) == 0) {
+       chprintf(chp, "***** TX POWER HIGH *****\r\n");
+       radio_setLowTxPower(false);
+     }
+     else if (strncasecmp("low", argv[0], 2) == 0) {
+       chprintf(chp, "***** TX POWER LOW *****\r\n");
+       radio_setLowTxPower(true);
+     }     
+  }
+}
 
 
 /****************************************************************************
@@ -381,7 +429,6 @@ static void cmd_adc(Stream *chp, int argc, char* argv[])
 {
    (void)argc;
    (void)argv;
-   adc_init();
    
    int32_t temp = adc_read_temp();
    chprintf(chp,"Temperature = %d\r\n", temp);

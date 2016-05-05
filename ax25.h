@@ -10,6 +10,8 @@
 #include "fbuf.h"
 #include <stdbool.h>
 #include "defines.h"
+#include "hal_streams.h"
+
 
 #define ASCII_0    0x00                 
 #define ASCII_SPC  0x20

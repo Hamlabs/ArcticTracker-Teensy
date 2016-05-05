@@ -86,19 +86,21 @@ endif
 PROJECT = ch
 
 # Imported source files and paths
-CHIBIOS = ChibiOS
+CHIBIOS = ChibiOS-RT
+CHIBIOS_CONTRIB = ChibiOS-Contrib
+
 # Startup files.
-include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_k20x7.mk
+include $(CHIBIOS_CONTRIB)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_k20x7.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
-include $(CHIBIOS)/os/hal/ports/KINETIS/K20x/platform.mk
-include $(CHIBIOS)/os/hal/boards/PJRC_TEENSY_3_1/board.mk
+include $(CHIBIOS_CONTRIB)/os/hal/ports/KINETIS/K20x/platform.mk
+include $(CHIBIOS_CONTRIB)/os/hal/boards/PJRC_TEENSY_3_1/board.mk
 include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
-include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
+include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
-include $(CHIBIOS)/test/rt/test.mk
+# include $(CHIBIOS)/test/rt/test.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/MK20DX256.ld
@@ -117,8 +119,7 @@ CSRC = $(STARTUPSRC) \
        tone.c afsk_tx.c afsk_rx.c hdlc_encoder.c hdlc_decoder.c \
        monitor.c usbsetup.c shell.c commands.c ui.c main.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c 
-#       \
-#       $(CHIBIOS)/os/various/shell.c
+
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -145,11 +146,12 @@ TCSRC =
 TCPPSRC =
 
 # List ASM source files here
-ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
+ASMSRC =
+ASMXSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(CHIBIOS)/os/various $(CHIBIOS)/os/hal/lib/streams
+         $(CHIBIOS)/os/various $(CHIBIOS)/os/license $(CHIBIOS)/os/hal/lib/streams
          
 #
 # Project, sources and paths
@@ -220,5 +222,5 @@ ULIBS = -lm --specs=nano.specs --specs=nosys.specs
 # End of user defines
 ##############################################################################
 
-RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
+RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC
 include $(RULESPATH)/rules.mk

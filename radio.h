@@ -12,5 +12,6 @@
  bool radio_setVolume(uint8_t vol);
  bool radio_setMicLevel(uint8_t level);
  bool radio_powerSave(bool on);
+ bool radio_setLowTxPower(bool on); 
  
 #endif

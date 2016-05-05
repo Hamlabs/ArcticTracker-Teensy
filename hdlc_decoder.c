@@ -56,7 +56,7 @@ static uint8_t get_bit ()
    static uint8_t bit_count = 0;
   
    if (bit_count < 8) {
-     register uint8_t byte = chIQGet(inq);
+     register uint8_t byte = iqGet(inq);
       bits |= ((uint16_t) byte << bit_count);
       bit_count += 8;
    }

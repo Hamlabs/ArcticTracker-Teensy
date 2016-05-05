@@ -3,6 +3,7 @@
 #define __HDLC_H__
 
 #include "fbuf.h"
+#include "hal.h"
 
 #define HDLC_FLAG 0x7E
 #define MAX_HDLC_FRAME_SIZE 289 // including FCS field

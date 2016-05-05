@@ -4,13 +4,13 @@
  */
 
 
-#include "ax25.h"
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "ch.h"
 #include "hal.h"
+#include "ax25.h"
 #include "chprintf.h"
  
 /* Static functions */

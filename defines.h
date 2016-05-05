@@ -11,7 +11,7 @@
 
 
 /* Queues for AFSK encoder/decoder */
-#define AFSK_RX_QUEUE_SIZE      128 
+#define AFSK_RX_QUEUE_SIZE      128
 #define AFSK_TX_QUEUE_SIZE      128
 #define HDLC_DECODER_QUEUE_SIZE   8
 #define HDLC_ENCODER_QUEUE_SIZE   8
@@ -65,10 +65,9 @@
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)
 #define THREAD_START(n, prio, arg) chThdCreateStatic(wa_##n, sizeof(wa_##n), (prio), n, arg)
-#define THREAD_DSTART(n, size, prio, arg) \
-   chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE((size)), (prio), n, arg)
-
-
+#define THREAD_DSTART(n, name, size, prio, arg) \
+   chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE((size)), (name), (prio), n, arg)
+   
 #define sleep(n)  chThdSleepMilliseconds(n)
 #define t_yield   chThdYield
 
