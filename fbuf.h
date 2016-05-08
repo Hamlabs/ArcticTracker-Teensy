@@ -42,6 +42,7 @@ void  fbuf_insert    (FBUF* b, FBUF* x, uint8_t pos);
 void  fbuf_connect   (FBUF* b, FBUF* x, uint8_t pos);
 void  fbuf_removeLast(FBUF* b);
 
+fbindex_t fbuf_usedSlots(void);
 fbindex_t fbuf_freeSlots(void);
 uint16_t fbuf_freeMem(void);
 

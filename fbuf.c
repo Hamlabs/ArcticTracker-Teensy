@@ -2,6 +2,7 @@
  * Buffers for frames of data.
  */ 
 #include "fbuf.h"
+#include "defines.h"
 #include <string.h>
 
 
@@ -15,8 +16,6 @@
  *
  *********************************************************************/
 
-#define FBUF_SLOTS 512
-#define FBUF_SLOTSIZE 32
 
 
 typedef struct _slot {
@@ -40,6 +39,8 @@ static fbindex_t _fbuf_newslot (void);
 fbindex_t fbuf_freeSlots()
    { return _free_slots; }
 
+fbindex_t fbuf_usedSlots()
+   { return FBUF_SLOTS - _free_slots; }
    
 uint16_t fbuf_freeMem()
    { return _free_slots * FBUF_SLOTSIZE; } 
