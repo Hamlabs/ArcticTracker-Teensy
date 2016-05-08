@@ -4,6 +4,10 @@
  
 /* Application configuration macros */
  
+/* Buffers */
+#define FBUF_SLOTS 512
+#define FBUF_SLOTSIZE 32
+
 
 /* ADC ports for Teensy 3.1 */
 #define ADC_TEENSY_PIN10 ADC_DAD0
