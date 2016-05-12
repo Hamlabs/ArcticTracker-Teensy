@@ -1,9 +1,17 @@
  #if !defined __DEFINES_H__
  #define __DEFINES_H__
  
+#include <inttypes.h>
+ 
  
 /* Application configuration macros */
- 
+   
+/* Conversions */
+#define KNOTS2KMH 1.853
+#define KNOTS2MPS 0.5148
+#define FEET2M 3.2898
+
+
 /* Buffers */
 #define FBUF_SLOTS 512
 #define FBUF_SLOTSIZE 32
@@ -65,6 +73,13 @@
 #define BUTTON_IOPORT    TEENSY_PIN16_IOPORT
 #define BUTTON_MODE      PAL_MODE_INPUT_PULLUP
 #define BUTTON_EXTCFG    {EXT_CH_MODE_FALLING_EDGE, button_handler, PORTB, BUTTON}
+
+
+/* LED blinking */
+extern uint16_t blink_length, blink_interval;
+#define BLINK_NORMAL        { blink_length = 50; blink_interval = 1950; }
+#define BLINK_GPS_SEARCHING { blink_length = 450; blink_interval = 450; }
+
 
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)

@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "util/eeprom.h"
 #include "radio.h"
+#include "gps.h"
 #include "commands.h"
 #include "fbuf.h"
 #include "hdlc.h"
@@ -53,10 +54,12 @@ int main(void)
    chSysInit();
    eeprom_initialize(); 
    hdlc_init_encoder(afsk_tx_init());
-   afsk_tx_start(); // Call this only when needed and stop it when not needed?? FIXME: Rename to afsk_tx_enable
+   afsk_tx_start(); // Call this only when needed and stop it when not needed??
+                    // FIXME: Rename to afsk_tx_enable
    ext_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
+   gps_init(&GPS_SERIAL, (Stream*) &SHELL_SERIAL);
    ui_init();
    adc_init();
    hdlc_init_decoder(afsk_rx_init());
@@ -64,8 +67,10 @@ int main(void)
    shellInit();
 
    while (!chThdShouldTerminateX()) {
-     if (!shelltp && usb_active())
+     if (!shelltp && usb_active()) {
+        sleep(100);
         shelltp = myshell_start();
+     }
      else if (chThdTerminatedX(shelltp)) {
         chThdRelease(shelltp);    
         shelltp = NULL;   

@@ -57,6 +57,7 @@ DEFINE_PARAM ( NDIGIS,         43,    Byte );
 DEFINE_PARAM ( DIGIS,          45,    __digilist_t );
 DEFINE_PARAM ( SYMBOL,        100,    Byte );
 DEFINE_PARAM ( SYMBOL_TAB,    102,    Byte ); 
+DEFINE_PARAM ( TRACKER_ON,    104,    Byte );
 
 
 #if defined __CONFIG_C__
@@ -81,6 +82,7 @@ DEFAULT_PARAM( NDIGIS )       = 2;
 DEFAULT_PARAM( DIGIS )        = {{"WIDE1",1,0}, {"WIDE2",2,0}};
 DEFAULT_PARAM( SYMBOL )       = '[';
 DEFAULT_PARAM( SYMBOL_TAB )   = '/';
+DEFAULT_PARAM( TRACKER_ON )   = 0;
 
 
 #endif

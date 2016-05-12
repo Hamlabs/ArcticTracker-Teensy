@@ -113,6 +113,7 @@ static void _rgb_led_off(void);
  /*********************************************************************
   * Main UI thread. LED blinking to indicate that it is alive
   *********************************************************************/
+ uint16_t blink_length, blink_interval;
  
  THREAD_STACK(ui_thread, 164);
  
@@ -136,12 +137,13 @@ static void _rgb_led_off(void);
    sleep(1000);
    dcd_led_off();
    
-   /* Blink LED every 2 second */
+   /* Blink LED */
+   BLINK_NORMAL;
    while (TRUE) {
      setPin(TEENSY_PIN13);
-     sleep(50);
+     sleep(blink_length);
      clearPin(TEENSY_PIN13);
-     sleep(1950);
+     sleep(blink_interval);
    }
  }
  
