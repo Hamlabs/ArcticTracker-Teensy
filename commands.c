@@ -86,8 +86,11 @@ static const ShellConfig shell_cfg = {
 
 thread_t* myshell_start()
 {  
-    streamGet(shell_cfg.sc_channel);
-    chprintf(shell_cfg.sc_channel, "\r\n\r\nWelcome to Polaric Hacker v. 2.0\r\n"); 
+    char line[10]; 
+    chprintf(shell_cfg.sc_channel, "\r\n");
+    shellGetLine(shell_cfg.sc_channel, line, sizeof(line));
+    sleep(10);
+    chprintf(shell_cfg.sc_channel, "\r\n\r\nWelcome to Polaric Hacker v. 2.0\r\n");   
     return shellCreate(&shell_cfg, SHELL_WA_SIZE, NORMALPRIO);
 }
 
@@ -125,19 +128,14 @@ bool readline(Stream * cbp, char* buf, const uint16_t max) {
  ****************************************************************************/
 
 static void cmd_mem(Stream *chp, int argc, char *argv[]) {
-  size_t n, total, largest;
   
   (void)argv;
   if (argc > 0) {
     chprintf(chp, "Usage: mem\r\n");
     return;
-  }
-  n = chHeapStatus(NULL, &total, &largest);
+  }  
   chprintf(chp, "core free memory : %u bytes\r\n", chCoreGetStatusX());
-  chprintf(chp, "heap fragments   : %u\r\n", n);
-  chprintf(chp, "heap free total  : %u bytes\r\n", total);
-  chprintf(chp, "heap free largest: %u bytes\r\n\r\n", largest);
-  
+  chprintf(chp, "fbuf used slots  : %u\r\n", fbuf_usedSlots());
   chprintf(chp, "fbuf free slots  : %u\r\n", fbuf_freeSlots());
   chprintf(chp, "fbuf free total  : %u bytes\r\n", fbuf_freeMem());
 }
@@ -158,7 +156,7 @@ static void cmd_threads(Stream *chp, int argc, char *argv[]) {
     chprintf(chp, "Usage: threads\r\n");
     return;
   }
-  chprintf(chp, "stklimit    stack     addr refs prio     state         name\r\n\r\n");
+  chprintf(chp, "stklimit    stack     addr refs prio     state  name\r\n\r\n");
   tp = chRegFirstThread();
   do {
     #if (CH_DBG_ENABLE_STACK_CHECK == TRUE) || (CH_CFG_USE_DYNAMIC == TRUE)
@@ -166,7 +164,7 @@ static void cmd_threads(Stream *chp, int argc, char *argv[]) {
     #else
     uint32_t stklimit = 0U;
     #endif
-    chprintf(chp, "%08lx %08lx %08lx %4lu %4lu %9s %12s\r\n",
+    chprintf(chp, "%08lx %08lx %08lx %4lu %4lu %9s  %s\r\n",
              stklimit, (uint32_t)tp->ctx.sp, (uint32_t)tp,
              (uint32_t)tp->refs - 1, (uint32_t)tp->prio, states[tp->state],
              tp->name == NULL ? "" : tp->name);
