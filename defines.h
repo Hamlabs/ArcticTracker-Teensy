@@ -32,6 +32,7 @@
 #define AFSK_RX_GPT      GPTD4
 #define AFSK_TX_GPT      GPTD2
 #define AFSK_TONEGEN_GPT GPTD3
+#define BUZZER_GPT       GPTD1
 
 
 /* Serial ports */
@@ -49,7 +50,7 @@
 #define TRX_PD_IOPORT    TEENSY_PIN5_IOPORT  
 #define TRX_PD           TEENSY_PIN5
 #define TRX_SQ_IOPORT    TEENSY_PIN19_IOPORT
-#define TRX_SQ           TEENSY_PIN19_IOPORT
+#define TRX_SQ           TEENSY_PIN19
 #define TRX_SQ_MODE      PAL_MODE_INPUT
 #define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, trx_sq_handler, PORTB, TRX_SQ}
 
@@ -67,6 +68,9 @@
 #define LED_DCD          TEENSY_PIN17       
 #define LED_DCD_IOPORT   TEENSY_PIN17_IOPORT
 
+/* Buzzer */
+#define BUZZER           TEENSY_PIN18
+#define BUZZER_IOPORT    TEENSY_PIN18_IOPORT
 
 /* Pushbutton */
 #define BUTTON           TEENSY_PIN16
@@ -95,6 +99,7 @@ extern uint16_t blink_length, blink_interval;
 #define putch(s, ch) streamPut(s, ch)
 #define getch(s) streamGet(s)
 
+#define pinIsHigh(x)        (palReadPad(x##_IOPORT, x)==PAL_HIGH)
 #define setPin(x)           palSetPad(x##_IOPORT, x)
 #define clearPin(x)         palClearPad(x##_IOPORT, x)
 #define togglePin(x)        palTogglePad(x##_IOPORT, x)

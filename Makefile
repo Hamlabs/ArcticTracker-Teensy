@@ -117,7 +117,7 @@ CSRC = $(STARTUPSRC) \
        $(TESTSRC) \
        util/eeprom.c util/DAC.c config.c fbuf.c ax25.c sr_frs.c adc_input.c \
        tone.c afsk_tx.c afsk_rx.c hdlc_encoder.c hdlc_decoder.c \
-       gps.c monitor.c usbsetup.c shell.c commands.c ui.c main.c \
+       gps.c monitor.c usbsetup.c shell.c commands.c buzzer.c ui.c main.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c 
 
 

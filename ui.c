@@ -4,6 +4,9 @@
 
 static void chandler(void *p);
 static void _rgb_led_off(void);
+static void bphandler(void* p);
+static void onoffhandler(void* p);
+
 
 
 /*****************************************************************
@@ -134,8 +137,13 @@ static void _rgb_led_off(void);
    rgb_led_off();
    sleep(300);
    dcd_led_on();
-   sleep(1000);
+   sleep(300);
    dcd_led_off();
+   blipUp();
+   sleep(500);
+   ring();
+//   beeps("--.- .-. ...-");
+
    
    /* Blink LED */
    BLINK_NORMAL;
@@ -152,17 +160,46 @@ static void _rgb_led_off(void);
   * Pushbutton handler
   *************************************************************/
  
- static bool buttpushed; 
+ static bool buttdown = false;
+ static bool blight; 
+ static virtual_timer_t vtb, vtOnoff; 
+ 
+
  void button_handler(EXTDriver *extp, expchannel_t channel) {
    (void)extp;
    (void)channel;
-   buttpushed = (buttpushed ? false : true); 
-   if (buttpushed)
-      rgb_led_on(false, true, false);
-   else
-      rgb_led_off();
-  
+   
+   buttdown = !pinIsHigh(BUTTON); 
+   chVTResetI(&vtb);
+   chVTSetI(&vtb, MS2ST(10), bphandler, NULL);
  }
+
+ 
+ static void bphandler(void* p)
+ {
+    (void) p;
+    
+    if (!pinIsHigh(BUTTON) && buttdown) {
+       chVTResetI(&vtOnoff);
+       chVTSetI(&vtb, MS2ST(1000), onoffhandler, NULL);
+    }
+ }
+ 
+ 
+static void onoffhandler(void* p) {
+   (void) p; 
+   
+   if (!pinIsHigh(BUTTON)) { 
+     if (!blight) {
+       blight = true; 
+       rgb_led_on(false, true, false);
+     }
+     else {
+       blight = false; 
+       rgb_led_off();
+     } 
+   }
+}
  
  
  /*****************************************
