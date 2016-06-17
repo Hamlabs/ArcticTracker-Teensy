@@ -64,6 +64,7 @@ int main(void)
    adc_init();
    hdlc_init_decoder(afsk_rx_init());
    mon_init((Stream*) &SHELL_SERIAL);
+   wifi_init((Stream*) &WIFI_SERIAL);
    shellInit();
 
    while (!chThdShouldTerminateX()) {

@@ -42,8 +42,8 @@ static const SerialConfig _serialConfig = {
 void radio_init(SerialDriver* sd)
 {  
    _serial = (Stream*) sd;
-   setPinMode(TEENSY_PIN7, PAL_MODE_ALTERNATIVE_3);
-   setPinMode(TEENSY_PIN8, PAL_MODE_ALTERNATIVE_3);
+   setPinMode(TRX_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
+   setPinMode(TRX_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
    setPin(TRX_PTT);
    sdStart(sd, &_serialConfig);   
 //   radio_on(true);  

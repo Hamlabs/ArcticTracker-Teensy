@@ -43,7 +43,7 @@ static void cmd_listen(Stream *chp, int argc, char* argv[]);
 static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
 static void cmd_txdelay(Stream *chp, int argc, char *argv[]);
-
+static void cmd_wifi(Stream *chp, int argc, char *argv[]);
 
 
 /*********************************************************************************
@@ -69,6 +69,7 @@ static const ShellCommand shell_commands[] =
   { "led",        "Test RGB LED",                         3, cmd_led },
   { "listen",     "Listen to radio",                      3, cmd_listen },
   { "converse",   "Converse mode",                        4, cmd_converse },
+  { "wifi",       "Access ESP-12 shell",                  4, cmd_wifi },  
   {NULL, NULL, 0, NULL}
 };
 
@@ -476,6 +477,20 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
   mon_activate(false);
   afsk_rx_disable();
 }
+
+
+
+
+static void cmd_wifi(Stream *chp, int argc, char* argv[])
+{
+  wifi_shell(chp);
+}
+
+
+
+
+
+
 
 
 #define BUFSIZE 90
