@@ -56,8 +56,45 @@ char* addr2str(char* string, const addr_t* addr)
     return string;
 }
 
-   
-   
+
+/**********************************************************************
+ * Convert AX.25 digipeater path  into string
+ **********************************************************************/
+
+char* digis2str(char* string, uint8_t ndigis, addr_t digis[])
+{
+  char buf[11];
+  if (ndigis==0)
+    sprintf(string, "<EMPTY>");
+  else { 
+     int n = 0;
+     for (uint8_t i=0; i<ndigis; i++)
+     {   
+        n += sprintf(string+n, "%s", addr2str(buf, &digis[i]));           
+        if (i < ndigis-1)
+           n += sprintf(string+n, ","); 
+     }
+  }
+  return string;
+}
+
+
+/**********************************************************************
+ * Convert array of strings into AX.25 digipeater path
+ **********************************************************************/
+
+uint8_t args2digis(addr_t* digis, int ndigis, char *argv[])
+{
+  if (ndigis > 7) 
+    ndigis = 7;
+  for (uint8_t i=0; i<ndigis; i++)
+    str2addr(&digis[i], argv[i], false);
+  return ndigis; 
+}
+
+
+
+
 /**********************************************************************
  * Encode a new AX25 frame
  **********************************************************************/

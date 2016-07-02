@@ -50,6 +50,9 @@ typedef struct {
 addr_t* addr(addr_t*, char*, uint8_t); 
 char* addr2str(char*, const addr_t*);
 void str2addr(addr_t* a, const char* str, bool d);
+char* digis2str(char*, uint8_t, addr_t[]);
+uint8_t args2digis(addr_t* digis, int argc, char *argv[]);
+
 
 /* Encode or decode header */
 void ax25_encode_header( FBUF*, addr_t*, addr_t*, addr_t[], uint8_t, 
