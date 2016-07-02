@@ -20,6 +20,8 @@
 #include "adc_input.h"
 #include "afsk.h"
 #include "ui.h"
+#include "wifi.h"
+
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
@@ -44,7 +46,7 @@ static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
 static void cmd_txdelay(Stream *chp, int argc, char *argv[]);
 static void cmd_wifi(Stream *chp, int argc, char *argv[]);
-
+static void cmd_digipath(Stream *chp, int argc, char *argv[]);
 
 /*********************************************************************************
  * Shell config
@@ -69,7 +71,8 @@ static const ShellCommand shell_commands[] =
   { "led",        "Test RGB LED",                         3, cmd_led },
   { "listen",     "Listen to radio",                      3, cmd_listen },
   { "converse",   "Converse mode",                        4, cmd_converse },
-  { "wifi",       "Access ESP-12 shell",                  4, cmd_wifi },  
+  { "wifi",       "Access ESP-12 shell",                  4, cmd_wifi },
+  { "digipath",   "Set/get digipeater path",              5, cmd_digipath },  
   {NULL, NULL, 0, NULL}
 };
 
@@ -483,16 +486,34 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
 
 static void cmd_wifi(Stream *chp, int argc, char* argv[])
 {
-  wifi_shell(chp);
+   if (argc < 1) {
+      chprintf(chp, "Usage: wifi on|off|ext|shell\r\n");
+      return;
+   } 
+  
+   if (strncasecmp("shell", argv[0], 2) == 0) {
+     chprintf(chp, "***** WIFI DEVICE. Ctrl-D to exit *****\r\n");
+     wifi_shell(chp);
+   }
+   else if (strncasecmp("on", argv[0], 2) == 0) { 
+     chprintf(chp, "***** WIFI MODULE ON *****\r\n");
+     wifi_enable();
+   }
+   else if (strncasecmp("off", argv[0], 2) == 0) {
+     chprintf(chp, "***** WIFI MODULE OFF *****\r\n");
+     wifi_disable();
+   }
+   else if (strncasecmp("ext", argv[0], 2) == 0) {
+     chprintf(chp, "***** WIFI USE EXT PINS *****\r\n");
+     wifi_external();
+   }
 }
 
 
 
-
-
-
-
-
+/* FIXME: Use of this buffer makes it unsafe to have multiple shell 
+ * instances. We may protect it using a mutex 
+ */ 
 #define BUFSIZE 90
 static char buf[BUFSIZE]; 
 
@@ -527,4 +548,38 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
   mon_activate(false);
   afsk_rx_disable(); 
 }
+
+
+
+
+/****************************************************************************
+ * Show or set digipeater path
+ ****************************************************************************/
+
+static void cmd_digipath(Stream *chp, int argc, char *argv[])
+{
+    __digilist_t digis;
+    uint8_t ndigis;
+    
+    if (argc > 0) {
+      if (argc==1 && strncasecmp("off", argv[0], 3)==0)
+        ndigis = 0;
+      else {
+        ndigis = args2digis(digis, argc, argv);
+        SET_PARAM(DIGIS, digis);     
+        SET_BYTE_PARAM(NDIGIS, ndigis);
+      }
+      chprintf(chp, "Ok\r\n");
+    }
+    else  {
+      ndigis = GET_BYTE_PARAM(NDIGIS);
+      GET_PARAM(DIGIS, &digis);
+      digis2str(buf, ndigis, digis);
+      chprintf(chp, "PATH %s\r\n", buf);
+    } 
+}
+
+
+
+
 

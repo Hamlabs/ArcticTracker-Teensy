@@ -73,6 +73,7 @@ extern "C" {
 #endif
   void shellInit(void);
   void shellExit(msg_t msg);
+  char *_strtok(char *str, const char *delim, char **saveptr); 
 #if CH_CFG_USE_HEAP && CH_CFG_USE_DYNAMIC
   thread_t *shellCreate(const ShellConfig *scp, size_t size, tprio_t prio);
 #endif
