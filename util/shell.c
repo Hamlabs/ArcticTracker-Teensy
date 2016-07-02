@@ -36,7 +36,7 @@
  */
 event_source_t shell_terminated;
 
-static char *_strtok(char *str, const char *delim, char **saveptr) {
+char *_strtok(char *str, const char *delim, char **saveptr) {
   char *token;
   if (str)
     *saveptr = str;
@@ -204,10 +204,10 @@ static THD_FUNCTION(shell_thread, p) {
       chprintf(chp, "\r\nlogout");
       break;
     }
-    lp = _strtok(line, " \t", &tokp);
+    lp = _strtok(line, " ,\t", &tokp);
     cmd = lp;
     n = 0;
-    while ((lp = _strtok(NULL, " \t", &tokp)) != NULL) {
+    while ((lp = _strtok(NULL, " ,\t", &tokp)) != NULL) {
       if (n >= SHELL_MAX_ARGUMENTS) {
         chprintf(chp, "too many arguments\r\n");
         cmd = NULL;
