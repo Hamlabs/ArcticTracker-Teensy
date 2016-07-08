@@ -46,7 +46,12 @@ static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
 static void cmd_txdelay(Stream *chp, int argc, char *argv[]);
 static void cmd_wifi(Stream *chp, int argc, char *argv[]);
+static void cmd_mycall(Stream *chp, int argc, char *argv[]);
+static void cmd_dest(Stream *chp, int argc, char *argv[]);
 static void cmd_digipath(Stream *chp, int argc, char *argv[]);
+static void cmd_ip(Stream *chp, int argc, char *argv[]);
+
+
 
 /*********************************************************************************
  * Shell config
@@ -71,8 +76,11 @@ static const ShellCommand shell_commands[] =
   { "led",        "Test RGB LED",                         3, cmd_led },
   { "listen",     "Listen to radio",                      3, cmd_listen },
   { "converse",   "Converse mode",                        4, cmd_converse },
-  { "wifi",       "Access ESP-12 shell",                  4, cmd_wifi },
-  { "digipath",   "Set/get digipeater path",              5, cmd_digipath },  
+  { "wifi",       "Access ESP-12 WIFI module",            4, cmd_wifi },
+  { "mycall",     "Set/get tracker's APRS callsign",      3, cmd_mycall },
+  { "dest",       "Set/get APRS destination address",     3, cmd_dest },
+  { "digipath",   "Set/get APRS digipeater path",         5, cmd_digipath },  
+  { "ip",         "Get IP address from WIFI module",      2, cmd_ip },
   {NULL, NULL, 0, NULL}
 };
 
@@ -550,6 +558,42 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
 }
 
 
+/****************************************************************************
+ * Show or set mycall
+ ****************************************************************************/
+
+static void cmd_mycall(Stream *chp, int argc, char *argv[]) 
+{
+   addr_t x;
+   if (argc > 0) {
+      str2addr(&x, argv[0], false);
+      SET_PARAM(MYCALL, &x);
+      chprintf(chp, "Ok\r\n");
+   }
+   else {
+      GET_PARAM(MYCALL, &x);
+      chprintf(chp, "MYCALL %s\r\n", addr2str(buf, &x));
+   } 
+}
+
+
+/****************************************************************************
+ * Show or set dest
+ ****************************************************************************/
+
+static void cmd_dest(Stream *chp, int argc, char *argv[]) 
+{
+  addr_t x;
+  if (argc > 0) {
+    str2addr(&x, argv[0], false);
+    SET_PARAM(DEST, &x);
+    chprintf(chp, "Ok\r\n");
+  }
+  else {
+    GET_PARAM(DEST, &x);
+    chprintf(chp, "DEST %s\r\n", addr2str(buf, &x));
+  } 
+}
 
 
 /****************************************************************************
@@ -580,6 +624,11 @@ static void cmd_digipath(Stream *chp, int argc, char *argv[])
 }
 
 
-
-
+static void cmd_ip(Stream *chp, int argc, char *argv[])
+{
+  (void) argc;
+  (void) argv; 
+  
+  chprintf(chp, "IP %s\r\n", wifi_doCommand("IP", buf));
+}
 
