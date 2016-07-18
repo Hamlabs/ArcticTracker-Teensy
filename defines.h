@@ -6,6 +6,10 @@
  
 /* Application configuration macros */
    
+
+#define VERSION_STRING "V0.1 alpha"
+
+
 /* Conversions */
 #define KNOTS2KMH 1.853
 #define KNOTS2MPS 0.5148
@@ -55,11 +59,16 @@
 #define TRX_SERIAL_TXD         TEENSY_PIN8
 #define TRX_SERIAL_TXD_IOPORT  TEENSY_PIN8_IOPORT
 
+/* APRS tracking FIXME */
+#define TRACKER_SLEEP_TIME 10
+#define TIMER_RESOLUTION   100 
+#define GPS_FIX_TIME       3
+#define COMMENT_PERIOD     4
 
 /* ESP-12 WIFI module */
 #define WIFI_ENABLE         TEENSY_PIN21
 #define WIFI_ENABLE_IOPORT  TEENSY_PIN21_IOPORT
-
+#define N_WIFIAP 6
 
 /* Radio transceiver module */
 /* 0 = 12.5 KHz, 1 = 25 KHz */
@@ -75,11 +84,11 @@
 
 
 /* RGB LED */
-#define LED_R            TEENSY_PIN2
-#define LED_G            TEENSY_PIN3
+#define LED_R            TEENSY_PIN3
+#define LED_G            TEENSY_PIN2
 #define LED_B            TEENSY_PIN4
-#define LED_R_IOPORT     TEENSY_PIN2_IOPORT
-#define LED_G_IOPORT     TEENSY_PIN3_IOPORT
+#define LED_R_IOPORT     TEENSY_PIN3_IOPORT
+#define LED_G_IOPORT     TEENSY_PIN2_IOPORT
 #define LED_B_IOPORT     TEENSY_PIN4_IOPORT
 
 
@@ -123,5 +132,16 @@ extern uint16_t blink_length, blink_interval;
 #define clearPin(x)         palClearPad(x##_IOPORT, x)
 #define togglePin(x)        palTogglePad(x##_IOPORT, x)
 #define setPinMode(x, mode) palSetPadMode(x##_IOPORT, x, mode)
+
+
+
+/*
+ * other
+ */
+#define min(a,b) ((a)<(b) ? a : b)
+#define max(a,b) ((a)>(b) ? a : b)
+
+
+
 
 #endif

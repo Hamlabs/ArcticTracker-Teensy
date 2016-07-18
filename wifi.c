@@ -4,6 +4,7 @@
 #include "config.h"
 #include "chprintf.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "string.h"
 #include "util/shell.h"
 #include "commands.h"
@@ -30,7 +31,7 @@ BSEMAPHORE_DECL(response_pending, true);
 #define SIGNAL_RESPONSE chBSemSignal(&response_pending)
 
 
-THREAD_STACK(wifi_monitor, 256);
+THREAD_STACK(wifi_monitor, 512);
 
 
 static const SerialConfig _serialConfig = {
@@ -39,8 +40,11 @@ static const SerialConfig _serialConfig = {
 
 
 void wifi_enable() {
-   if (wifiEnabled++ == 0)
+   if (wifiEnabled++ == 0) {
       setPin(WIFI_ENABLE);
+      sleep(2000);
+      wifi_start_server();
+   }
 }
 
 void wifi_disable() {
@@ -64,7 +68,7 @@ void wifi_internal() {
  ***************************************************************/
 
 static void wifi_start_server() {
-  sleep(100);
+  sleep(200);
   chprintf(_serial, "coroutine.resume(listener)\r");
   sleep(200);
 }
@@ -83,13 +87,30 @@ char* wifi_doCommand(char* cmd, char* buf) {
   MUTEX_LOCK;
   chprintf(_serial, "%s\r", cmd);
   client_active=true;
+  client_buf = &buf; 
   WAIT_RESPONSE;
   client_active=false;
   MUTEX_UNLOCK;
   return buf; 
 }
 
-
+char* wifi_status(char* buf) {
+   char res[8];
+   int n;
+   wifi_doCommand("STATUS", res);
+   n = atoi(res);
+   switch(n) {
+     case 0: strcpy(buf, "Idle"); break;
+     case 1: strcpy(buf, "Connecting.."); break;
+     case 2: strcpy(buf, "Wrong password"); break;
+     case 3: strcpy(buf, "AP not found"); break;
+     case 4: strcpy(buf, "Failed"); break;
+     case 5: strcpy(buf, "Connected ok"); break;
+   }
+   return buf;
+}
+  
+  
   
 /**************************************************************
  * Connect to shell on WIFI module
@@ -97,11 +118,10 @@ char* wifi_doCommand(char* cmd, char* buf) {
 
 void wifi_shell(Stream* chp) {
   wifi_enable();
-  sleep(200);
   
   MUTEX_LOCK;
   _shell = chp;
-  chprintf(_serial, "\rSHELL\r");
+  chprintf(_serial, "SHELL\r\r");
   while (true) { 
     char c; 
     if (streamRead(chp, (uint8_t *)&c, 1) == 0)
@@ -179,6 +199,21 @@ static void cmd_setParm(char* p, char* val) {
     }
 }
 
+static ap_config_t wifiap;
+
+
+static void cmd_checkAp(char* ssid) {
+   for (int i=0; i<N_WIFIAP; i++) {
+     GET_PARAM_I(WIFIAP, i, &wifiap);
+     if (strcmp(ssid, wifiap.ssid) == 0) {
+        chprintf(_serial, "%d,%s\r", i, wifiap.passwd);
+        return;
+     }
+   }
+   /* Index 999 means that no config is found */
+   chprintf(_serial, "999,_NO_\r");
+   
+}
 
 
 
@@ -199,9 +234,13 @@ static void wifi_command() {
    if (line[0] == 'R') 
       /* Read parameter */
       cmd_getParm((char*) _strtok((char*) line+1, " ", &tokp));
-   if (line[0] == 'W')
+   else if (line[0] == 'W')
       /* Write parameter */
       cmd_setParm((char*) _strtok((char*) line+1, " ", &tokp), (char*) _strtok(NULL, " ", &tokp));
+   else if (line[0] == 'A')
+      /* Check access point */
+      cmd_checkAp((char*) _strtok((char*) line+1, " ", &tokp));
+     
    MUTEX_UNLOCK;
 }
 
@@ -244,8 +283,8 @@ void wifi_init(SerialDriver* sd)
   _serial = (Stream*) sd;
   wifi_internal();
   clearPin(WIFI_ENABLE);
-  wifiEnabled = 0;
-  sdStart(sd, &_serialConfig);   
+  sdStart(sd, &_serialConfig);  
   THREAD_START(wifi_monitor, NORMALPRIO+2, NULL);
+  wifi_enable();
 }
 

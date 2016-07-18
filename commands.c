@@ -50,8 +50,19 @@ static void cmd_mycall(Stream *chp, int argc, char *argv[]);
 static void cmd_dest(Stream *chp, int argc, char *argv[]);
 static void cmd_digipath(Stream *chp, int argc, char *argv[]);
 static void cmd_ip(Stream *chp, int argc, char *argv[]);
+static void cmd_macaddr(Stream *chp, int argc, char *argv[]);
 
+static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 
+#define CMD_BOOL_SETTING(x, name) \
+   static inline void cmd_##x(Stream* out, int argc, char** argv) \
+      { _parameter_setting_bool(out, argc, argv, x##_offset, &x##_default, name); }
+      
+CMD_BOOL_SETTING(TRACKER_ON,   "TRACKER");      
+CMD_BOOL_SETTING(TIMESTAMP_ON, "TIMESTAMP");
+CMD_BOOL_SETTING(COMPRESS_ON,  "COMPRESS");
+CMD_BOOL_SETTING(ALTITUDE_ON,  "ALTITUDE");
+CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
 
 /*********************************************************************************
  * Shell config
@@ -81,8 +92,48 @@ static const ShellCommand shell_commands[] =
   { "dest",       "Set/get APRS destination address",     3, cmd_dest },
   { "digipath",   "Set/get APRS digipeater path",         5, cmd_digipath },  
   { "ip",         "Get IP address from WIFI module",      2, cmd_ip },
+  { "macaddr",    "Get MAC address from WIFI module",     3, cmd_macaddr },
+  { "tracker",    "Tracking on/off",                      4, cmd_TRACKER_ON },
+  { "timestamp",  "Timestamp on/off",                     5, cmd_TIMESTAMP_ON },
+  { "compress",   "Compressed positions on/off",          4, cmd_COMPRESS_ON },
+  { "altitude",   "Altidude in reports on/off",           4, cmd_ALTITUDE_ON },
+  { "reportbeep", "Beep when reporting on/off",          10, cmd_REPORT_BEEP_ON },
+  
   {NULL, NULL, 0, NULL}
 };
+
+
+
+/* 
+ * Generic getter/setter method for boolean settings 
+ */
+
+
+
+static void _parameter_setting_bool(Stream* out, int argc, char** argv, 
+                uint16_t ee_addr, const void* default_val, char* name )
+{
+    if (argc < 1) {
+       chprintf(out, name);
+       if (get_byte_param(ee_addr, default_val)) 
+          chprintf(out," ON\r\n");
+       else
+          chprintf(out, " OFF\r\n");
+       return; 
+    }
+    if (strncasecmp("on", argv[0], 2) == 0 || strncasecmp("true", argv[0], 1) == 0) {
+       chprintf(out, "Ok\r\n");
+       set_byte_param(ee_addr, (uint8_t) 1);
+    }  
+    else if (strncasecmp("off", argv[0], 2) == 0 || strncasecmp("false", argv[0], 1) == 0) {
+       chprintf(out, "Ok\r\n");
+       set_byte_param(ee_addr, (uint8_t) 0);
+    }
+    else 
+       chprintf(out, "ERROR: parameter must be 'ON' or 'OFF'\r\n");
+    
+    
+}
 
 
 
@@ -491,16 +542,66 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
 
 
 
+/* FIXME: Use of these buffers makes it unsafe to have multiple shell 
+ * instances. We may protect them using a mutex 
+ */ 
+#define BUFSIZE 90
+static char buf[BUFSIZE]; 
+static ap_config_t wifiap;
+
+/*****************************************************************************
+ * wifi module commands
+ *****************************************************************************/
 
 static void cmd_wifi(Stream *chp, int argc, char* argv[])
 {
    if (argc < 1) {
-      chprintf(chp, "Usage: wifi on|off|ext|shell\r\n");
+      chprintf(chp, "Usage: wifi on|off|info|ap|shell\r\n");
       return;
    } 
-  
-   if (strncasecmp("shell", argv[0], 2) == 0) {
-     chprintf(chp, "***** WIFI DEVICE. Ctrl-D to exit *****\r\n");
+   if (strncasecmp("info", argv[0], 3) == 0) {
+      chprintf(chp, "    Stn status: %s\r\n",  wifi_status(buf));
+      chprintf(chp, "  Connected to: %s\r\n",  wifi_doCommand("CONF", buf));
+      chprintf(chp, "    IP address: %s\r\n",  wifi_doCommand("IP", buf));
+      chprintf(chp, "   MAC address: %s\r\n",  wifi_doCommand("MAC", buf));
+      
+      chprintf(chp, "\r\n");
+      chprintf(chp, "       AP SSID: %s\r\n",  wifi_doCommand("AP.SSID", buf));     
+      chprintf(chp, " AP IP address: %s\r\n",  wifi_doCommand("AP.IP", buf));
+
+
+      chprintf(chp, "\r\nConfigured access points:\r\n");
+      for (int i=0; i<N_WIFIAP; i++) {
+         GET_PARAM_I(WIFIAP, i, &wifiap);
+         if (strlen(wifiap.ssid) == 0)
+            chprintf(chp, " %d: -\r\n", i+1);
+         else
+            chprintf(chp," %d: %s : '%s'\r\n", i+1, wifiap.ssid, wifiap.passwd);
+      }
+   }
+   else if (strncasecmp("ap", argv[0], 2) == 0) {
+      if (argc < 2)
+         chprintf(chp, "Usage: wifi ap <1-%d>\r\n", N_WIFIAP);
+      else {
+         int i = atoi(argv[1]);
+         if (i < 1 || i > 4) {
+            chprintf(chp, "Argument must be a number 1-4\r\n");
+            return; 
+         }
+         chprintf(chp, "SSID: ");
+         shellGetLine(chp, wifiap.ssid, 32);
+         if (strlen(wifiap.ssid) > 0) {
+            chprintf(chp, "Password: ");
+            shellGetLine(chp, wifiap.passwd, 32);
+         }
+         if (strlen(wifiap.passwd) == 0)
+            strcpy(wifiap.passwd, "_OPEN_");
+         chprintf(chp, "Ok\r\n");
+         SET_PARAM_I(WIFIAP, i-1, &wifiap);
+      }
+   }
+   else if (strncasecmp("shell", argv[0], 2) == 0) {
+     chprintf(chp, "***** WIFI DEVICE SHELL. Ctrl-D to exit *****\r\n");
      wifi_shell(chp);
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
@@ -511,19 +612,19 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
      chprintf(chp, "***** WIFI MODULE OFF *****\r\n");
      wifi_disable();
    }
-   else if (strncasecmp("ext", argv[0], 2) == 0) {
-     chprintf(chp, "***** WIFI USE EXT PINS *****\r\n");
-     wifi_external();
-   }
 }
 
 
 
-/* FIXME: Use of this buffer makes it unsafe to have multiple shell 
- * instances. We may protect it using a mutex 
- */ 
-#define BUFSIZE 90
-static char buf[BUFSIZE]; 
+static void cmd_httpserver(Stream *chp, int argc, char* argv[])
+{
+   if (argc < 1) {
+      chprintf(chp, "Usage: httpserver on|off|auth\r\n");
+      return;
+   }
+}
+
+
 
 
 /****************************************************************************
@@ -632,3 +733,11 @@ static void cmd_ip(Stream *chp, int argc, char *argv[])
   chprintf(chp, "IP %s\r\n", wifi_doCommand("IP", buf));
 }
 
+
+static void cmd_macaddr(Stream *chp, int argc, char *argv[])
+{
+  (void) argc;
+  (void) argv; 
+  
+  chprintf(chp, "MAC %s\r\n", wifi_doCommand("MAC", buf));
+}

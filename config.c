@@ -47,7 +47,7 @@ void set_param(uint16_t ee_addr, void* ram_addr, const uint8_t size)
 /************************************************************************
  * Get config parameter from EEPROM. 
  * If checksum does not match, use default value from program memory 
- * instead and return 0. Value is copied into ram_addr.
+ * instead and return 1. Value is copied into ram_addr.
  ************************************************************************/
    
 int get_param(uint16_t ee_addr, void* ram_addr, const uint8_t size, const void* default_val)
@@ -102,3 +102,16 @@ uint8_t get_byte_param(uint16_t ee_addr, const void* default_val)
     else
        return *((uint8_t*) default_val);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
