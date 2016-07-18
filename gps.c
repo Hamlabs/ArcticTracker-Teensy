@@ -34,7 +34,7 @@ static void do_gga (uint8_t, char**, Stream*);
 static void notify_fix (bool);
 
 /* Local variables */
-static char buf[NMEA_BUFSIZE];
+static char buf[NMEA_BUFSIZE+1];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = true;
 static condition_variable_t wait_gps; 
@@ -79,7 +79,7 @@ static THD_FUNCTION(nmeaListener, arg)
     
     
     /* Checksum (optional) */
-    uint8_t i;
+    uint8_t i = 0;
     for (i=1; i<NMEA_BUFSIZE && buf[i] !='*' && buf[i] != 0 ; i++) 
       checksum ^= buf[i];
     if (buf[i] == '*') {
