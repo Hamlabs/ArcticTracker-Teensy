@@ -82,6 +82,11 @@
 #define TRX_SQ_MODE      PAL_MODE_INPUT
 #define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, trx_sq_handler, PORTB, TRX_SQ}
 
+#define TRX_MIN_FREQUENCY  1440000
+#define TRX_MAX_FREQUENCY  1460000
+
+
+
 
 /* RGB LED */
 #define LED_R            TEENSY_PIN3

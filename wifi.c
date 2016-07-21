@@ -20,6 +20,7 @@ static void wifi_command(void);
 static void cmd_getParm(char* p);
 static void cmd_setParm(char* p, char* val);
 static void wifi_start_server(void);
+static uint32_t parseFreq(char* val);
 
 
 MUTEX_DECL(wifi_mutex);
@@ -31,7 +32,7 @@ BSEMAPHORE_DECL(response_pending, true);
 #define SIGNAL_RESPONSE chBSemSignal(&response_pending)
 
 
-THREAD_STACK(wifi_monitor, 512);
+THREAD_STACK(wifi_monitor, 1024);
 
 
 static const SerialConfig _serialConfig = {
@@ -166,6 +167,12 @@ static void cmd_getParm(char* p) {
       uint8_t n = GET_BYTE_PARAM(NDIGIS);
       chprintf(_serial, "%s\r", digis2str(cbuf, n, digis)); 
    }
+   else if (strcmp("SYMBOL", p) == 0) {
+       char tab = GET_BYTE_PARAM(SYMBOL_TAB);
+       char sym = GET_BYTE_PARAM(SYMBOL); 
+       chprintf(_serial, "%c%c\r", tab, sym); 
+   }
+   
    else if (strcmp("TRX_TX_FREQ", p) == 0) {
       uint32_t x;
       GET_PARAM(TRX_TX_FREQ, &x);
@@ -194,10 +201,56 @@ static void cmd_setParm(char* p, char* val) {
     else if (strcmp("DEST", p) == 0) {
        addr_t x;
        str2addr(&x, val, false);
-       SET_PARAM(MYCALL, &x);
+       SET_PARAM(DEST, &x);
        chprintf(_serial, "OK\r"); 
     }
+    else if (strcmp("SYMBOL", p) == 0) {
+       if (strlen(val) > 2) {
+          chprintf(_serial, "ERROR. Symbol should be two characters\r");
+          return; 
+       }
+       SET_BYTE_PARAM(SYMBOL_TAB, val[0]);
+       SET_BYTE_PARAM(SYMBOL, val[1]);
+       chprintf(_serial, "OK\r");
+    }
+    else if (strcmp("TRX_TX_FREQ", p) == 0) {
+       uint32_t txf=0, rxf=0;
+       txf = parseFreq(val);
+       SET_PARAM(TRX_TX_FREQ, &txf);
+       radio_setFreq(txf, rxf);    
+    }
+    else if (strcmp("TRX_RX_FREQ", p) == 0) {
+       uint32_t txf=0, rxf=0;
+       rxf = parseFreq(val);
+       SET_PARAM(TRX_TX_FREQ, &rxf);
+       radio_setFreq(txf, rxf);    
+    }
+    
+    else
+       chprintf(_serial, "ERROR. Unknown setting\r");
 }
+
+
+
+static uint32_t parseFreq(char* val)
+{
+  uint32_t f = 0;
+  if (sscanf(val, "%ld", &f) == 1) {
+    if (f < TRX_MIN_FREQUENCY)
+       chprintf(_serial, "ERROR. Frequency is below lower limit\r");
+    else if (f > TRX_MAX_FREQUENCY) {
+       chprintf(_serial, "ERROR. Frequency is above upper limit\r");
+       return f; 
+    }
+    else chprintf(_serial, "OK\r");
+  }
+  else
+    chprintf(_serial, "ERROR, Couldn't parse input. Wrong format?\r");
+  return 0;
+}
+
+
+
 
 static ap_config_t wifiap;
 

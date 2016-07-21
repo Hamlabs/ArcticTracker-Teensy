@@ -141,8 +141,7 @@ static void onoffhandler(void* p);
    dcd_led_off();
    blipUp();
    sleep(500);
-   ring();
-//   beeps("--.- .-. ...-");
+   beeps("--.- .-. ...-");
 
    
    /* Blink LED */

@@ -76,8 +76,10 @@ static void _initialize()
   
 bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq)
 {
-    _txfreq = txfreq;
-    _rxfreq = rxfreq;
+    if (txfreq > 0)
+       _txfreq = txfreq;
+    if (rxfreq > 0)
+       _rxfreq = rxfreq;
     return _setGroupParm();
 }
  
