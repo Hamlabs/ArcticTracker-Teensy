@@ -11,7 +11,7 @@
 #include <string.h>
 #include "defines.h"
 #include "afsk.h"
-#include "ui.h"
+#include "ui/ui.h"
 #include "fifo.h"
 #include "adc_input.h"
 

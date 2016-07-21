@@ -13,7 +13,7 @@
 #include "ax25.h"
 #include "hal.h"
 #include "fbuf.h"
-#include "ui.h"
+#include "ui/ui.h"
 
 
 static input_queue_t *inq;

@@ -6,9 +6,9 @@
 #include "defines.h"
 #include "util/eeprom.h"
 #include "config.h"
-#include "commands.h"
+#include "ui/commands.h"
+#include "ui/ui.h"
 #include "radio.h"
-#include "ui.h"
 
 #define FLAG_BUSY_LOCK  0x01
 #define FLAG_COMP_EXP   0x02

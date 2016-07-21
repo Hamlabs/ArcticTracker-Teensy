@@ -8,12 +8,12 @@
 #include "util/eeprom.h"
 #include "radio.h"
 #include "gps.h"
-#include "commands.h"
 #include "fbuf.h"
 #include "hdlc.h"
 #include "afsk.h"
 #include "defines.h"
-#include "ui.h"
+#include "ui/ui.h"
+#include "ui/commands.h"
 #include "adc_input.h"
 
 static void ext_init(void);

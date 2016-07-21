@@ -11,7 +11,7 @@
 #include "config.h"
 #include "radio.h"
 #include "hdlc.h"
-#include "ui.h"
+#include "ui/ui.h"
 #include "tracker.h"
 
 

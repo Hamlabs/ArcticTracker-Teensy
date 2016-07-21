@@ -12,7 +12,7 @@
 #include "util/eeprom.h"
 #include <stdint.h>
 #include "ax25.h"
-#include "wifi.h"
+#include "ui/wifi.h"
 
 #if defined __CONFIG_C__
 

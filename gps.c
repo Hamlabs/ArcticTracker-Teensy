@@ -2,7 +2,7 @@
 #include "ch.h"
 #include "hal.h"
 #include "chprintf.h"
-#include "commands.h"
+#include "ui/commands.h"
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
