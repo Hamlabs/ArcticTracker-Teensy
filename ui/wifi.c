@@ -20,8 +20,7 @@ static void wifi_command(void);
 static void cmd_getParm(char* p);
 static void cmd_setParm(char* p, char* val);
 static void wifi_start_server(void);
-static uint32_t parseFreq(char* val);
-
+char* parseFreq(char* val, char* buf, bool tx);
 
 MUTEX_DECL(wifi_mutex);
 #define MUTEX_LOCK chMtxLock(&wifi_mutex)
@@ -121,8 +120,8 @@ void wifi_shell(Stream* chp) {
   wifi_enable();
   
   MUTEX_LOCK;
-  _shell = chp;
   chprintf(_serial, "SHELL\r\r");
+  _shell = chp;
   while (true) { 
     char c; 
     if (streamRead(chp, (uint8_t *)&c, 1) == 0)
@@ -204,6 +203,9 @@ static void cmd_setParm(char* p, char* val) {
        SET_PARAM(DEST, &x);
        chprintf(_serial, "OK\r"); 
     }
+    else if (strcmp("DIGIS", p) == 0) 
+       chprintf(_serial, "%s\r", parseDigipath(val, cbuf));
+      
     else if (strcmp("SYMBOL", p) == 0) {
        if (strlen(val) > 2) {
           chprintf(_serial, "ERROR. Symbol should be two characters\r");
@@ -213,41 +215,16 @@ static void cmd_setParm(char* p, char* val) {
        SET_BYTE_PARAM(SYMBOL, val[1]);
        chprintf(_serial, "OK\r");
     }
-    else if (strcmp("TRX_TX_FREQ", p) == 0) {
-       uint32_t txf=0, rxf=0;
-       txf = parseFreq(val);
-       SET_PARAM(TRX_TX_FREQ, &txf);
-       radio_setFreq(txf, rxf);    
-    }
-    else if (strcmp("TRX_RX_FREQ", p) == 0) {
-       uint32_t txf=0, rxf=0;
-       rxf = parseFreq(val);
-       SET_PARAM(TRX_TX_FREQ, &rxf);
-       radio_setFreq(txf, rxf);    
-    }
+    else if (strcmp("TRX_TX_FREQ", p) == 0) 
+       chprintf(_serial, "%s\r", parseFreq(val, cbuf, true));
+    
+    else if (strcmp("TRX_RX_FREQ", p) == 0) 
+       chprintf(_serial, "%s\r", parseFreq(val, cbuf, false));
     
     else
        chprintf(_serial, "ERROR. Unknown setting\r");
 }
 
-
-
-static uint32_t parseFreq(char* val)
-{
-  uint32_t f = 0;
-  if (sscanf(val, "%ld", &f) == 1) {
-    if (f < TRX_MIN_FREQUENCY)
-       chprintf(_serial, "ERROR. Frequency is below lower limit\r");
-    else if (f > TRX_MAX_FREQUENCY) {
-       chprintf(_serial, "ERROR. Frequency is above upper limit\r");
-       return f; 
-    }
-    else chprintf(_serial, "OK\r");
-  }
-  else
-    chprintf(_serial, "ERROR, Couldn't parse input. Wrong format?\r");
-  return 0;
-}
 
 
 

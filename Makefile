@@ -117,7 +117,7 @@ CSRC = $(STARTUPSRC) \
        $(TESTSRC) \
        util/eeprom.c util/DAC.c config.c fbuf.c ax25.c sr_frs.c adc_input.c \
        tone.c afsk_tx.c afsk_rx.c hdlc_encoder.c hdlc_decoder.c \
-       gps.c monitor.c usbsetup.c util/shell.c ui/commands.c ui/buzzer.c ui/ui.c ui/wifi.c tracker.c main.c \
+       gps.c monitor.c usbsetup.c util/shell.c ui/text.c ui/commands.c ui/buzzer.c ui/ui.c ui/wifi.c tracker.c main.c \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c 
 
 
@@ -215,7 +215,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = -lm --specs=nano.specs --specs=nosys.specs
+ULIBS = -lc -lm -lgcc  --specs=nano.specs --specs=nosys.specs
 
 
 #

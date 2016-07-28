@@ -16,11 +16,12 @@
 #include "string.h"
 #include "defines.h"
 #include "util/shell.h"
-#include "commands.h"
 #include "adc_input.h"
 #include "afsk.h"
-#include "ui.h"
-#include "wifi.h"
+#include "ui/ui.h"
+#include "ui/commands.h"
+#include "ui/text.h"
+#include "ui/wifi.h"
 
 
 
@@ -101,6 +102,16 @@ static const ShellCommand shell_commands[] =
   
   {NULL, NULL, 0, NULL}
 };
+
+
+
+/* FIXME: Use of these buffers makes it unsafe to have multiple shell 
+ * instances. We may protect them using a mutex 
+ */ 
+#define BUFSIZE 90
+static char buf[BUFSIZE]; 
+static ap_config_t wifiap;
+
 
 
 
@@ -248,18 +259,15 @@ static void cmd_setfreq(Stream *chp, int argc, char *argv[]) {
   if (argc == 0) {
      GET_PARAM(TRX_TX_FREQ, &txf);
      GET_PARAM(TRX_RX_FREQ, &rxf);
+     chprintf(chp, "FREQUENCY: TX=%lu, RX=%lu\r\n", txf, rxf);
   }
   else {
-     sscanf(argv[0], "%ld", &txf);
+     chprintf(chp, "%s\r\n", parseFreq(argv[0], buf, true));
      if (argc > 1)
-        sscanf(argv[1], "%ld", &rxf);
+        chprintf(chp, "%s\r\n", parseFreq(argv[0], buf, true));
      if (rxf==0)
         rxf = txf;
-     SET_PARAM(TRX_TX_FREQ, &txf);
-     SET_PARAM(TRX_RX_FREQ, &rxf);
-     radio_setFreq(txf, rxf);
   }
-  chprintf(chp, "FREQUENCY: TX=%lu, RX=%lu\r\n", txf, rxf);
 }
 
 
@@ -542,13 +550,6 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
 
 
 
-/* FIXME: Use of these buffers makes it unsafe to have multiple shell 
- * instances. We may protect them using a mutex 
- */ 
-#define BUFSIZE 90
-static char buf[BUFSIZE]; 
-static ap_config_t wifiap;
-
 /*****************************************************************************
  * wifi module commands
  *****************************************************************************/
@@ -703,24 +704,15 @@ static void cmd_dest(Stream *chp, int argc, char *argv[])
 
 static void cmd_digipath(Stream *chp, int argc, char *argv[])
 {
-    __digilist_t digis;
-    uint8_t ndigis;
-    
-    if (argc > 0) {
-      if (argc==1 && strncasecmp("off", argv[0], 3)==0)
-        ndigis = 0;
-      else {
-        ndigis = args2digis(digis, argc, argv);
-        SET_PARAM(DIGIS, digis);     
-        SET_BYTE_PARAM(NDIGIS, ndigis);
-      }
-      chprintf(chp, "Ok\r\n");
-    }
+    if (argc > 0) 
+       chprintf(chp, "%s\r\n", parseDigipathTokens(argc, argv, buf));
     else  {
-      ndigis = GET_BYTE_PARAM(NDIGIS);
-      GET_PARAM(DIGIS, &digis);
-      digis2str(buf, ndigis, digis);
-      chprintf(chp, "PATH %s\r\n", buf);
+       __digilist_t digis;
+       uint8_t ndigis;
+       ndigis = GET_BYTE_PARAM(NDIGIS);
+       GET_PARAM(DIGIS, &digis);
+       digis2str(buf, ndigis, digis);
+       chprintf(chp, "PATH %s\r\n", buf);
     } 
 }
 
