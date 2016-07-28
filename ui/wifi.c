@@ -8,6 +8,7 @@
 #include "string.h"
 #include "util/shell.h"
 #include "commands.h"
+#include "text.h"
 #include "wifi.h"
 
 
@@ -206,15 +207,9 @@ static void cmd_setParm(char* p, char* val) {
     else if (strcmp("DIGIS", p) == 0) 
        chprintf(_serial, "%s\r", parseDigipath(val, cbuf));
       
-    else if (strcmp("SYMBOL", p) == 0) {
-       if (strlen(val) > 2) {
-          chprintf(_serial, "ERROR. Symbol should be two characters\r");
-          return; 
-       }
-       SET_BYTE_PARAM(SYMBOL_TAB, val[0]);
-       SET_BYTE_PARAM(SYMBOL, val[1]);
-       chprintf(_serial, "OK\r");
-    }
+    else if (strcmp("SYMBOL", p) == 0) 
+       chprintf(_serial, "%s\r", parseSymbol(val, cbuf));
+    
     else if (strcmp("TRX_TX_FREQ", p) == 0) 
        chprintf(_serial, "%s\r", parseFreq(val, cbuf, true));
     

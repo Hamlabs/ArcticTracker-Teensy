@@ -52,6 +52,7 @@ static void cmd_dest(Stream *chp, int argc, char *argv[]);
 static void cmd_digipath(Stream *chp, int argc, char *argv[]);
 static void cmd_ip(Stream *chp, int argc, char *argv[]);
 static void cmd_macaddr(Stream *chp, int argc, char *argv[]);
+static void cmd_symbol(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 
@@ -91,6 +92,7 @@ static const ShellCommand shell_commands[] =
   { "wifi",       "Access ESP-12 WIFI module",            4, cmd_wifi },
   { "mycall",     "Set/get tracker's APRS callsign",      3, cmd_mycall },
   { "dest",       "Set/get APRS destination address",     3, cmd_dest },
+  { "symbol",     "Set/get APRS symbol",                  3, cmd_symbol },
   { "digipath",   "Set/get APRS digipeater path",         5, cmd_digipath },  
   { "ip",         "Get IP address from WIFI module",      2, cmd_ip },
   { "macaddr",    "Get MAC address from WIFI module",     3, cmd_macaddr },
@@ -698,6 +700,24 @@ static void cmd_dest(Stream *chp, int argc, char *argv[])
 }
 
 
+
+/****************************************************************************
+ * Show or set symbol
+ ****************************************************************************/
+
+static void cmd_symbol(Stream *chp, int argc, char* argv[])
+{
+   if (argc > 0)
+     chprintf(chp, "%s\r\n", parseSymbol(argv[0], buf));
+   else {
+     char tab = GET_BYTE_PARAM(SYMBOL_TAB);
+     char sym = GET_BYTE_PARAM(SYMBOL);
+     chprintf(chp, "SYMBOL %c%c\r\n", tab,sym);
+   }
+}
+
+
+
 /****************************************************************************
  * Show or set digipeater path
  ****************************************************************************/
@@ -717,6 +737,12 @@ static void cmd_digipath(Stream *chp, int argc, char *argv[])
 }
 
 
+
+
+/****************************************************************************
+ * Show IP address
+ ****************************************************************************/
+
 static void cmd_ip(Stream *chp, int argc, char *argv[])
 {
   (void) argc;
@@ -725,6 +751,12 @@ static void cmd_ip(Stream *chp, int argc, char *argv[])
   chprintf(chp, "IP %s\r\n", wifi_doCommand("IP", buf));
 }
 
+
+
+
+/****************************************************************************
+ * Show MAC address
+ ****************************************************************************/
 
 static void cmd_macaddr(Stream *chp, int argc, char *argv[])
 {

@@ -45,8 +45,25 @@ char* parseFreq(char* val, char* buf, bool tx)
    
    return buf;
 }
- 
- 
+
+
+
+/********************************************************************
+ * Parse and set symbol
+ ********************************************************************/
+
+char* parseSymbol(char* val, char* buf)
+{
+   if (strlen(val) != 2) 
+      sprintf(buf, "ERROR. Symbol should be two characters\r");
+   else {
+      SET_BYTE_PARAM(SYMBOL_TAB, val[0]);
+      SET_BYTE_PARAM(SYMBOL, val[1]);
+      sprintf(buf, "OK");
+   }
+   return buf;
+}
+
 
  
 /*********************************************************************
