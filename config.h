@@ -65,25 +65,25 @@ DEFINE_PARAM ( DIGIS,              45,  __digilist_t );
 DEFINE_PARAM ( SYMBOL,             100, Byte );
 DEFINE_PARAM ( SYMBOL_TAB,         102, Byte ); 
 DEFINE_PARAM ( TRACKER_ON,         104, Byte );
-DEFINE_PARAM ( TRACKER_TURN_LIMIT, 107, Word );
+DEFINE_PARAM ( TRACKER_TURN_LIMIT, 106, Word );
 DEFINE_PARAM ( TRACKER_MAXPAUSE,   109, Byte );
 DEFINE_PARAM ( TRACKER_MINDIST,    111, Byte ); 
-DEFINE_PARAM ( TRACKER_MINPAUSE,   112, Byte ); 
-DEFINE_PARAM ( STATUS_TIME,        114, Byte );
-DEFINE_PARAM ( TIMESTAMP_ON,       116, Byte );
-DEFINE_PARAM ( COMPRESS_ON,        118, Byte );
-DEFINE_PARAM ( ALTITUDE_ON,        120, Byte );
-DEFINE_PARAM ( OBJ_SYMBOL,         122, Byte );
-DEFINE_PARAM ( OBJ_SYMBOL_TABLE,   124, Byte );
-DEFINE_PARAM ( OBJ_ID,             126, obj_id_t );
-DEFINE_PARAM ( REPORT_COMMENT,     137, comment ); 
-DEFINE_PARAM ( REPORT_BEEP_ON,     178, Byte );
-DEFINE_PARAM ( REPEAT_ON,          180, Byte );
-DEFINE_PARAM ( EXTRATURN_ON,       182, Byte );
-DEFINE_PARAM ( FAKE_REPORTS_ON,    184, Byte );
-DEFINE_PARAM ( GPS_POWERSAVE_ON,   186, Byte );
-DEFINE_PARAM ( HTTPS_ON,           188, Byte );
-DEFINE_PARAM ( WIFIAP,             190, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( TRACKER_MINPAUSE,   113, Byte ); 
+DEFINE_PARAM ( STATUS_TIME,        115, Byte );
+DEFINE_PARAM ( TIMESTAMP_ON,       117, Byte );
+DEFINE_PARAM ( COMPRESS_ON,        119, Byte );
+DEFINE_PARAM ( ALTITUDE_ON,        121, Byte );
+DEFINE_PARAM ( OBJ_SYMBOL,         123, Byte );
+DEFINE_PARAM ( OBJ_SYMBOL_TABLE,   125, Byte );
+DEFINE_PARAM ( OBJ_ID,             127, obj_id_t );
+DEFINE_PARAM ( REPORT_COMMENT,     138, comment ); 
+DEFINE_PARAM ( REPORT_BEEP_ON,     179, Byte );
+DEFINE_PARAM ( REPEAT_ON,          181, Byte );
+DEFINE_PARAM ( EXTRATURN_ON,       183, Byte );
+DEFINE_PARAM ( FAKE_REPORTS_ON,    185, Byte );
+DEFINE_PARAM ( GPS_POWERSAVE_ON,   187, Byte );
+DEFINE_PARAM ( HTTPS_ON,           189, Byte );
+DEFINE_PARAM ( WIFIAP,             191, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 

@@ -45,7 +45,6 @@ static void cmd_led(Stream *chp, int argc, char* argv[]);
 static void cmd_listen(Stream *chp, int argc, char* argv[]);
 static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
-static void cmd_txdelay(Stream *chp, int argc, char *argv[]);
 static void cmd_wifi(Stream *chp, int argc, char *argv[]);
 static void cmd_mycall(Stream *chp, int argc, char *argv[]);
 static void cmd_dest(Stream *chp, int argc, char *argv[]);
@@ -53,18 +52,32 @@ static void cmd_digipath(Stream *chp, int argc, char *argv[]);
 static void cmd_ip(Stream *chp, int argc, char *argv[]);
 static void cmd_macaddr(Stream *chp, int argc, char *argv[]);
 static void cmd_symbol(Stream *chp, int argc, char* argv[]);
+static void cmd_turnlimit(Stream *chp, int argc, char *argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
+static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
+
 
 #define CMD_BOOL_SETTING(x, name) \
    static inline void cmd_##x(Stream* out, int argc, char** argv) \
       { _parameter_setting_bool(out, argc, argv, x##_offset, &x##_default, name); }
+
+#define CMD_BYTE_SETTING(x, name, llimit, ulimit) \
+      static inline void cmd_##x(Stream* out, int argc, char** argv) \
+      { _parameter_setting_byte(out, argc, argv, x##_offset, &x##_default, name, llimit, ulimit); }    
       
-CMD_BOOL_SETTING(TRACKER_ON,   "TRACKER");      
-CMD_BOOL_SETTING(TIMESTAMP_ON, "TIMESTAMP");
-CMD_BOOL_SETTING(COMPRESS_ON,  "COMPRESS");
-CMD_BOOL_SETTING(ALTITUDE_ON,  "ALTITUDE");
+CMD_BOOL_SETTING(TRACKER_ON,      "TRACKER");      
+CMD_BOOL_SETTING(TIMESTAMP_ON,    "TIMESTAMP");
+CMD_BOOL_SETTING(COMPRESS_ON,     "COMPRESS");
+CMD_BOOL_SETTING(ALTITUDE_ON,     "ALTITUDE");
 CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
+CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
+CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
+CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
+CMD_BYTE_SETTING(TRACKER_MAXPAUSE,"MAXPAUSE", 0, 100);
+CMD_BYTE_SETTING(TRACKER_MINPAUSE,"MINPAUSE", 0, 100);
+CMD_BYTE_SETTING(TRACKER_MINDIST, "MINDIST",  0, 250);
+
 
 /*********************************************************************************
  * Shell config
@@ -72,43 +85,51 @@ CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
 
 static const ShellCommand shell_commands[] = 
 {
-  { "mem",        "Memory status",                        3, cmd_mem },
-  { "threads",    "Thread information",                   3, cmd_threads },
-  { "freq",       "Set/get freguency of radio",           4, cmd_setfreq },
-  { "squelch",    "Set/get squelch level of receiver",    2, cmd_setsquelch },
-  { "volume",     "Set/get volume level of receiver",     3, cmd_setvolume },
-  { "miclevel",   "Set mic sensitivity level (1-8)",      4, cmd_setmiclevel }, 
-  { "txpower",    "Set TX power (hi=1W, lo=0.5W)",        4, cmd_txpower },
-  { "txdelay",    "Set TX delay (flags)",                 3, cmd_txdelay },
-  { "ptt",        "Turn on/off transmitter",              3, cmd_ptt },
-  { "radio",      "Turn on/off radio",                    5, cmd_radio },
-  { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone", 3, cmd_txtone },
-  { "testpacket", "Send test APRS packet",                5, cmd_testpacket },
-  { "teston",     "Generate test signal with data byte",  6, cmd_teston },
-  { "adc",        "Get test samples from ADC",            3, cmd_adc },
-  { "led",        "Test RGB LED",                         3, cmd_led },
-  { "listen",     "Listen to radio",                      3, cmd_listen },
-  { "converse",   "Converse mode",                        4, cmd_converse },
-  { "wifi",       "Access ESP-12 WIFI module",            4, cmd_wifi },
-  { "mycall",     "Set/get tracker's APRS callsign",      3, cmd_mycall },
-  { "dest",       "Set/get APRS destination address",     3, cmd_dest },
-  { "symbol",     "Set/get APRS symbol",                  3, cmd_symbol },
-  { "digipath",   "Set/get APRS digipeater path",         5, cmd_digipath },  
-  { "ip",         "Get IP address from WIFI module",      2, cmd_ip },
-  { "macaddr",    "Get MAC address from WIFI module",     3, cmd_macaddr },
-  { "tracker",    "Tracking on/off",                      4, cmd_TRACKER_ON },
-  { "timestamp",  "Timestamp on/off",                     5, cmd_TIMESTAMP_ON },
-  { "compress",   "Compressed positions on/off",          4, cmd_COMPRESS_ON },
-  { "altitude",   "Altidude in reports on/off",           4, cmd_ALTITUDE_ON },
-  { "reportbeep", "Beep when reporting on/off",          10, cmd_REPORT_BEEP_ON },
+  { "mem",        "Memory status",                             3, cmd_mem },
+  { "threads",    "Thread information",                        3, cmd_threads },
+  { "freq",       "Set/get freguency of radio",                4, cmd_setfreq },
+  { "squelch",    "Set/get squelch level of receiver",         2, cmd_setsquelch },
+  { "volume",     "Set/get volume level of receiver",          3, cmd_setvolume },
+  { "miclevel",   "Set/get mic sensitivity level (1-8)",       4, cmd_setmiclevel }, 
+  { "txpower",    "Set/get TX power (hi=1W, lo=0.5W)",         4, cmd_txpower },
+  { "txdelay",    "Set/get TX delay (flags before frame)",     3, cmd_TXDELAY },
+  { "txtail",     "Set/get TX tail (flags after frame)",       3, cmd_TXTAIL },
+  { "maxframe",   "Set/get max frames in one transmission",    4, cmd_MAXFRAME },
+  { "ptt",        "Turn on/off transmitter",                   3, cmd_ptt },
+  { "radio",      "Turn on/off radio",                         5, cmd_radio },
+  { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone",      3, cmd_txtone },
+  { "testpacket", "Send test APRS packet",                     5, cmd_testpacket },
+  { "teston",     "Generate test signal with data byte",       6, cmd_teston },
+  { "adc",        "Get test samples from ADC",                 3, cmd_adc },
+  { "led",        "Test RGB LED",                              3, cmd_led },
+  { "listen",     "Listen to radio",                           3, cmd_listen },
+  { "converse",   "Converse mode",                             4, cmd_converse },
+  { "wifi",       "Access ESP-12 WIFI module",                 4, cmd_wifi },
+  { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
+  { "dest",       "Set/get APRS destination address",          3, cmd_dest },
+  { "symbol",     "Set/get APRS symbol",                       3, cmd_symbol },
+  { "digipath",   "Set/get APRS digipeater path",              5, cmd_digipath },  
+  { "ip",         "Get IP address from WIFI module",           2, cmd_ip },
+  { "macaddr",    "Get MAC address from WIFI module",          3, cmd_macaddr },
+  { "tracker",    "Tracking on/off",                           4, cmd_TRACKER_ON },
+  { "timestamp",  "Timestamp on/off",                          5, cmd_TIMESTAMP_ON },
+  { "compress",   "Compressed positions on/off",               4, cmd_COMPRESS_ON },
+  { "altitude",   "Altidude in reports on/off",                4, cmd_ALTITUDE_ON },
+  { "reportbeep", "Beep when reporting on/off",                6, cmd_REPORT_BEEP_ON },
+  { "turnlimit",  "Change in heading that trigger report",     5, cmd_turnlimit },
+  { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
+  { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
+  { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
   
   {NULL, NULL, 0, NULL}
 };
 
 
 
-/* FIXME: Use of these buffers makes it unsafe to have multiple shell 
- * instances. We may protect them using a mutex 
+/*
+ * FIXME: Use of these buffers makes it unsafe to have more than one shell
+ * instance at a time. We may protect them using a mutex or use more 
+ * stack for buffers.  
  */ 
 #define BUFSIZE 90
 static char buf[BUFSIZE]; 
@@ -117,37 +138,32 @@ static ap_config_t wifiap;
 
 
 
-/* 
+/********************************************************** 
  * Generic getter/setter method for boolean settings 
- */
-
-
+ **********************************************************/
 
 static void _parameter_setting_bool(Stream* out, int argc, char** argv, 
                 uint16_t ee_addr, const void* default_val, char* name )
 {
-    if (argc < 1) {
-       chprintf(out, name);
-       if (get_byte_param(ee_addr, default_val)) 
-          chprintf(out," ON\r\n");
-       else
-          chprintf(out, " OFF\r\n");
-       return; 
-    }
-    if (strncasecmp("on", argv[0], 2) == 0 || strncasecmp("true", argv[0], 1) == 0) {
-       chprintf(out, "Ok\r\n");
-       set_byte_param(ee_addr, (uint8_t) 1);
-    }  
-    else if (strncasecmp("off", argv[0], 2) == 0 || strncasecmp("false", argv[0], 1) == 0) {
-       chprintf(out, "Ok\r\n");
-       set_byte_param(ee_addr, (uint8_t) 0);
-    }
-    else 
-       chprintf(out, "ERROR: parameter must be 'ON' or 'OFF'\r\n");
-    
-    
+    if (argc < 1) 
+       chprintf(out,"%s %s\r\n", name, printBoolSetting(ee_addr, default_val, buf));
+    else
+       chprintf(out, "%s\r\n", parseBoolSetting(ee_addr, argv[0], buf));
 }
 
+
+/********************************************************** 
+ * Generic getter/setter method for byte numeric settings 
+ **********************************************************/
+
+static void _parameter_setting_byte(Stream* out, int argc, char** argv, 
+                   uint16_t ee_addr, const void* default_val, char* name, uint8_t llimit, uint8_t ulimit )
+{
+  if (argc < 1) 
+    chprintf(out, "%s %u\r\n", name, get_byte_param(ee_addr, default_val));
+  else
+    chprintf(out, "%s\r\n", parseByteSetting(ee_addr, argv[0], llimit, ulimit, buf));
+}
 
 
 static const ShellConfig shell_cfg = {
@@ -330,22 +346,6 @@ static void cmd_setvolume(Stream *chp, int argc, char *argv[]) {
      radio_setVolume(vol);
   }
   chprintf(chp, "VOLUME: %d\r\n", vol);
-}
-
-
-/****************************************************************************
- * Set/get volume level of receiver
- ****************************************************************************/
-
-static void cmd_txdelay(Stream *chp, int argc, char *argv[]) {
-  uint8_t txd=0;
-  if (argc == 0)
-     txd = GET_BYTE_PARAM(TXDELAY);
-  else {
-     sscanf(argv[0], "%hhu", &txd);
-     SET_BYTE_PARAM(TXDELAY, txd);
-  }
-  chprintf(chp, "TXDELAY: %d\r\n", txd); 
 }
 
 
@@ -736,6 +736,22 @@ static void cmd_digipath(Stream *chp, int argc, char *argv[])
     } 
 }
 
+
+
+/****************************************************************************
+ * Show or set turn limit
+ ****************************************************************************/
+
+static void cmd_turnlimit(Stream *chp, int argc, char *argv[])
+{
+   if (argc > 0)
+      chprintf(chp, "%s\r\n", parseTurnLimit(argv[0], buf));
+   else {
+      uint16_t x; 
+      GET_PARAM(TRACKER_TURN_LIMIT, &x);
+      chprintf(chp, "TURN_LIMIT %u\r\n", x);
+   }
+}
 
 
 

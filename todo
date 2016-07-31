@@ -1,54 +1,66 @@
-* Integrate changes to ChibiOS from GITHUB
-       DONE.
-       
-* Use serial over USB for shell 
-       DONE. Need debugging of ChibiOS code??
-       
-* Command shell
-       DONE.
-    
-* Write sa818 functions and test using shell commands. 
-       DONE. 
-       
-* Write sr_frs functions and test using shell commands. 
-       DONE
-    
-* Implement EEPROM storage of settings. Store radio settings in EEPROM. Test. 
-       DONE.
-     
-* Packet generation, encoding, transmitting
-       DONE. 
 
-* Packet receiving, decoding
-     - Set up sampling on ADC. In progress. DONE.
-     - AFSK RX decoding based on samples. DONE 
-     - HDLC decoding. Queue interface for receiving packets. DONE.
-     - Test on radio using SR-FRS. DONE.
-     - Document on hamlabs. DONE. 
-     - Credit the orgiginal author of decoding code!!!
 
-* NodeMCU testing. Decide on ESP-12 platform. 
-     In progress. 
+Implement config via shell and webinterface: 
 
-* Design a PCB, get parts and make a lab model (first prototype). 
-        IN PROGRESS (First PCB design ready and in production)      
-    - Document on hamlabs
+Config                  Web     Shell
+--------------------------------------------------------
+TRX_TX_FREQ             done    done          
+TRX_RX_FREQ             done    done
+TRX_SQUELCH             -       done
+TRX_VOLUME              -       done     Maybe not necessary
+TXDELAY                 -       done
+TXTAIL                  -       done    
+MAXFRAME                -       done     Maybe not necessary
+MYCALL                  done    done 
+DEST                    -       done  
+NDIGIS                  done    done
+DIGIS                   "       "
+SYMBOL                  done    done
+SYMBOL_TAB,             "       " 
+TRACKER_ON              ?       tbd
+TRACKER_TURN_LIMIT      done    done     Smart beaconing
+TRACKER_MAXPAUSE        done    done
+TRACKER_MINDIST         done    done
+TRACKER_MINPAUSE        done    done
+STATUS_TIME             ?       tbd      Maybe not necessary
+TIMESTAMP_ON            done    done    
+COMPRESS_ON             done    done
+ALTITUDE_ON             done    done
+OBJ_SYMBOL              ?       tbd
+OBJ_SYMBOL_TABLE        "       "
+OBJ_ID                  ?       tbd
+REPORT_COMMENT          done    tbd    
+REPORT_BEEP_ON          ?       done
+REPEAT_ON               ?       tbd      Experimental        
+EXTRATURN_ON            ?       tbd      Experimental
+FAKE_REPORTS_ON         ?       ?        Remove?  
+GPS_POWERSAVE_ON        ?       ?
+HTTPS_ON                ?       ?
+WIFIAP                  ?       done  
 
+--------------------------------------------------------
+
+      
 * KISS TNC? 
 
 * Digipeater
 
-* GPS data decoding. 
+* GPS data decoding.
+    NEED TESTING. 
 
 * Tracker function
+    IN PROGRESS
 
 * Packet logs. Store in ESP-12. 
 
 * Battery charging conrol? 
 
+* Get display up and running
+
+* Design and implement display UI
 
 
--------------------------
+
 
 LATER: 
 

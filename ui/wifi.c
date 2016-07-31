@@ -144,7 +144,7 @@ void wifi_shell(Stream* chp) {
 
 
 /* FIXME: Should check thread safety when using this */
-static char cbuf[64]; 
+static char cbuf[129]; 
 
 /*****************************************************************
  * Process commands coming from WIFI module that read parameters
@@ -167,11 +167,23 @@ static void cmd_getParm(char* p) {
       uint8_t n = GET_BYTE_PARAM(NDIGIS);
       chprintf(_serial, "%s\r", digis2str(cbuf, n, digis)); 
    }
+   else if (strcmp("REPORT_COMMENT", p) == 0) {
+      GET_PARAM(REPORT_COMMENT, cbuf);
+      chprintf(_serial, "%s\r", cbuf);
+   }
    else if (strcmp("SYMBOL", p) == 0) {
        char tab = GET_BYTE_PARAM(SYMBOL_TAB);
        char sym = GET_BYTE_PARAM(SYMBOL); 
        chprintf(_serial, "%c%c\r", tab, sym); 
    }
+   else if (strcmp("TIMESTAMP", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(TIMESTAMP_ON, cbuf));
+   
+   else if (strcmp("COMPRESS", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(COMPRESS_ON, cbuf));
+   
+   else if (strcmp("ALTITUDE", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(ALTITUDE_ON, cbuf));
    
    else if (strcmp("TRX_TX_FREQ", p) == 0) {
       uint32_t x;
@@ -183,6 +195,22 @@ static void cmd_getParm(char* p) {
       GET_PARAM(TRX_RX_FREQ, &x);
       chprintf(_serial, "%lu\r", x);
    }
+   else if (strcmp("TRACKER_TURN_LIMIT", p) == 0) {
+      uint16_t x; 
+      GET_PARAM(TRACKER_TURN_LIMIT, &x);
+      chprintf(_serial, "%u\r", x);
+   }
+   else if (strcmp("TRACKER_MAXPAUSE", p) == 0)
+      chprintf(_serial, "%u\r", GET_BYTE_PARAM(TRACKER_MAXPAUSE));
+   
+   else if (strcmp("TRACKER_MINPAUSE", p) == 0)
+      chprintf(_serial, "%u\r", GET_BYTE_PARAM(TRACKER_MINPAUSE));
+   
+   else if (strcmp("TRACKER_MINDIST", p) == 0)
+     chprintf(_serial, "%u\r", GET_BYTE_PARAM(TRACKER_MINDIST));
+   
+   else
+      chprintf(_serial, "ERROR. Unknown setting\r");
 }
 
 
@@ -210,17 +238,43 @@ static void cmd_setParm(char* p, char* val) {
     else if (strcmp("SYMBOL", p) == 0) 
        chprintf(_serial, "%s\r", parseSymbol(val, cbuf));
     
+    else if (strcmp("REPORT_COMMENT", p) == 0) {
+      /* FIXME: Sanitize input */ 
+      SET_PARAM(REPORT_COMMENT, val);
+       chprintf(_serial, "OK\r");
+    }
+    else if (strcmp("TIMESTAMP", p) == 0)
+       chprintf(_serial, "%s\r", PARSE_BOOL(TIMESTAMP_ON, val, cbuf));  
+
+    else if (strcmp("COMPRESS", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(COMPRESS_ON, val, cbuf));  
+
+    else if (strcmp("ALTITUDE", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(ALTITUDE_ON, val, cbuf));  
+    
     else if (strcmp("TRX_TX_FREQ", p) == 0) 
        chprintf(_serial, "%s\r", parseFreq(val, cbuf, true));
     
     else if (strcmp("TRX_RX_FREQ", p) == 0) 
        chprintf(_serial, "%s\r", parseFreq(val, cbuf, false));
     
+    else if (strcmp("TRACKER_TURN_LIMIT", p) == 0) 
+       chprintf(_serial, "%s\r", parseTurnLimit(val, cbuf));
+    
+    else if (strcmp("TRACKER_MAXPAUSE", p) == 0)
+       chprintf(_serial, "%s\r", PARSE_BYTE(TRACKER_MAXPAUSE, val, 0, 100, cbuf));
+    
+    else if (strcmp("TRACKER_MINPAUSE", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BYTE(TRACKER_MINPAUSE, val, 0, 100, cbuf));
+    
+    else if (strcmp("TRACKER_MINDIST", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BYTE(TRACKER_MINDIST, val, 0, 250, cbuf));
+    
     else
        chprintf(_serial, "ERROR. Unknown setting\r");
 }
 
-
+ 
 
 
 
@@ -251,20 +305,19 @@ static void cmd_checkAp(char* ssid) {
  ***************************************************************************/
 
 static void wifi_command() {
-   char line[32];
    char *tokp; 
    
    MUTEX_LOCK;
-   readline(_serial, line, 32);
-   if (line[0] == 'R') 
+   readline(_serial, cbuf, 128);
+   if (cbuf[0] == 'R') 
       /* Read parameter */
-      cmd_getParm((char*) _strtok((char*) line+1, " ", &tokp));
-   else if (line[0] == 'W')
+      cmd_getParm((char*) _strtok((char*) cbuf+1, " ", &tokp));
+   else if (cbuf[0] == 'W')
       /* Write parameter */
-      cmd_setParm((char*) _strtok((char*) line+1, " ", &tokp), (char*) _strtok(NULL, " ", &tokp));
-   else if (line[0] == 'A')
+      cmd_setParm((char*) _strtok((char*) cbuf+1, " ", &tokp), (char*) _strtok(NULL, "\0", &tokp));
+   else if (cbuf[0] == 'A')
       /* Check access point */
-      cmd_checkAp((char*) _strtok((char*) line+1, " ", &tokp));
+      cmd_checkAp((char*) _strtok((char*) cbuf+1, " ", &tokp));
      
    MUTEX_UNLOCK;
 }
@@ -291,7 +344,7 @@ static THD_FUNCTION(wifi_monitor, arg)
              * initiating a command or a response. All other characters are ignored.  
              */
 	    if (client_active) {
-	       readline(_serial, *client_buf, 32);
+	       readline(_serial, *client_buf, 128);
 	       SIGNAL_RESPONSE;
 	    }
             else 
