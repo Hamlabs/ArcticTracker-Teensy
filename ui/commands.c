@@ -53,6 +53,7 @@ static void cmd_ip(Stream *chp, int argc, char *argv[]);
 static void cmd_macaddr(Stream *chp, int argc, char *argv[]);
 static void cmd_symbol(Stream *chp, int argc, char* argv[]);
 static void cmd_turnlimit(Stream *chp, int argc, char *argv[]);
+static void cmd_webserver(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
@@ -105,6 +106,7 @@ static const ShellCommand shell_commands[] =
   { "listen",     "Listen to radio",                           3, cmd_listen },
   { "converse",   "Converse mode",                             4, cmd_converse },
   { "wifi",       "Access ESP-12 WIFI module",                 4, cmd_wifi },
+  { "webserver",  "Control webserver (on WIFI module)",        4, cmd_webserver },
   { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
   { "dest",       "Set/get APRS destination address",          3, cmd_dest },
   { "symbol",     "Set/get APRS symbol",                       3, cmd_symbol },
@@ -563,15 +565,18 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
       return;
    } 
    if (strncasecmp("info", argv[0], 3) == 0) {
-      chprintf(chp, "    Stn status: %s\r\n",  wifi_status(buf));
-      chprintf(chp, "  Connected to: %s\r\n",  wifi_doCommand("CONF", buf));
-      chprintf(chp, "    IP address: %s\r\n",  wifi_doCommand("IP", buf));
-      chprintf(chp, "   MAC address: %s\r\n",  wifi_doCommand("MAC", buf));
+      if (wifi_is_enabled()) {
+        chprintf(chp, "    Stn status: %s\r\n",  wifi_status(buf));
+        chprintf(chp, "  Connected to: %s\r\n",  wifi_doCommand("CONF", buf));
+        chprintf(chp, "    IP address: %s\r\n",  wifi_doCommand("IP", buf));
+        chprintf(chp, "   MAC address: %s\r\n",  wifi_doCommand("MAC", buf));
       
-      chprintf(chp, "\r\n");
-      chprintf(chp, "       AP SSID: %s\r\n",  wifi_doCommand("AP.SSID", buf));     
-      chprintf(chp, " AP IP address: %s\r\n",  wifi_doCommand("AP.IP", buf));
-
+        chprintf(chp, "\r\n");
+        chprintf(chp, "       AP SSID: %s\r\n",  wifi_doCommand("AP.SSID", buf));     
+        chprintf(chp, " AP IP address: %s\r\n",  wifi_doCommand("AP.IP", buf));
+      }
+      else
+        chprintf(chp, " WIFI is off\r\n");
 
       chprintf(chp, "\r\nConfigured access points:\r\n");
       for (int i=0; i<N_WIFIAP; i++) {
@@ -591,10 +596,10 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
             chprintf(chp, "Argument must be a number 1-4\r\n");
             return; 
          }
-         chprintf(chp, "SSID: ");
+         chprintf(chp, "Enter SSID: ");
          shellGetLine(chp, wifiap.ssid, 32);
          if (strlen(wifiap.ssid) > 0) {
-            chprintf(chp, "Password: ");
+            chprintf(chp, "Enter Password: ");
             shellGetLine(chp, wifiap.passwd, 32);
          }
          if (strlen(wifiap.passwd) == 0)
@@ -608,8 +613,8 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
      wifi_shell(chp);
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
-     chprintf(chp, "***** WIFI MODULE ON *****\r\n");
      wifi_enable();
+     chprintf(chp, "***** WIFI MODULE ON *****\r\n");
    }
    else if (strncasecmp("off", argv[0], 2) == 0) {
      chprintf(chp, "***** WIFI MODULE OFF *****\r\n");
@@ -619,11 +624,32 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
 
 
 
-static void cmd_httpserver(Stream *chp, int argc, char* argv[])
+static void cmd_webserver(Stream *chp, int argc, char* argv[])
 {
    if (argc < 1) {
-      chprintf(chp, "Usage: httpserver on|off|auth\r\n");
+      chprintf(chp, "Usage: webserver on|off|auth\r\n");
       return;
+   }
+   else if (strncasecmp("on", argv[0], 2) == 0) { 
+     chprintf(chp, "***** HTTP SERVER ON *****\r\n");
+     SET_BYTE_PARAM(HTTP_ON, 1);
+     wifi_restart();
+   }
+   else if (strncasecmp("off", argv[0], 2) == 0) {
+     chprintf(chp, "***** HTTP SERVER OFF *****\r\n");
+     SET_BYTE_PARAM(HTTP_ON, 0);
+     wifi_restart();
+   }
+   else if (strncasecmp("auth", argv[0], 3) == 0) {
+      chprintf(chp, "Enter username: ");
+      shellGetLine(chp, buf, 32);
+      if (strlen(buf) > 0) {
+         SET_PARAM(HTTP_USER, buf);
+         chprintf(chp, "Enter password: ");
+         shellGetLine(chp, buf, 32);
+         SET_PARAM(HTTP_PASSWD, buf);
+         chprintf(chp, "Ok\r\n");
+      }
    }
 }
 

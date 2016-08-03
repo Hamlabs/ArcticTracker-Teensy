@@ -35,23 +35,31 @@ REPEAT_ON               ?       tbd      Experimental
 EXTRATURN_ON            ?       tbd      Experimental
 FAKE_REPORTS_ON         ?       ?        Remove?  
 GPS_POWERSAVE_ON        ?       ?
-HTTPS_ON                ?       ?
-WIFIAP                  ?       done  
+HTTP_ON                 -       done
+WIFIAP                  tbd     done  
 
 --------------------------------------------------------
-
-      
-* KISS TNC? 
-
-* Digipeater
 
 * GPS data decoding.
     NEED TESTING. 
 
 * Tracker function
-    IN PROGRESS
+    IN PROGRESS, NEED TESTING
+    
+* Set Wifi password, set AP password, set web password
 
-* Packet logs. Store in ESP-12. 
+* Turn on/off webserver. Shell command.
+    DONE.
+
+* Software AP shell command
+
+* Connect internet service from MCU
+
+* Igate
+
+* Digipeater
+
+* Position report logs. Store in ESP-12. 
 
 * Battery charging conrol? 
 

@@ -15,7 +15,7 @@
 // static bool mon_on = false;
 static Stream*  _serial;
 static Stream*  _shell = NULL;
-static uint16_t wifiEnabled = 0;
+static bool wifiEnabled = false;
 
 static void wifi_command(void);
 static void cmd_getParm(char* p);
@@ -41,7 +41,9 @@ static const SerialConfig _serialConfig = {
 
 
 void wifi_enable() {
-   if (wifiEnabled++ == 0) {
+   if (!wifiEnabled) {
+      wifiEnabled = true;
+      SET_BYTE_PARAM(WIFI_ON, 1);
       setPin(WIFI_ENABLE);
       sleep(2000);
       wifi_start_server();
@@ -49,9 +51,26 @@ void wifi_enable() {
 }
 
 void wifi_disable() {
-  if (--wifiEnabled == 0)
+  if (wifiEnabled)
       clearPin(WIFI_ENABLE);
+  wifiEnabled = false; 
+  SET_BYTE_PARAM(WIFI_ON, 0);
 }
+
+
+bool wifi_is_enabled() {
+  return wifiEnabled;
+}
+
+
+void wifi_restart() {
+  if (wifiEnabled) {
+    wifi_disable();
+    sleep(100);
+    wifi_enable(); 
+  }
+}
+
 
 void wifi_external() {
   setPinMode(WIFI_SERIAL_RXD, PAL_MODE_UNCONNECTED);
@@ -70,8 +89,11 @@ void wifi_internal() {
 
 static void wifi_start_server() {
   sleep(200);
+  if (GET_BYTE_PARAM(HTTP_ON))
+    chprintf(_serial, "start_http_server()\r");
+  sleep(100);
   chprintf(_serial, "coroutine.resume(listener)\r");
-  sleep(200);
+  sleep(100);
 }
 
 
@@ -85,13 +107,17 @@ static bool client_active = false;
 
 
 char* wifi_doCommand(char* cmd, char* buf) {
-  MUTEX_LOCK;
-  chprintf(_serial, "%s\r", cmd);
-  client_active=true;
-  client_buf = &buf; 
-  WAIT_RESPONSE;
-  client_active=false;
-  MUTEX_UNLOCK;
+  if (wifi_is_enabled()) {
+     MUTEX_LOCK;
+     chprintf(_serial, "%s\r", cmd);
+     client_active=true;
+     client_buf = &buf; 
+     WAIT_RESPONSE;
+     client_active=false;
+     MUTEX_UNLOCK;
+  }
+  else
+    sprintf(buf, "-");
   return buf; 
 }
 
@@ -118,6 +144,7 @@ char* wifi_status(char* buf) {
  **************************************************************/
 
 void wifi_shell(Stream* chp) {
+  bool was_enabled = wifi_is_enabled();
   wifi_enable();
   
   MUTEX_LOCK;
@@ -138,7 +165,8 @@ void wifi_shell(Stream* chp) {
   wifi_start_server();
   MUTEX_UNLOCK;
   
-  wifi_disable();
+  if (!was_enabled)
+      wifi_disable();
 }
 
 
@@ -209,6 +237,8 @@ static void cmd_getParm(char* p) {
    else if (strcmp("TRACKER_MINDIST", p) == 0)
      chprintf(_serial, "%u\r", GET_BYTE_PARAM(TRACKER_MINDIST));
    
+   else if (strcmp("HTTP_ON", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(HTTP_ON, cbuf));
    else
       chprintf(_serial, "ERROR. Unknown setting\r");
 }
@@ -363,6 +393,7 @@ void wifi_init(SerialDriver* sd)
   clearPin(WIFI_ENABLE);
   sdStart(sd, &_serialConfig);  
   THREAD_START(wifi_monitor, NORMALPRIO+2, NULL);
-  wifi_enable();
+  if (GET_BYTE_PARAM(WIFI_ON))
+     wifi_enable();
 }
 
