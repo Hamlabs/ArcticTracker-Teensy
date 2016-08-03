@@ -46,7 +46,7 @@ void wifi_enable() {
       SET_BYTE_PARAM(WIFI_ON, 1);
       setPin(WIFI_ENABLE);
       sleep(2000);
-      wifi_start_server();
+//      wifi_start_server();
    }
 }
 
@@ -89,8 +89,11 @@ void wifi_internal() {
 
 static void wifi_start_server() {
   sleep(200);
+  char uname[32], passwd[32];
+  GET_PARAM(HTTP_USER, uname);
+  GET_PARAM(HTTP_PASSWD, passwd);
   if (GET_BYTE_PARAM(HTTP_ON))
-    chprintf(_serial, "start_http_server()\r");
+    chprintf(_serial, "start_http_server('%s','%s')\r", uname, passwd);
   sleep(100);
   chprintf(_serial, "coroutine.resume(listener)\r");
   sleep(100);
@@ -369,6 +372,11 @@ static THD_FUNCTION(wifi_monitor, arg)
          if (_shell != NULL)
             /* If shell is active, just pass character on to the shell */
             streamPut(_shell, c);
+         else if (c == '$') {
+            readline(_serial, cbuf, 8);
+            if (strcmp(cbuf, "__BOOT__") == 0)
+                wifi_start_server();
+        }
          else if (c == '#') {
             /* If shell is not active and if the incoming character is a #, it is
              * initiating a command or a response. All other characters are ignored.  

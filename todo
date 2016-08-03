@@ -36,6 +36,8 @@ EXTRATURN_ON            ?       tbd      Experimental
 FAKE_REPORTS_ON         ?       ?        Remove?  
 GPS_POWERSAVE_ON        ?       ?
 HTTP_ON                 -       done
+HTTP_USER               tbd     done
+HTTP_PASSWD             tbd     done
 WIFIAP                  tbd     done  
 
 --------------------------------------------------------
@@ -46,12 +48,13 @@ WIFIAP                  tbd     done
 * Tracker function
     IN PROGRESS, NEED TESTING
     
-* Set Wifi password, set AP password, set web password
-
+* Set web password
+    DONE (shell)
+    
 * Turn on/off webserver. Shell command.
     DONE.
 
-* Software AP shell command
+* Software AP shell command, set passwd
 
 * Connect internet service from MCU
 
@@ -74,7 +77,7 @@ LATER:
 
 * Filtering to make receiving better. 
 
-* Receive commands... 
+* Receive commands over APRS... 
 
 * Consider using flash card for storage. 
 
