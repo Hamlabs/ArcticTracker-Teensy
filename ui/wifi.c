@@ -32,7 +32,7 @@ BSEMAPHORE_DECL(response_pending, true);
 #define SIGNAL_RESPONSE chBSemSignal(&response_pending)
 
 
-THREAD_STACK(wifi_monitor, 1024);
+THREAD_STACK(wifi_monitor, STACK_WIFI);
 
 
 static const SerialConfig _serialConfig = {

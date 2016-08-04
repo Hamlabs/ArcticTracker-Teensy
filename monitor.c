@@ -9,7 +9,7 @@ static bool mon_on = false;
 static Stream *out;
 FBQ mon;
 
-THREAD_STACK(monitor, 500);
+THREAD_STACK(monitor, STACK_MONITOR);
 
 
 

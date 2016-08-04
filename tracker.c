@@ -16,7 +16,7 @@
 
 
 
-THREAD_STACK(tracker, 256);
+THREAD_STACK(tracker, STACK_TRACKER);
 
 // #include "math.h"
 
@@ -219,6 +219,7 @@ static THD_FUNCTION(tracker, arg)
     uint8_t t;
     uint8_t st_count = GET_BYTE_PARAM(STATUS_TIME);
     
+    chRegSetThreadName("APRS Tracker"); 
  //   bcond_wait(&tready); FIXME
  //   bcond_clear(&tready);
     gps_on();     

@@ -118,7 +118,7 @@ static void onoffhandler(void* p);
   *********************************************************************/
  uint16_t blink_length, blink_interval;
  
- THREAD_STACK(ui_thread, 164);
+ THREAD_STACK(ui_thread, STACK_UI);
  
  __attribute__((noreturn))
  static THD_FUNCTION(ui_thread, arg)

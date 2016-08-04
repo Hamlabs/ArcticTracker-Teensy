@@ -24,7 +24,7 @@ static FBUF buffer;
 #define PERSISTENCE 80 /* p = x/255 */
 #define SLOTTIME    10 /* Milliseconds/10 */
 
-THREAD_STACK(hdlc_txencoder, 500);
+THREAD_STACK(hdlc_txencoder, STACK_HDLCENCODER);
 
 
 

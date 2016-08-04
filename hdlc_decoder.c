@@ -20,10 +20,10 @@ static input_queue_t *inq;
 static fbuf_t fbuf;
 static fbq_t* mqueue[3];
 
-static uint8_t get_bit (void);
+static uint8_t get_bit (void); 
 static bool crc_match(FBUF*, uint8_t);
 
-THREAD_STACK(hdlc_rxdecoder, 400);
+THREAD_STACK(hdlc_rxdecoder, STACK_HDLCDECODER);
    
 
 
