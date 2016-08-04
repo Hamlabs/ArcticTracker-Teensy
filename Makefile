@@ -215,7 +215,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = -lc -lm -lgcc  --specs=nano.specs --specs=nosys.specs
+ULIBS = -lc -lm -lgcc  --specs=nano.specs -u _printf_float -u _scanf_float --specs=nosys.specs
 
 
 #
