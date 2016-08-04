@@ -43,7 +43,7 @@ WIFIAP                  tbd     done
 --------------------------------------------------------
 
 * GPS data decoding.
-    NEED TESTING. 
+    DONE. 
 
 * Tracker function
     IN PROGRESS, NEED TESTING
@@ -56,6 +56,8 @@ WIFIAP                  tbd     done
 
 * Software AP shell command, set passwd
 
+* Web interface page for WIFI related settings.
+
 * Connect internet service from MCU
 
 * Igate
@@ -64,7 +66,7 @@ WIFIAP                  tbd     done
 
 * Position report logs. Store in ESP-12. 
 
-* Battery charging conrol? 
+* Battery charging control? 
 
 * Get display up and running
 
