@@ -22,13 +22,15 @@
 #include "ui/commands.h"
 #include "ui/text.h"
 #include "ui/wifi.h"
+#include "gps.h"
 
 
+#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
 
-#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
 extern SerialUSBDriver SDU1;
 extern void mon_activate(bool);
 
+static void cmd_date(Stream *chp, int argc, char* argv[]);
 static void cmd_mem(Stream *chp, int argc, char *argv[]);
 static void cmd_threads(Stream *chp, int argc, char *argv[]);
 static void cmd_setfreq(Stream *chp, int argc, char *argv[]);
@@ -42,6 +44,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[]);
 static void cmd_teston(Stream *chp, int argc, char* argv[]);
 static void cmd_adc(Stream *chp, int argc, char* argv[]);
 static void cmd_led(Stream *chp, int argc, char* argv[]);
+static void cmd_nmea(Stream *chp, int argc, char* argv[]);
 static void cmd_listen(Stream *chp, int argc, char* argv[]);
 static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
@@ -86,6 +89,7 @@ CMD_BYTE_SETTING(TRACKER_MINDIST, "MINDIST",  0, 250);
 
 static const ShellCommand shell_commands[] = 
 {
+  { "date",       "Current date and time",                     4, cmd_date }, 
   { "mem",        "Memory status",                             3, cmd_mem },
   { "threads",    "Thread information",                        3, cmd_threads },
   { "freq",       "Set/get freguency of radio",                4, cmd_setfreq },
@@ -105,6 +109,7 @@ static const ShellCommand shell_commands[] =
   { "led",        "Test RGB LED",                              3, cmd_led },
   { "listen",     "Listen to radio",                           3, cmd_listen },
   { "converse",   "Converse mode",                             4, cmd_converse },
+  { "gps",        "Control GPS module",                        3, cmd_nmea },
   { "wifi",       "Access ESP-12 WIFI module",                 4, cmd_wifi },
   { "webserver",  "Control webserver (on WIFI module)",        4, cmd_webserver },
   { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
@@ -214,6 +219,16 @@ bool readline(Stream * cbp, char* buf, const uint16_t max) {
   }
   buf[i] = '\0';
   return true;
+}
+
+/****************************************************************************
+ * Show current date and time
+ ****************************************************************************/
+
+static void cmd_date(Stream *chp, int argc, char* argv[]) {
+  (void)argv; (void)argc;
+  char buf1[10], buf2[10];
+  chprintf(chp, "%s %s UTC", DATE_STR(buf1), TIME_STR(buf2));
 }
 
 
@@ -532,6 +547,48 @@ static void cmd_led(Stream *chp, int argc, char* argv[])
   b=atoi(argv[2]);
   off=atoi(argv[3]);
   rgb_led_mix((uint8_t) r, (uint8_t) g, (uint8_t) b, (uint8_t) off);
+}
+
+
+/****************************************************************************
+ * GPS control
+ ****************************************************************************/
+
+static void cmd_nmea(Stream *chp, int argc, char* argv[])
+{
+  if (argc < 1) {
+    chprintf(chp, "Usage: GPS on|off|nmea|pos\r\n");
+    return;
+  }
+  else if (strncasecmp("on", argv[0], 2) == 0) {
+    chprintf(chp, "***** GPS ON *****\r\n");
+    gps_on();
+    return;
+  } 
+  else if (strncasecmp("off", argv[0], 2) == 0) {
+    chprintf(chp, "***** GPS OFF *****\r\n");
+    gps_off();
+    return;
+  }  
+  else if (strncasecmp("nmea", argv[0], 1) == 0) {
+    chprintf(chp, "***** NMEA PACKETS *****\r\n");
+    gps_mon_raw();
+  } 
+  else if (strncasecmp("pos", argv[0], 3) == 0){
+    chprintf(chp, "***** VALID POSITION REPORTS (GPRMC) *****\r\n");
+    gps_mon_pos();
+  }    
+  else if (strncasecmp("test", argv[0], 4) == 0) {
+    float x;
+    sscanf(argv[1], "%f", &x); 
+    chprintf(chp, "%f\r\n", x);
+  }
+  else 
+    return;
+  
+  /* And wait until some character has been typed */
+  getch(chp);
+  gps_mon_off();
 }
 
 

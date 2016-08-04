@@ -19,14 +19,16 @@
 #define NMEA_MAXTOKENS 16
 
 
-THREAD_STACK(nmeaListener, 400);
+THREAD_STACK(nmeaListener, STACK_NMEALISTENER);
 
 
 /* Defined in commands.c */
 uint8_t tokenize(char*, char*[], uint8_t, char*, bool);
 
-/* Current position */
+/* Current position and time */
 posdata_t current_pos; 
+timestamp_t current_time = 0; 
+date_t current_date;
 
 /* Local handlers */
 static void do_rmc (uint8_t, char**, Stream*);
@@ -63,8 +65,9 @@ static THD_FUNCTION(nmeaListener, arg)
   char* argv[16];
   uint8_t argc;
   
+  chRegSetThreadName("NMEA GPS Listener");
   while (1) {
-    uint8_t checksum = 0; 
+    int checksum = 0; 
     int c_checksum;
     
     readline(_serial, buf, NMEA_BUFSIZE);
@@ -75,7 +78,7 @@ static THD_FUNCTION(nmeaListener, arg)
     
     /* If requested, show raw NMEA packet on screen */
     if (monitor_raw) 
-      chprintf(_shell, "%s\n", buf);
+      chprintf(_shell, "%s\r\n", buf);
     
     
     /* Checksum (optional) */
@@ -84,7 +87,7 @@ static THD_FUNCTION(nmeaListener, arg)
       checksum ^= buf[i];
     if (buf[i] == '*') {
       buf[i] = 0;
-      sscanf(buf+i+1, "%X", &c_checksum);
+      sscanf(buf+i+1, "%x", &c_checksum);
       if (c_checksum != checksum) 
         continue;
     } 
@@ -92,7 +95,6 @@ static THD_FUNCTION(nmeaListener, arg)
     
     /* Split input line into tokens */
     argc = tokenize(buf, argv, NMEA_MAXTOKENS, ",", false);           
-    
     /* Select command handler */    
     if (strncmp("RMC", argv[0]+3, 3) == 0)
       do_rmc(argc, argv, _shell);
@@ -106,6 +108,8 @@ void gps_init(SerialDriver *str, Stream *sh)
 {
     _serial = (Stream*) str; 
     _shell = sh;
+    setPinMode(GPS_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
+    setPinMode(GPS_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
     sdStart(str, &_serialConfig);   
     chCondObjectInit(&wait_gps); 
     chVTObjectInit(&ttimer);
@@ -221,29 +225,37 @@ static void str2coord(const uint8_t ndeg, const char* str, float* coord)
 
 
 /*****************************************************************
- * Convert date/time NMEA fields to 32 bit integer (timestamp)
+ * Convert date/time NMEA fields (timestamp + date)
  *****************************************************************/
  
-static void nmea2time( timestamp_t* t, const char* timestr, const char* datestr)
+static void nmea2time( timestamp_t* t, date_t* d, const char* timestr, const char* datestr)
 {
-    unsigned int hour, min, sec;
-    unsigned int date, month, year;
+    unsigned int hour, min, sec, day, month, year;
     sscanf(timestr, "%2u%2u%2u", &hour, &min, &sec);
-    sscanf(datestr, "%2u%2u%2u", &date, &month, &year);
+    sscanf(datestr, "%2u%2u%2u", &day, &month, &year);
+    d->day = day; d->month = month; d->year = year; 
+    d->year += 2000;
     *t = (uint32_t) 
-         ((uint32_t) date-1) * 86400 +  ((uint32_t)hour) * 3600 + ((uint32_t)min) * 60 + sec;
+         ((uint32_t) d->day-1) * 86400 +  ((uint32_t)hour) * 3600 + ((uint32_t)min) * 60 + sec;
 }
 
 
 
 char* time2str(char* buf, timestamp_t time)
 {
-    sprintf(buf, "%2u:%2u:%2u", 
+    sprintf(buf, "%02u:%02u:%02u", 
       (uint8_t) ((time / 3600) % 24), (uint8_t) ((time / 60) % 60), (uint8_t) (time % 60) );
     return buf;
 }
  
  
+char* date2str(char* buf, date_t date)
+{
+   sprintf(buf, "%02hu-%02hu-%4hu", date.day, date.month, date.year);
+   return buf;
+}
+
+
  
 /****************************************************************
  * handle changes in GPS lock - mainly change LED blinking
@@ -302,7 +314,10 @@ static void do_rmc(uint8_t argc, char** argv, Stream *out)
     char tbuf[9];
     if (argc != 13)                 /* Ignore if wrong format */
        return;
-
+    
+    /* get timestamp */
+    nmea2time(&current_time, &current_date, argv[1], argv[9]);
+    
     if (*argv[2] != 'A') { 
        notify_fix(false);          /* Ignore if receiver not in lock */
        lock_cnt = 4;
@@ -316,10 +331,9 @@ static void do_rmc(uint8_t argc, char** argv, Stream *out)
       
     lock_cnt = 1;
     notify_fix(true);
-       
-    /* get timestamp */
-    nmea2time(&current_pos.timestamp, argv[1], argv[9]);
    
+    current_pos.timestamp = current_time; 
+    
     /* get latitude [ddmm.mmmmm] */
     str2coord(2, argv[3], &current_pos.latitude);  
     if (*argv[4] == 'S')

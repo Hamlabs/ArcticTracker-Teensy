@@ -118,6 +118,17 @@ extern uint16_t blink_length, blink_interval;
 #define BLINK_GPS_SEARCHING { blink_length = 450; blink_interval = 450; }
 
 
+/* Stack sizes for threads */
+#define STACK_NMEALISTENER 1024
+#define STACK_HDLCDECODER   400
+#define STACK_HDLCENCODER   500
+#define STACK_MONITOR       500
+#define STACK_TRACKER       500
+#define STACK_UI            164
+#define STACK_WIFI         1024
+#define STACK_SHELL        1024
+// 
+
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)
 #define THREAD_START(n, prio, arg) chThdCreateStatic(wa_##n, sizeof(wa_##n), (prio), n, arg)

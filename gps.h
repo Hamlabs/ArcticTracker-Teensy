@@ -9,6 +9,12 @@
 /* Timestamp: Seconds since first day of month 00:00 */
 typedef uint32_t timestamp_t; 
 
+typedef struct _Date {
+   uint16_t year;
+   uint8_t month;
+   uint8_t day;
+} date_t;
+
 /* Position report */
 typedef struct _PosData {    
     float latitude;
@@ -20,9 +26,16 @@ typedef struct _PosData {
 
 
 
-/* Access to current position */
+/* Access to current position. Note that current_time can be 
+ * different from timestamp in current_pos since GPS is not always in fix 
+ */
 
 extern posdata_t current_pos;
+extern timestamp_t current_time;
+extern date_t current_date;
+
+#define TIME_STR(buf) time2str((buf), current_time)
+#define DATE_STR(buf) date2str((buf), current_date)
 
 
 /* API */
@@ -35,6 +48,7 @@ void     gps_mon_off (void);
 bool     gps_is_fixed (void);
 bool     gps_wait_fix (uint16_t);
 char*    time2str (char*, timestamp_t);
+char*    date2str (char*, date_t);
 void     gps_on(void);
 void     gps_off(void);
 bool     gps_hasWaiters(void);
