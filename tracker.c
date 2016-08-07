@@ -25,12 +25,9 @@ posdata_t prev_pos_gps;
 int16_t course=-1, prev_course=-1, prev_gps_course=-1;
 
 extern fbq_t* outframes;  
-extern Stream cdc_outstr;
 static bool maxpause_reached = false;
 static uint8_t pause_count = 0;
 static bool waited = false;
-// static BCond tready; 
-
 
 static void activate_tx(void);
 static bool should_update(posdata_t*, posdata_t*, posdata_t*);
@@ -61,30 +58,9 @@ double round(double);
 double log(double);
 long lround(double);
 
-extern bool is_off;   /* FIXME: Use accessor function */
+extern bool is_off ;         /* FIXME: Use accessor function */
 
 
-/*********************************************************
- *  Turn tracking on
- *********************************************************/
-
-void tracker_on() 
-{
-    if (GET_BYTE_PARAM(TRACKER_ON))
-       return; 
-    SET_BYTE_PARAM(TRACKER_ON, 1);
-//    THREAD_START(trackerThread, STACK_TRACKER); FIXME
-}
-
-
-/**********************************************************
- * Turn tracking off 
- **********************************************************/
-
-void tracker_off()
-{ 
-    SET_BYTE_PARAM(TRACKER_ON, 0);
-}
 
 
 /***********************************************************
@@ -211,17 +187,12 @@ static void report_objects(bool keep)
  * main thread for tracking
  ***************************************************************/
 
-#define GPS_TIMEOUT 6 /* MOVE TO defines.h */
-
 static THD_FUNCTION(tracker, arg)
 {
    (void) arg;
     uint8_t t;
     uint8_t st_count = GET_BYTE_PARAM(STATUS_TIME);
-    
-    chRegSetThreadName("APRS Tracker"); 
- //   bcond_wait(&tready); FIXME
- //   bcond_clear(&tready);
+    chRegSetThreadName("APRS Tracker");
     gps_on();     
     while (GET_BYTE_PARAM(TRACKER_ON)) 
     {
@@ -229,25 +200,21 @@ static THD_FUNCTION(tracker, arg)
         * Wait for a fix on position. But with timeout to allow status and 
         * object reports to be sent. 
         */  
-        uint8_t statustime = GET_BYTE_PARAM( STATUS_TIME);
-        waited = gps_wait_fix( GPS_TIMEOUT * TRACKER_SLEEP_TIME * TIMER_RESOLUTION); // FIXME: timer res
+        uint8_t statustime = GET_BYTE_PARAM(STATUS_TIME);
+        rgb_led_off();
+        waited = gps_wait_fix( GPS_TIMEOUT * TRACKER_SLEEP_TIME * TIMER_RESOLUTION);
         if (!gps_is_fixed())
            st_count += GPS_TIMEOUT-1; 
-
-       /* Pause GPS serial data to avoid interference with modulation 
-        * and to save CPU cycles. 
-        */
- //       uart_rx_pause(); FIXME  
 
         /*
          * Send status report and object reports.
          */
         if (++st_count >= statustime) {
-           st_count = 0;
            report_status(&current_pos);
+           st_count = 0;
            report_objects(true);
         }       
-        
+
         /*
          * Send position report
          */  
@@ -259,34 +226,18 @@ static THD_FUNCTION(tracker, arg)
               report_station_position(&current_pos, false);
               prev_pos = current_pos;                      
            }
-           else {
-              if (GET_BYTE_PARAM(FAKE_REPORTS_ON))
-                 report_station_position(&current_pos, true);
-           }
         }
         prev_pos_gps = current_pos;
         activate_tx();
         t = TRACKER_SLEEP_TIME;
-        
-        /* Powersave mode */
-        if ( maxpause_reached &&
-             ( !gps_is_fixed() || (current_pos.speed < 1 && GET_BYTE_PARAM(GPS_POWERSAVE_ON))))
-        {
-             gps_off();
-             pause_count = GET_BYTE_PARAM(TRACKER_MAXPAUSE) - 1;
-             sleep (pause_count * t * TIMER_RESOLUTION);
-             gps_on();
-        }
 
         t = (t > GPS_FIX_TIME) ?
             t - GPS_FIX_TIME : 1;
-        sleep(t * TIMER_RESOLUTION); 
         
- //       uart_rx_resume(); FIXME
+        sleep(t * TIMER_RESOLUTION); 
         sleep(GPS_FIX_TIME * TIMER_RESOLUTION);   
     }
     gps_off();
- //   bcond_set(&tready); FIXME
 }
 
 
@@ -297,11 +248,34 @@ static THD_FUNCTION(tracker, arg)
  
 void tracker_init()
 {
-//    bcond_init(&tready, true); FIXME
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
     if (GET_BYTE_PARAM(TRACKER_ON)) 
         THREAD_START(tracker, NORMALPRIO, NULL);
+}
+
+
+
+/*********************************************************
+ *  Turn tracking on
+ *********************************************************/
+
+void tracker_on() 
+{
+  if (GET_BYTE_PARAM(TRACKER_ON))
+    return; 
+  SET_BYTE_PARAM(TRACKER_ON, 1);
+  THREAD_START(tracker, NORMALPRIO, NULL);
+}
+
+
+/**********************************************************
+ * Turn tracking off 
+ **********************************************************/
+
+void tracker_off()
+{ 
+  SET_BYTE_PARAM(TRACKER_ON, 0);
 }
 
 
@@ -371,7 +345,6 @@ static bool should_update(posdata_t* prev_gps, posdata_t* prev, posdata_t* curre
 	 
         prev_course = course;
         pause_count = 0;
-        beep(3);  // REMOVE.
         return true;
     }
     if ( maxpause_reached || waited
@@ -431,7 +404,7 @@ static void report_status(posdata_t* pos)
  //   sprintf(vbatt, "%.1f%c", batt_voltage(), '\0');
     
     /* Send firmware version and battery voltage in status report */
-    fbuf_putstr(&packet, "FW=");
+    fbuf_putstr(&packet, "FW=AT ");
     fbuf_putstr(&packet, VERSION_STRING);
  //   fbuf_putstr(&packet, " / VBATT="); FIXME
  //   fbuf_putstr(&packet, vbatt);

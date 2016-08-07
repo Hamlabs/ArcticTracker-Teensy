@@ -61,9 +61,10 @@
 
 /* APRS tracking FIXME */
 #define TRACKER_SLEEP_TIME 10
-#define TIMER_RESOLUTION   100 
+#define TIMER_RESOLUTION   1000 
 #define GPS_FIX_TIME       3
 #define COMMENT_PERIOD     4
+#define GPS_TIMEOUT        6 
 
 /* ESP-12 WIFI module */
 #define WIFI_ENABLE         TEENSY_PIN21
@@ -119,14 +120,14 @@ extern uint16_t blink_length, blink_interval;
 
 
 /* Stack sizes for threads */
-#define STACK_NMEALISTENER 1024
+#define STACK_NMEALISTENER 1500
 #define STACK_HDLCDECODER   400
 #define STACK_HDLCENCODER   500
 #define STACK_MONITOR       500
-#define STACK_TRACKER       500
+#define STACK_TRACKER      1500
 #define STACK_UI            164
 #define STACK_WIFI         1024
-#define STACK_SHELL        1024
+#define STACK_SHELL        1100
 // 
 
 

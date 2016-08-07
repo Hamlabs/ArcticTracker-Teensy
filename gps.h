@@ -51,7 +51,6 @@ char*    time2str (char*, timestamp_t);
 char*    date2str (char*, date_t);
 void     gps_on(void);
 void     gps_off(void);
-bool     gps_hasWaiters(void);
 
 #endif
 

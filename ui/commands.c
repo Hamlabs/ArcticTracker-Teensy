@@ -48,6 +48,7 @@ static void cmd_nmea(Stream *chp, int argc, char* argv[]);
 static void cmd_listen(Stream *chp, int argc, char* argv[]);
 static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
+static void cmd_tracker(Stream *chp, int argc, char *argv[]);
 static void cmd_wifi(Stream *chp, int argc, char *argv[]);
 static void cmd_mycall(Stream *chp, int argc, char *argv[]);
 static void cmd_dest(Stream *chp, int argc, char *argv[]);
@@ -70,11 +71,11 @@ static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*,
       static inline void cmd_##x(Stream* out, int argc, char** argv) \
       { _parameter_setting_byte(out, argc, argv, x##_offset, &x##_default, name, llimit, ulimit); }    
       
-CMD_BOOL_SETTING(TRACKER_ON,      "TRACKER");      
 CMD_BOOL_SETTING(TIMESTAMP_ON,    "TIMESTAMP");
 CMD_BOOL_SETTING(COMPRESS_ON,     "COMPRESS");
 CMD_BOOL_SETTING(ALTITUDE_ON,     "ALTITUDE");
 CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
+CMD_BOOL_SETTING(TXMON_ON,        "TXMON");
 CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
 CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
 CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
@@ -110,6 +111,8 @@ static const ShellCommand shell_commands[] =
   { "listen",     "Listen to radio",                           3, cmd_listen },
   { "converse",   "Converse mode",                             4, cmd_converse },
   { "gps",        "Control GPS module",                        3, cmd_nmea },
+  { "txmon",      "Monitor transmitted packets on/off",        4, cmd_TXMON_ON }, 
+  { "tracker",    "Tracker on/off",                            5, cmd_tracker },
   { "wifi",       "Access ESP-12 WIFI module",                 4, cmd_wifi },
   { "webserver",  "Control webserver (on WIFI module)",        4, cmd_webserver },
   { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
@@ -118,7 +121,6 @@ static const ShellCommand shell_commands[] =
   { "digipath",   "Set/get APRS digipeater path",              5, cmd_digipath },  
   { "ip",         "Get IP address from WIFI module",           2, cmd_ip },
   { "macaddr",    "Get MAC address from WIFI module",          3, cmd_macaddr },
-  { "tracker",    "Tracking on/off",                           4, cmd_TRACKER_ON },
   { "timestamp",  "Timestamp on/off",                          5, cmd_TIMESTAMP_ON },
   { "compress",   "Compressed positions on/off",               4, cmd_COMPRESS_ON },
   { "altitude",   "Altidude in reports on/off",                4, cmd_ALTITUDE_ON },
@@ -592,23 +594,24 @@ static void cmd_nmea(Stream *chp, int argc, char* argv[])
 }
 
 
+/*****************************************************************************
+ * tracker on / off
+ *****************************************************************************/
 
-/****************************************************************************
- * Listen on radio
- ****************************************************************************/
-
-static void cmd_listen(Stream *chp, int argc, char* argv[])
+static void cmd_tracker(Stream *chp, int argc, char* argv[])
 {
-  (void) argv;
-  (void) argc; 
+  if (argc < 1) 
+    chprintf(chp, "TRACKER %s\r\n", (GET_BYTE_PARAM(TRACKER_ON) ? "ON" : "OFF"));
   
-  afsk_rx_enable();
-  mon_activate(true);
-  getch(chp);
-  mon_activate(false);
-  afsk_rx_disable();
+  else if (strncasecmp("on", argv[0], 2) == 0) {
+    chprintf(chp, "***** TRACKER ON *****\r\n");
+    tracker_on();
+  } 
+  else if (strncasecmp("off", argv[0], 2) == 0) {
+    chprintf(chp, "***** TRACKER OFF *****\r\n");
+    tracker_off();
+  } 
 }
-
 
 
 /*****************************************************************************
@@ -710,6 +713,24 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[])
    }
 }
 
+
+
+
+/****************************************************************************
+ * Listen on radio
+ ****************************************************************************/
+
+static void cmd_listen(Stream *chp, int argc, char* argv[])
+{
+  (void) argv;
+  (void) argc; 
+  
+  afsk_rx_enable();
+  mon_activate(true);
+  getch(chp);
+  mon_activate(false);
+  afsk_rx_disable();
+}
 
 
 

@@ -17,7 +17,7 @@ NDIGIS                  done    done
 DIGIS                   "       "
 SYMBOL                  done    done
 SYMBOL_TAB,             "       " 
-TRACKER_ON              ?       tbd
+TRACKER_ON              -       done
 TRACKER_TURN_LIMIT      done    done     Smart beaconing
 TRACKER_MAXPAUSE        done    done
 TRACKER_MINDIST         done    done
@@ -46,7 +46,7 @@ WIFIAP                  tbd     done
     DONE. 
 
 * Tracker function
-    IN PROGRESS, NEED TESTING
+    DONE.
     
 * Set web password
     DONE (shell)

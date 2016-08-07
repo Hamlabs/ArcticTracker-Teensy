@@ -58,7 +58,7 @@ void mon_activate(bool m)
    mon_on = m;
    FBQ* mq = (mon_on? &mon : NULL);
    hdlc_subscribe_rx(mq, 0);
-   if ( true || !mon_on /* || GET_BYTE_PARAM(TXMON_ON) */ )
+   if ( true || !mon_on || GET_BYTE_PARAM(TXMON_ON) )
       hdlc_monitor_tx(mq);
    
    if (tstart) 

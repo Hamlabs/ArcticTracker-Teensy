@@ -39,9 +39,11 @@ static void notify_fix (bool);
 static char buf[NMEA_BUFSIZE+1];
 static bool monitor_pos, monitor_raw; 
 static bool is_fixed = true;
-static condition_variable_t wait_gps; 
 static virtual_timer_t ttimer; 
 
+BSEMAPHORE_DECL(wait_gps, true);
+#define WAIT_FIX chBSemWait(&wait_gps)
+#define SIGNAL_FIX chBSemSignal(&wait_gps)
 
 static Stream *_serial, *_shell;
 
@@ -111,7 +113,6 @@ void gps_init(SerialDriver *str, Stream *sh)
     setPinMode(GPS_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
     setPinMode(GPS_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
     sdStart(str, &_serialConfig);   
-    chCondObjectInit(&wait_gps); 
     chVTObjectInit(&ttimer);
     monitor_pos = monitor_raw = false; 
     THREAD_START(nmeaListener, NORMALPRIO, NULL);
@@ -267,7 +268,7 @@ void notify_fix(bool lock)
       BLINK_GPS_SEARCHING
    else {
        if (!is_fixed) {
-          chCondBroadcast(&wait_gps);
+          SIGNAL_FIX;
        }     
        BLINK_NORMAL
    }
@@ -285,18 +286,13 @@ bool gps_wait_fix(uint16_t timeout)
      if (is_fixed) 
         return false;      
      if (timeout > 0) {
-       chVTSet(&ttimer, MS2ST(timeout), (vtfunc_t) chCondBroadcast, &wait_gps); 
+       chVTSet(&ttimer, MS2ST(timeout), (vtfunc_t) chBSemSignal, &wait_gps); 
      }
-
-    chCondWait(&wait_gps);
+    WAIT_FIX;
     chVTReset(&ttimer);
     return true;
 }         
 
-
-bool gps_hasWaiters()
-  { return !chThdQueueIsEmptyI(&wait_gps.queue); }
-   
    
 uint16_t course_count = 0;  
 float altitude = -1;

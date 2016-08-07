@@ -30,6 +30,8 @@
 
 #include "mcuconf.h"
 
+#define CHPRINTF_USE_FLOAT TRUE
+
 /**
  * @brief   Enables the PAL subsystem.
  */

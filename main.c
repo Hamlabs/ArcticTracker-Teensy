@@ -23,6 +23,10 @@ extern void mon_init(Stream*);
 
 extern SerialUSBDriver SDU1;
 
+fbq_t *outframes, *inframes;  
+bool is_off = false;  /* FIXME: See tracker.c */
+
+
 
 /*************************************************************
  * Set up interrupt driven GPIO
@@ -53,16 +57,18 @@ int main(void)
    halInit();
    chSysInit();
    eeprom_initialize(); 
-   hdlc_init_encoder(afsk_tx_init());
-   afsk_tx_start(); // Call this only when needed and stop it when not needed??
-                    // FIXME: Rename to afsk_tx_enable
    ext_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
    gps_init(&GPS_SERIAL, (Stream*) &SHELL_SERIAL);
+   tracker_init();
    ui_init();
    adc_init();
    hdlc_init_decoder(afsk_rx_init());
+   outframes = hdlc_init_encoder(afsk_tx_init());
+   afsk_tx_start(); // Call this only when needed and stop it when not needed??
+   // FIXME: Rename to afsk_tx_enable
+   
    mon_init((Stream*) &SHELL_SERIAL);
    wifi_init((Stream*) &WIFI_SERIAL);
    shellInit();
