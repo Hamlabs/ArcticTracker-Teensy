@@ -9,7 +9,7 @@ static bool mon_on = false;
 static Stream *out;
 FBQ mon;
 
-THREAD_STACK(monitor, STACK_MONITOR);
+// THREAD_STACK(monitor, STACK_MONITOR);
 
 
 
@@ -22,6 +22,12 @@ void mon_init(Stream* outstr)
 
 
 
+/******************************************************************************
+ *  Monitor thread 
+ *   Just write out incoming frames. 
+ *   Currently this is static. We may consider making it dynamic to save
+ *   memory when it is not used. 
+ ******************************************************************************/
 
 static THD_FUNCTION(monitor, arg)
 {
@@ -45,7 +51,7 @@ static THD_FUNCTION(monitor, arg)
 }
 
 
-
+static thread_t* mont=NULL;
 
 void mon_activate(bool m)
 { 
@@ -56,17 +62,20 @@ void mon_activate(bool m)
    bool tstop = !m && mon_on;
    
    mon_on = m;
-   FBQ* mq = (mon_on? &mon : NULL);
-   hdlc_subscribe_rx(mq, 0);
-   if ( true || !mon_on || GET_BYTE_PARAM(TXMON_ON) )
-      hdlc_monitor_tx(mq);
    
-   if (tstart) 
-      THREAD_START(monitor, NORMALPRIO, NULL);  
+   if (tstart) {
+      FBQ* mq = (mon_on? &mon : NULL);
+      hdlc_subscribe_rx(mq, 0);
+      if ( true || !mon_on || GET_BYTE_PARAM(TXMON_ON) )
+         hdlc_monitor_tx(mq);
+      mont = THREAD_DSTART(monitor, STACK_MONITOR, NORMALPRIO, NULL);  
+   }
    if (tstop) {
       hdlc_monitor_tx(NULL);
       hdlc_subscribe_rx(NULL, 0);
       fbq_signal(&mon);
+      if (mont!=NULL) chThdWait(mont);
+      mont=NULL;
    }
 }
 

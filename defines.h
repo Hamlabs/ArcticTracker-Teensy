@@ -64,7 +64,7 @@
 #define TIMER_RESOLUTION   1000 
 #define GPS_FIX_TIME       3
 #define COMMENT_PERIOD     4
-#define GPS_TIMEOUT        6 
+#define GPS_TIMEOUT        3 
 
 /* ESP-12 WIFI module */
 #define WIFI_ENABLE         TEENSY_PIN21
@@ -123,7 +123,8 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_NMEALISTENER 1500
 #define STACK_HDLCDECODER   400
 #define STACK_HDLCENCODER   500
-#define STACK_MONITOR       500
+#define STACK_HDLC_TEST     256
+#define STACK_MONITOR       512
 #define STACK_TRACKER      1500
 #define STACK_UI            164
 #define STACK_WIFI         1024
@@ -133,8 +134,8 @@ extern uint16_t blink_length, blink_interval;
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)
 #define THREAD_START(n, prio, arg) chThdCreateStatic(wa_##n, sizeof(wa_##n), (prio), n, arg)
-#define THREAD_DSTART(n, name, size, prio, arg) \
-   chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE((size)), (name), (prio), n, arg)
+#define THREAD_DSTART(n, size, prio, arg) \
+   chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE((size)), "-", (prio), n, arg)
    
 #define sleep(n)  chThdSleepMilliseconds(n)
 #define t_yield   chThdYield

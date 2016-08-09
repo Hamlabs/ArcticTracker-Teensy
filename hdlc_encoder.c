@@ -90,7 +90,7 @@ void hdlc_test_on(uint8_t b)
 { 
    testbyte = b;
    test_active = true;
-   testt = THREAD_DSTART(hdlc_testsignal, "hdlc testsignal", 256, NORMALPRIO, NULL);
+   testt = THREAD_DSTART(hdlc_testsignal, STACK_HDLC_TEST, NORMALPRIO, NULL);
 }
 
 void hdlc_test_off()

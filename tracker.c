@@ -16,7 +16,7 @@
 
 
 
-THREAD_STACK(tracker, STACK_TRACKER);
+// THREAD_STACK(tracker, STACK_TRACKER);
 
 // #include "math.h"
 
@@ -201,11 +201,10 @@ static THD_FUNCTION(tracker, arg)
         * object reports to be sent. 
         */  
         uint8_t statustime = GET_BYTE_PARAM(STATUS_TIME);
-        rgb_led_off();
         waited = gps_wait_fix( GPS_TIMEOUT * TRACKER_SLEEP_TIME * TIMER_RESOLUTION);
         if (!gps_is_fixed())
            st_count += GPS_TIMEOUT-1; 
-
+        
         /*
          * Send status report and object reports.
          */
@@ -226,21 +225,23 @@ static THD_FUNCTION(tracker, arg)
               report_station_position(&current_pos, false);
               prev_pos = current_pos;                      
            }
-        }
-        prev_pos_gps = current_pos;
-        activate_tx();
-        t = TRACKER_SLEEP_TIME;
-
-        t = (t > GPS_FIX_TIME) ?
-            t - GPS_FIX_TIME : 1;
         
-        sleep(t * TIMER_RESOLUTION); 
-        sleep(GPS_FIX_TIME * TIMER_RESOLUTION);   
+           prev_pos_gps = current_pos;
+           activate_tx();
+           t = TRACKER_SLEEP_TIME;
+ 
+           t = (t > GPS_FIX_TIME) ?
+               t - GPS_FIX_TIME : 1;
+        
+           sleep(t * TIMER_RESOLUTION); 
+           sleep(GPS_FIX_TIME * TIMER_RESOLUTION);   
+        }
     }
     gps_off();
 }
 
 
+static thread_t* trackert=NULL;
 
 /***************************************************************
  * Init tracker. gps_init should be called first.
@@ -251,7 +252,7 @@ void tracker_init()
     prev_pos.timestamp=0;
     prev_pos_gps.timestamp=0;
     if (GET_BYTE_PARAM(TRACKER_ON)) 
-        THREAD_START(tracker, NORMALPRIO, NULL);
+        trackert = THREAD_DSTART(tracker, STACK_TRACKER, NORMALPRIO, NULL);
 }
 
 
@@ -265,7 +266,7 @@ void tracker_on()
   if (GET_BYTE_PARAM(TRACKER_ON))
     return; 
   SET_BYTE_PARAM(TRACKER_ON, 1);
-  THREAD_START(tracker, NORMALPRIO, NULL);
+  trackert = THREAD_DSTART(tracker, STACK_TRACKER, NORMALPRIO, NULL);
 }
 
 
@@ -276,6 +277,8 @@ void tracker_on()
 void tracker_off()
 { 
   SET_BYTE_PARAM(TRACKER_ON, 0);
+  if (trackert!=NULL) chThdWait(trackert);
+  trackert=NULL;
 }
 
 
