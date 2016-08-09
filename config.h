@@ -88,9 +88,9 @@ DEFINE_PARAM ( TXMON_ON,           189, Byte  );
 DEFINE_PARAM ( WIFI_ON,            191, Byte );
 DEFINE_PARAM ( HTTP_ON,            193, Byte );
 DEFINE_PARAM ( HTTP_USER,          195, credential );
-DEFINE_PARAM ( HTTP_PASSWD,        227, credential );
-DEFINE_PARAM ( SOFTAP_PASSWD,      260, credential );
-DEFINE_PARAM ( WIFIAP,             293, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( HTTP_PASSWD,        228, credential );
+DEFINE_PARAM ( SOFTAP_PASSWD,      261, credential );
+DEFINE_PARAM ( WIFIAP,             294, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 

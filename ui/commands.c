@@ -23,6 +23,7 @@
 #include "ui/text.h"
 #include "ui/wifi.h"
 #include "gps.h"
+#include "tracker.h"
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
@@ -276,7 +277,7 @@ static void cmd_threads(Stream *chp, int argc, char *argv[]) {
     uint32_t stklimit = 0U;
     #endif
     chprintf(chp, "%08lx %08lx %08lx %4lu %4lu %9s  %s\r\n",
-             stklimit, (uint32_t)tp->ctx.sp, (uint32_t)tp,
+             stklimit, (uint32_t)tp->ctx.sp, (uint32_t)tp, 
              (uint32_t)tp->refs - 1, (uint32_t)tp->prio, states[tp->state],
              tp->name == NULL ? "" : tp->name);
     tp = chRegNextThread(tp);
@@ -608,8 +609,9 @@ static void cmd_tracker(Stream *chp, int argc, char* argv[])
     tracker_on();
   } 
   else if (strncasecmp("off", argv[0], 2) == 0) {
-    chprintf(chp, "***** TRACKER OFF *****\r\n");
+    chprintf(chp, "please wait ...\r\n");
     tracker_off();
+    chprintf(chp, "***** TRACKER OFF *****\r\n");
   } 
 }
 
@@ -687,7 +689,7 @@ static void cmd_wifi(Stream *chp, int argc, char* argv[])
 static void cmd_webserver(Stream *chp, int argc, char* argv[])
 {
    if (argc < 1) {
-      chprintf(chp, "Usage: webserver on|off|auth\r\n");
+      chprintf(chp, "Usage: webserver on|off|info|auth\r\n");
       return;
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
@@ -700,6 +702,9 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[])
      SET_BYTE_PARAM(HTTP_ON, 0);
      wifi_restart();
    }
+   else if (strncasecmp("info", argv[0], 2) == 0) {
+      chprintf(chp, "Webserver is %s\r\n", (GET_BYTE_PARAM(HTTP_ON) ? "on" : "off"));
+   }
    else if (strncasecmp("auth", argv[0], 3) == 0) {
       chprintf(chp, "Enter username: ");
       shellGetLine(chp, buf, 32);
@@ -708,6 +713,7 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[])
          chprintf(chp, "Enter password: ");
          shellGetLine(chp, buf, 32);
          SET_PARAM(HTTP_PASSWD, buf);
+         wifi_restart();
          chprintf(chp, "Ok\r\n");
       }
    }
