@@ -89,12 +89,19 @@ void wifi_internal() {
 
 static void wifi_start_server() {
   sleep(200);
+  addr_t call;
   char uname[32], passwd[32];
   GET_PARAM(HTTP_USER, uname);
   GET_PARAM(HTTP_PASSWD, passwd);
   if (GET_BYTE_PARAM(HTTP_ON))
     chprintf(_serial, "start_http_server('%s','%s')\r", uname, passwd);
   sleep(100);
+  
+  GET_PARAM(MYCALL, &call);
+  GET_PARAM(SOFTAP_PASSWD, passwd);
+  chprintf(_serial, "start_softap('Arctic-%s', '%s')\r", addr2str(uname, &call), passwd);
+  sleep(100);
+  
   chprintf(_serial, "coroutine.resume(listener)\r");
   sleep(100);
 }

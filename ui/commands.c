@@ -51,6 +51,7 @@ static void cmd_converse(Stream *chp, int argc, char* argv[]);
 static void cmd_txpower(Stream *chp, int argc, char *argv[]);
 static void cmd_tracker(Stream *chp, int argc, char *argv[]);
 static void cmd_wifi(Stream *chp, int argc, char *argv[]);
+static void cmd_softap(Stream *chp, int argc, char* argv[]);
 static void cmd_mycall(Stream *chp, int argc, char *argv[]);
 static void cmd_dest(Stream *chp, int argc, char *argv[]);
 static void cmd_digipath(Stream *chp, int argc, char *argv[]);
@@ -116,6 +117,7 @@ static const ShellCommand shell_commands[] =
   { "tracker",    "Tracker on/off",                            5, cmd_tracker },
   { "wifi",       "Access ESP-12 WIFI module",                 4, cmd_wifi },
   { "webserver",  "Control webserver (on WIFI module)",        4, cmd_webserver },
+  { "softap",     "Control access point (on WIFI module)",     5, cmd_softap },  
   { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
   { "dest",       "Set/get APRS destination address",          3, cmd_dest },
   { "symbol",     "Set/get APRS symbol",                       3, cmd_symbol },
@@ -690,7 +692,6 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[])
 {
    if (argc < 1) {
       chprintf(chp, "Usage: webserver on|off|info|auth\r\n");
-      return;
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
      chprintf(chp, "***** HTTP SERVER ON *****\r\n");
@@ -719,6 +720,33 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[])
    }
 }
 
+
+
+/****************************************************************************
+ * Software AP config
+ ****************************************************************************/
+
+static void cmd_softap(Stream *chp, int argc, char* argv[]) 
+{
+   if (argc < 1) {
+     chprintf(chp, "Usage: softap info|auth\r\n");
+   }
+   else if (strncasecmp("info", argv[0], 2) == 0) {
+     chprintf(chp, "       AP SSID: %s\r\n",  wifi_doCommand("AP.SSID", buf));     
+     chprintf(chp, " AP IP address: %s\r\n",  wifi_doCommand("AP.IP", buf));
+   }
+   else if (strncasecmp("auth", argv[0], 3) == 0) {
+     chprintf(chp, "Enter password: ");
+     shellGetLine(chp, buf, 32);
+     if (strlen(buf) > 8) {
+       SET_PARAM(SOFTAP_PASSWD, buf);
+       wifi_restart();
+       chprintf(chp, "Ok\r\n");
+     }
+     else
+       chprintf(chp, "ERROR. AP password must be at least 8 characters\r\n");
+   }
+}
 
 
 
