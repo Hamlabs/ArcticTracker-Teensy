@@ -38,6 +38,7 @@ GPS_POWERSAVE_ON        ?       ?
 HTTP_ON                 -       done
 HTTP_USER               tbd     done
 HTTP_PASSWD             tbd     done
+SOFTAP_PASSWD           tbd     done
 WIFIAP                  tbd     done  
 
 --------------------------------------------------------
@@ -53,10 +54,12 @@ WIFIAP                  tbd     done
     
 * Turn on/off webserver. Shell command.
     DONE.
-    
-* Test tracking with radio and moving
-
+   
 * Software AP shell command, set passwd
+    DONE.
+ 
+* Test tracking with radio and moving
+    DONE. Ok.
 
 * Web interface page for WIFI related settings.
 
