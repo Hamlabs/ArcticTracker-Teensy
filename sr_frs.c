@@ -23,6 +23,7 @@ static uint32_t _rxfreq;       // RX frequency in 100 Hz units
 static uint8_t  _squelch;      // Squelch level (0-8 where 0 is open)
 static Stream*  _serial;
 
+static int count = 0; 
   
 static bool _handshake(void);
 static bool _setGroupParm(void);
@@ -33,6 +34,43 @@ static const SerialConfig _serialConfig = {
    9600
 };
 
+BSEMAPHORE_DECL(tx_off, true);
+#define WAIT_TX_OFF chBSemWait(&tx_off)
+#define SIGNAL_TX_OFF chBSemSignal(&tx_off)
+
+
+
+/******************************************************
+ * Need radio - turn it on if not already on
+ ******************************************************/
+ 
+void radio_require(void)
+{
+    if (++count == 1) 
+        radio_on(true);
+}
+
+
+
+/*******************************************************
+ * Radio not needed any more - turn it off if no others
+ * need it
+ *******************************************************/
+ 
+void radio_release(void)
+{
+    if (--count == 0) {
+       /* 
+        * Before turning off transceiver, wait until
+        * Packet is sent and transmitter is turned off. 
+        */
+       sleep(60);
+       hdlc_wait_idle();
+       WAIT_TX_OFF;
+       radio_on(false);
+    }
+    if (count < 0) count = 0;
+}
 
 
 /***********************************************
@@ -130,6 +168,7 @@ void radio_PTT(bool on)
     else {
        setPin(TRX_PTT);
        rgb_led_off();
+       SIGNAL_TX_OFF;
     }
 }
 

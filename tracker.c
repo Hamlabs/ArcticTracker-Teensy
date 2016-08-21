@@ -292,8 +292,8 @@ void tracker_off()
 static void activate_tx()
 {
       if (!is_off && hdlc_enc_packets_waiting()) {
-  //       radio_require(); FIXME
-  //       radio_release();
+         radio_require(); 
+         radio_release();
       }
 }
 

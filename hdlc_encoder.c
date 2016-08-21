@@ -52,7 +52,12 @@ bool hdlc_enc_packets_waiting()
    { return !fbq_eof(&encoder_queue) || !BUFFER_EMPTY; }
 
 
+void hdlc_wait_idle()
+   { /* TBD */}
 
+   
+   
+   
 /*******************************************************
  * Pseudo random function.
  *******************************************************/

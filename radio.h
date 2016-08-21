@@ -3,7 +3,8 @@
   
  #include <stdint.h>
  
- 
+ void radio_require(void);
+ void radio_release(void);
  void radio_init(SerialDriver* sd);
  bool radio_setFreq(uint32_t txfreq, uint32_t rxfreq);
  bool radio_setSquelch(uint8_t sq);

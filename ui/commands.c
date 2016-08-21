@@ -101,11 +101,11 @@ static const ShellCommand shell_commands[] =
   { "miclevel",   "Set/get mic sensitivity level (1-8)",       4, cmd_setmiclevel }, 
   { "txpower",    "Set/get TX power (hi=1W, lo=0.5W)",         4, cmd_txpower },
   { "txdelay",    "Set/get TX delay (flags before frame)",     3, cmd_TXDELAY },
-  { "txtail",     "Set/get TX tail (flags after frame)",       3, cmd_TXTAIL },
+  { "txtail",     "Set/get TX tail (flags after frame)",       4, cmd_TXTAIL },
   { "maxframe",   "Set/get max frames in one transmission",    4, cmd_MAXFRAME },
   { "ptt",        "Turn on/off transmitter",                   3, cmd_ptt },
   { "radio",      "Turn on/off radio",                         5, cmd_radio },
-  { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone",      3, cmd_txtone },
+  { "txtone",     "Send 1200Hz (lo) or 2200Hz (hi) tone",      4, cmd_txtone },
   { "testpacket", "Send test APRS packet",                     5, cmd_testpacket },
   { "teston",     "Generate test signal with data byte",       6, cmd_teston },
   { "adc",        "Get test samples from ADC",                 3, cmd_adc },
@@ -435,11 +435,12 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
      chprintf(chp, "Usage: tone high|low|off\r\n");
      return;
    } 
-
+   
    if (strncasecmp("hi", argv[0], 2) == 0) {
       chprintf(chp, "***** TEST TONE HIGH *****\r\n");
       tone_setHigh(true);
       if (!txtone_on) {
+	 radio_require();
          radio_PTT(true); 
          tone_start();
          txtone_on = true;
@@ -449,6 +450,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
       chprintf(chp, "***** TEST TONE LOW *****\r\n");
       tone_setHigh(false);
       if (!txtone_on) {
+	 radio_require();
          radio_PTT(true);
          tone_start();
          txtone_on = true;
@@ -457,6 +459,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
    else if (strncasecmp("off", argv[0], 2) == 0 && txtone_on) {
       radio_PTT(false);
       tone_stop();
+      radio_release();
       txtone_on = false; 
    }
 }
@@ -476,7 +479,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   addr_t from, to; 
   addr_t digis[7];
   
-//  radio_require();; 
+  radio_require();; 
   GET_PARAM(MYCALL, &from);
   GET_PARAM(DEST, &to);       
   uint8_t ndigis = GET_BYTE_PARAM(NDIGIS); 
@@ -486,7 +489,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
   chprintf(chp, "Sending (AX25 UI) test packet....\r\n");       
   fbq_put(outframes, packet); 
-//  radio_release(); 
+  radio_release(); 
 }
 
 
@@ -502,14 +505,14 @@ static void cmd_teston(Stream *chp, int argc, char* argv[])
     return;
   }
   sscanf(argv[0], "%xhh", &ch);
-//  radio_require();  
+  radio_require();  
   hdlc_test_on((uint8_t) ch);
   chprintf(chp, "**** TEST SIGNAL: 0x%X ****\r\n", ch);
   
   /* And wait until some character has been typed */
   getch(chp);
   hdlc_test_off();
-//  radio_release();
+  radio_release();
 }
 
 
@@ -759,11 +762,14 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
   (void) argv;
   (void) argc; 
   
+  chprintf(chp, "***** LISTEN ON RECEIVER *****\r\n");
+  radio_require();
   afsk_rx_enable();
   mon_activate(true);
   getch(chp);
   mon_activate(false);
   afsk_rx_disable();
+  radio_release();
 }
 
 
@@ -779,6 +785,7 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
   
   static FBUF packet; 
   chprintf(chp, "***** CONVERSE MODE. Ctrl-D to exit *****\r\n");
+  radio_require();
   afsk_rx_enable();
   mon_activate(true); 
   fbq_t* outframes = hdlc_get_encoder_queue();
@@ -796,7 +803,8 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
     fbq_put(outframes, packet);
   }
   mon_activate(false);
-  afsk_rx_disable(); 
+  afsk_rx_disable();
+  radio_release();
 }
 
 
