@@ -81,7 +81,7 @@
 #define TRX_SQ_IOPORT    TEENSY_PIN19_IOPORT
 #define TRX_SQ           TEENSY_PIN19
 #define TRX_SQ_MODE      PAL_MODE_INPUT
-#define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, trx_sq_handler, PORTB, TRX_SQ}
+#define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, squelch_handler, PORTB, TRX_SQ}
 
 #define TRX_MIN_FREQUENCY  1440000
 #define TRX_MAX_FREQUENCY  1460000
@@ -128,7 +128,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_TRACKER      1500
 #define STACK_UI            164
 #define STACK_WIFI         1024
-#define STACK_SHELL        1100
+#define STACK_SHELL        2400
 // 
 
 

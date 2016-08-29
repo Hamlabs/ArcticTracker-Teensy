@@ -34,7 +34,7 @@ bool is_off = false;  /* FIXME: See tracker.c */
 
 static const EXTConfig extcfg = {
   {
-    BUTTON_EXTCFG // , TRX_SQ_EXTCFG
+    BUTTON_EXTCFG, TRX_SQ_EXTCFG
   }
 };
 
@@ -42,7 +42,7 @@ static void ext_init() {
    setPinMode(BUTTON, BUTTON_MODE);
    extStart(&EXTD1, &extcfg);
    extChannelEnable(&EXTD1, 0);
-//   extChannelEnable(&EXTD1, 1);
+   extChannelEnable(&EXTD1, 1);
 }
 
 
