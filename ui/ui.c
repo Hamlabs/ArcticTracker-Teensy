@@ -104,11 +104,11 @@ static void onoffhandler(void* p);
   * DCD LED
   *********************************************************************/
  
- void dcd_led_on() {
+ void tx_led_on() {
     setPin(LED_DCD);
  }
  
- void dcd_led_off() {
+ void tx_led_off() {
     clearPin(LED_DCD);
  }
  
@@ -136,9 +136,9 @@ static void onoffhandler(void* p);
    sleep(300);
    rgb_led_off();
    sleep(300);
-   dcd_led_on();
+   tx_led_on();
    sleep(300);
-   dcd_led_off();
+   tx_led_off();
    blipUp();
    sleep(500);
    beeps("--.- .-. ...-");
