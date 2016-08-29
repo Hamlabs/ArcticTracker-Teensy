@@ -88,6 +88,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    
    /* Sync to next flag */
    flag_sync:
+   rgb_led_off();
    do {      
       bit = get_bit ();
    }  while (bit != HDLC_FLAG);
@@ -95,10 +96,10 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    
    /* Sync to next frame */
    frame_sync:
+   rgb_led_off();
    do {      
       bit = get_bit ();
    }  while (bit == HDLC_FLAG);
- 
 
    
    /* Receiving frame */
@@ -106,7 +107,8 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    uint8_t ones_count = 0;
    uint16_t length = 0;
    uint8_t octet = 0;
-  
+   
+   rgb_led_on(true,true,false);
    fbuf_release (&fbuf); // In case we had an abort or checksum
    fbuf_new(&fbuf);      // mismatch on the previous frame
    do {
@@ -134,10 +136,9 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
       length++;
    } while (bit != HDLC_FLAG);
 
-
+   rgb_led_off();
    if (crc_match(&fbuf, length)) 
    {     
-      rgb_led_on(false, true, false);
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 
        * Note also that receiver queues should not share the fbuf, use newRef to create a new reference
@@ -154,9 +155,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
          fbuf_release(&fbuf); 
       fbuf_new(&fbuf);
    }
-   else
-     rgb_led_on(false, false, true);
-   
+
    goto frame_sync; // Two consecutive frames may share the same flag
 }
 
