@@ -26,6 +26,9 @@ static FBUF buffer;
 
 THREAD_STACK(hdlc_txencoder, STACK_HDLCENCODER);
 
+BSEMAPHORE_DECL(enc_idle, false);
+#define WAIT_IDLE chBSemWait(&enc_idle)
+#define SIGNAL_IDLE chBSemSignal(&enc_idle)
 
 
 
@@ -53,7 +56,7 @@ bool hdlc_enc_packets_waiting()
 
 
 void hdlc_wait_idle()
-   { /* TBD */}
+   { while (!hdlc_idle) WAIT_IDLE; }
 
    
    
@@ -129,7 +132,9 @@ static THD_FUNCTION(hdlc_txencoder, arg)
      /* Wait until channel is free 
       * P-persistence algorithm 
       */
-//   radio_wait_enabled();  
+     rgb_led_on(false,true,false);
+     radio_wait_enabled();  
+     rgb_led_off();
      hdlc_idle = false;
      for (;;) {
         wait_channel_ready(); 
@@ -141,7 +146,7 @@ static THD_FUNCTION(hdlc_txencoder, arg)
       } 
       hdlc_encode_frames();
       hdlc_idle = true; 
- //   notifyAll(&hdlc_idle_sig);  WHAT IS THIS??
+      SIGNAL_IDLE;
       sleep(500);
   }
 }
@@ -150,9 +155,10 @@ static THD_FUNCTION(hdlc_txencoder, arg)
 
 static void wait_channel_ready()
 {
-    /* Wait to squelch is closed */
+    /* Wait to radio is on and squelch is closed */
     /* TODO: Implement this in sr_frs.c */
 }
+
 
 
 /*************************************************************

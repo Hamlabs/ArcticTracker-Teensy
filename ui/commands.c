@@ -387,7 +387,7 @@ static void cmd_txpower(Stream *chp, int argc, char *argv[]) {
      else if (strncasecmp("low", argv[0], 2) == 0) {
        chprintf(chp, "***** TX POWER LOW *****\r\n");
        radio_setLowTxPower(true);
-     }     
+     }   
   }
 }
 
@@ -401,10 +401,12 @@ static void cmd_ptt(Stream *chp, int argc, char *argv[]) {
        chprintf(chp, "Usage: ptt on|off\r\n");
        return;
     }
+    radio_require();
     if (strncmp(argv[0], "on", 2) == 0)
        radio_PTT(true);
     else
        radio_PTT(false);
+    radio_release();
 }
 
 
@@ -418,9 +420,9 @@ static void cmd_radio(Stream *chp, int argc, char *argv[]) {
        return;
     } 
     if (strncmp(argv[0], "on", 2) == 0) 
-       radio_on(true);
+       radio_require();
     else 
-       radio_on(false);
+       radio_release();
 }
 
 
@@ -479,7 +481,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   addr_t from, to; 
   addr_t digis[7];
   
-  radio_require();; 
+  radio_require();
   GET_PARAM(MYCALL, &from);
   GET_PARAM(DEST, &to);       
   uint8_t ndigis = GET_BYTE_PARAM(NDIGIS); 

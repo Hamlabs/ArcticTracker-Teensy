@@ -34,9 +34,18 @@ static const SerialConfig _serialConfig = {
    9600
 };
 
+MUTEX_DECL(radio_mutex);
+#define MUTEX_LOCK chMtxLock(&radio_mutex)
+#define MUTEX_UNLOCK chMtxUnlock(&radio_mutex)
+
 BSEMAPHORE_DECL(tx_off, true);
 #define WAIT_TX_OFF chBSemWait(&tx_off)
 #define SIGNAL_TX_OFF chBSemSignal(&tx_off)
+
+CONDVAR_DECL(_radio_rdy);
+#define WAIT_RADIO_READY chCondWait(&_radio_rdy)
+#define SIGNAL_RADIO_READY chCondBroadcast(&_radio_rdy)
+bool radio_rdy = false;
 
 
 
@@ -45,9 +54,11 @@ BSEMAPHORE_DECL(tx_off, true);
  ******************************************************/
  
 void radio_require(void)
-{
-    if (++count == 1) 
-        radio_on(true);
+{   
+   MUTEX_LOCK;
+   if (++count == 1) 
+     radio_on(true);
+   MUTEX_UNLOCK;
 }
 
 
@@ -59,6 +70,7 @@ void radio_require(void)
  
 void radio_release(void)
 {
+    MUTEX_LOCK;
     if (--count == 0) {
        /* 
         * Before turning off transceiver, wait until
@@ -70,11 +82,12 @@ void radio_release(void)
        radio_on(false);
     }
     if (count < 0) count = 0;
+    MUTEX_UNLOCK;
 }
 
 
 /***********************************************
- * Initiialize
+ * Initialize
  ***********************************************/
 
 void radio_init(SerialDriver* sd)
@@ -83,15 +96,14 @@ void radio_init(SerialDriver* sd)
    setPinMode(TRX_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
    setPinMode(TRX_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
    setPin(TRX_PTT);
-   sdStart(sd, &_serialConfig);   
-//   radio_on(true);  
+   sdStart(sd, &_serialConfig);  
 }
   
   
 static void _initialize()
 {  
    radio_PTT(false);
-   sleep(1500);
+   sleep(600);
    _handshake();
    sleep (100);
   
@@ -135,6 +147,33 @@ bool radio_setSquelch(uint8_t sq)
 }
 
 
+
+/************************************************
+ * Squelch handler. 
+ ************************************************/
+
+void squelch_handler(EXTDriver *extp, expchannel_t channel) {
+  (void)extp;
+  (void)channel;
+  
+  if (pinIsHigh(TRX_SQ))
+    rgb_led_on(true, false, true);
+  else
+    rgb_led_off();
+}
+
+
+/************************************************
+ * Wait to radio is ready 
+ ************************************************/
+
+void radio_wait_enabled() {
+  MUTEX_LOCK;
+  while(!radio_rdy)
+     WAIT_RADIO_READY;
+  MUTEX_UNLOCK;
+}
+
 /************************************************
  * Power on
  ************************************************/
@@ -147,9 +186,13 @@ void radio_on(bool on)
    if (on) {
       setPin(TRX_PD);
       _initialize();
+      radio_rdy=true;
+      SIGNAL_RADIO_READY;
    }
-   else
+   else {
       clearPin(TRX_PD);
+      radio_rdy=false;
+   }
 }
 
 
@@ -162,12 +205,13 @@ void radio_PTT(bool on)
     if (!_on)
        return;
     if (on) {
+       WAIT_TX_OFF;
        clearPin(TRX_PTT);
-       rgb_led_on(true, false, false);
+       tx_led_on();
     }
     else {
        setPin(TRX_PTT);
-       rgb_led_off();
+       tx_led_off();
        SIGNAL_TX_OFF;
     }
 }
