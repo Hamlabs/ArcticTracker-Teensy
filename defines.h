@@ -87,6 +87,13 @@
 #define TRX_MAX_FREQUENCY  1460000
 
 
+/* 
+ * If set to true, radio will be turned off even if tracking is active
+ * and will be turned on only when sending packets. Otherwise it will
+ * be on as long as tracking is on. 
+ */
+#define TRACKER_TRX_ONDEMAND false
+
 
 
 /* RGB LED */
@@ -128,7 +135,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_TRACKER      1500
 #define STACK_UI            164
 #define STACK_WIFI         1024
-#define STACK_SHELL        2400
+#define STACK_SHELL        2600
 // 
 
 

@@ -58,8 +58,6 @@ double round(double);
 double log(double);
 long lround(double);
 
-extern bool is_off ;         /* FIXME: Use accessor function */
-
 
 
 
@@ -193,7 +191,9 @@ static THD_FUNCTION(tracker, arg)
     uint8_t t;
     uint8_t st_count = GET_BYTE_PARAM(STATUS_TIME);
     chRegSetThreadName("APRS Tracker");
-    gps_on();     
+    gps_on();    
+    if (!TRACKER_TRX_ONDEMAND)
+       radio_require();
     while (GET_BYTE_PARAM(TRACKER_ON)) 
     {
        /*
@@ -212,6 +212,7 @@ static THD_FUNCTION(tracker, arg)
            report_status(&current_pos);
            st_count = 0;
            report_objects(true);
+           activate_tx();
         }       
 
         /*
@@ -238,6 +239,8 @@ static THD_FUNCTION(tracker, arg)
         }
     }
     gps_off();
+    if (!TRACKER_TRX_ONDEMAND)
+      radio_release();
 }
 
 
@@ -291,7 +294,7 @@ void tracker_off()
 
 static void activate_tx()
 {
-      if (!is_off && hdlc_enc_packets_waiting()) {
+      if (hdlc_enc_packets_waiting()) {
          radio_require(); 
          radio_release();
       }
