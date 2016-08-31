@@ -13,8 +13,10 @@
 #include "afsk.h"
 #include "defines.h"
 #include "ui/ui.h"
+#include "ui/wifi.h"
 #include "ui/commands.h"
 #include "adc_input.h"
+#include "tracker.h"
 
 static void ext_init(void);
 extern void usb_initialize(void);
@@ -24,8 +26,6 @@ extern void mon_init(Stream*);
 extern SerialUSBDriver SDU1;
 
 fbq_t *outframes, *inframes;  
-bool is_off = false;  /* FIXME: See tracker.c */
-
 
 
 /*************************************************************

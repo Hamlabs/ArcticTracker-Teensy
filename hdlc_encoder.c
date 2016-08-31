@@ -147,7 +147,7 @@ static THD_FUNCTION(hdlc_txencoder, arg)
       hdlc_encode_frames();
       hdlc_idle = true; 
       SIGNAL_IDLE;
-      sleep(500);
+      sleep(50);
   }
 }
 

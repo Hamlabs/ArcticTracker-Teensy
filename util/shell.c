@@ -61,10 +61,12 @@ static void usage(BaseSequentialStream *chp, char *p) {
 
 
 static void list_commands(BaseSequentialStream *chp, const ShellCommand *scp) {
-
+  int n=12;
   while (scp->sc_name != NULL) {
     chprintf(chp, "%s ", scp->sc_name);
     scp++;
+    n += strlen(scp->sc_name) + 1;
+    if (n > 75) { n=0; chprintf(chp, "\r\n "); }
   }
 }
 
@@ -236,7 +238,7 @@ static THD_FUNCTION(shell_thread, p) {
            cmdhelp(scp, chp, args[0]);
            continue;
         }
-        chprintf(chp, "Commands: help exit ");
+        chprintf(chp, "Commands:\r\n help exit ");
         list_commands(chp, local_commands);
         if (scp != NULL)
           list_commands(chp, scp);
