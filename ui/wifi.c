@@ -249,6 +249,20 @@ static void cmd_getParm(char* p) {
    
    else if (strcmp("HTTP_ON", p) == 0)
      chprintf(_serial, "%s\r", PRINT_BOOL(HTTP_ON, cbuf));
+   
+   else if (strncmp("WIFIAP", p, 6) == 0) {
+      int i = atoi(p+6);
+      if (i<0 || i>5) {
+        chprintf(_serial, "ERROR. Index out of bounds\r");
+        return;
+      }
+      ap_config_t x; 
+      GET_PARAM_I(WIFIAP, i, &x);
+      if (strlen(x.ssid) == 0)
+         chprintf(_serial, "-,-\r"); 
+      else
+         chprintf(_serial, "%s,%s\r", x.ssid, x.passwd);
+   }
    else
       chprintf(_serial, "ERROR. Unknown setting\r");
 }
@@ -281,7 +295,7 @@ static void cmd_setParm(char* p, char* val) {
     else if (strcmp("REPORT_COMMENT", p) == 0) {
       /* FIXME: Sanitize input */ 
       SET_PARAM(REPORT_COMMENT, val);
-       chprintf(_serial, "OK\r");
+      chprintf(_serial, "OK\r");
     }
     else if (strcmp("TIMESTAMP", p) == 0)
        chprintf(_serial, "%s\r", PARSE_BOOL(TIMESTAMP_ON, val, cbuf));  
@@ -309,6 +323,44 @@ static void cmd_setParm(char* p, char* val) {
     
     else if (strcmp("TRACKER_MINDIST", p) == 0)
       chprintf(_serial, "%s\r", PARSE_BYTE(TRACKER_MINDIST, val, 0, 250, cbuf));
+    
+    else if (strcmp("SOFTAP_PASSWD", p) == 0) {
+      SET_PARAM(SOFTAP_PASSWD, val);
+      chprintf(_serial, "OK\r"); 
+    }
+    
+    else if (strncmp("WIFIAP_RESET", p, 12) == 0) {
+      ap_config_t x; 
+      *x.ssid = '\0'; 
+      *x.passwd = '\0';
+      for (int i=0; i<6; i++)
+         SET_PARAM_I(WIFIAP, i, &x);
+      chprintf(_serial, "OK\r");
+    }
+      
+    else if (strncmp("WIFIAP", p, 6) == 0) {
+      int i = atoi(p+6);
+      if (i<0 || i>5) {
+        chprintf(_serial, "ERROR. Index out of bounds\r");
+        return; 
+      }
+      char* split = strchr(val, ',');
+      ap_config_t x; 
+
+      if (*(split+1) == '-')
+        *x.passwd = '\0';
+      else
+        strcpy(x.passwd, split+1);
+
+      if (*val == '-')
+        *x.ssid = '\0';
+      else {
+        *split = '\0'; 
+        strcpy(x.ssid, val);
+      }
+      SET_PARAM_I(WIFIAP, i, &x); 
+      chprintf(_serial, "OK\r");
+    }
     
     else
        chprintf(_serial, "ERROR. Unknown setting\r");

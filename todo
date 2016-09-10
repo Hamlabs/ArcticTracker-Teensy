@@ -38,8 +38,8 @@ GPS_POWERSAVE_ON        ?       ?
 HTTP_ON                 -       done
 HTTP_USER               tbd     done
 HTTP_PASSWD             tbd     done
-SOFTAP_PASSWD           tbd     done
-WIFIAP                  tbd     done  
+SOFTAP_PASSWD           done    done
+WIFIAP                  done    done  
 
 --------------------------------------------------------
 
@@ -62,7 +62,8 @@ WIFIAP                  tbd     done
     DONE. Ok.
 
 * Web interface page for WIFI related settings.
-
+    DONE. 
+    
 * Connect internet service from MCU
 
 * Igate
