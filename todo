@@ -31,13 +31,13 @@ OBJ_SYMBOL_TABLE        "       "
 OBJ_ID                  ?       tbd
 REPORT_COMMENT          done    tbd    
 REPORT_BEEP_ON          ?       done
-REPEAT_ON               ?       tbd      Experimental        
-EXTRATURN_ON            ?       tbd      Experimental
+REPEAT_ON               tbd     done     Experimental        
+EXTRATURN_ON            tbd     done     Experimental
 FAKE_REPORTS_ON         ?       ?        Remove?  
 GPS_POWERSAVE_ON        ?       ?
 HTTP_ON                 -       done
-HTTP_USER               tbd     done
-HTTP_PASSWD             tbd     done
+HTTP_USER               done    done
+HTTP_PASSWD             done    done
 SOFTAP_PASSWD           done    done
 WIFIAP                  done    done  
 
@@ -65,6 +65,7 @@ WIFIAP                  done    done
     DONE. 
     
 * Connect internet service from MCU
+    IN PROGRESS.
 
 * Igate
 
