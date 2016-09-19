@@ -60,6 +60,7 @@ static void cmd_macaddr(Stream *chp, int argc, char *argv[]);
 static void cmd_symbol(Stream *chp, int argc, char* argv[]);
 static void cmd_turnlimit(Stream *chp, int argc, char *argv[]);
 static void cmd_webserver(Stream *chp, int argc, char* argv[]);
+static void cmd_connect(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
@@ -78,6 +79,8 @@ CMD_BOOL_SETTING(COMPRESS_ON,     "COMPRESS");
 CMD_BOOL_SETTING(ALTITUDE_ON,     "ALTITUDE");
 CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
 CMD_BOOL_SETTING(TXMON_ON,        "TXMON");
+CMD_BOOL_SETTING(REPEAT_ON,       "REPEAT");
+CMD_BOOL_SETTING(EXTRATURN_ON,    "EXTRATURN");
 CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
 CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
 CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
@@ -128,10 +131,13 @@ static const ShellCommand shell_commands[] =
   { "compress",   "Compressed positions on/off",               4, cmd_COMPRESS_ON },
   { "altitude",   "Altidude in reports on/off",                4, cmd_ALTITUDE_ON },
   { "reportbeep", "Beep when reporting on/off",                6, cmd_REPORT_BEEP_ON },
+  { "repeat",     "Repeat posisition report (piggybacked)",    4, cmd_REPEAT_ON },
+  { "extraturn",  "Extra report on turn (piggybacked)",        6, cmd_EXTRATURN_ON },
   { "turnlimit",  "Change in heading that trigger report",     5, cmd_turnlimit },
   { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
   { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
   { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
+  { "connect",    "Open internet connectio (host,port)",       4, cmd_connect },
   
   {NULL, NULL, 0, NULL}
 };
@@ -491,6 +497,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   fbuf_putstr(&packet, "The lazy brown dog jumps over the quick fox 1234567890");                      
   chprintf(chp, "Sending (AX25 UI) test packet....\r\n");       
   fbq_put(outframes, packet); 
+  sleep(10);
   radio_release(); 
 }
 
@@ -929,3 +936,35 @@ static void cmd_macaddr(Stream *chp, int argc, char *argv[])
   
   chprintf(chp, "MAC %s\r\n", wifi_doCommand("MAC", buf));
 }
+
+
+
+/*****************************************************************************
+ * Open internet connection
+ *****************************************************************************/
+
+static void cmd_connect(Stream *chp, int argc, char* argv[])
+{
+   if (argc < 2) {
+      chprintf(chp, "Usage: connect <host> <port>\r\n");
+      return;
+   }
+   int port = atoi(argv[1]);
+   int res = inet_open(argv[0], port);
+   if (res == 0) {
+      chprintf(chp, "**** Connected to %s **** \r\n", argv[0]);
+      inet_mon_on(true);
+      sleep(10);
+      while (!shellGetLine(chp, buf, BUFSIZE)) { 
+         // FIXME: SEND TEXT
+         // FIXME: HANDLE DISCONNECTIONS FROM SERVER
+      }
+      inet_close();
+      inet_mon_on(false);
+   }
+   else
+     chprintf(chp, "ERROR. Cannot connect: %d\r\n", res);
+}
+
+
+

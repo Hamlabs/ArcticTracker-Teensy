@@ -23,13 +23,22 @@ static void cmd_setParm(char* p, char* val);
 static void wifi_start_server(void);
 char* parseFreq(char* val, char* buf, bool tx);
 
+
 MUTEX_DECL(wifi_mutex);
 #define MUTEX_LOCK chMtxLock(&wifi_mutex)
 #define MUTEX_UNLOCK chMtxUnlock(&wifi_mutex)
 
+MUTEX_DECL(data_mutex);
+#define DMUTEX_LOCK chMtxLock(&data_mutex)
+#define DMUTEX_UNLOCK chMtxUnlock(&data_mutex)
+
 BSEMAPHORE_DECL(response_pending, true);
 #define WAIT_RESPONSE chBSemWait(&response_pending)
 #define SIGNAL_RESPONSE chBSemSignal(&response_pending)
+
+BSEMAPHORE_DECL(data_pending, true);
+#define WAIT_DATA chBSemWait(&data_pending)
+#define SIGNAL_DATA chBSemSignal(&data_pending)
 
 
 THREAD_STACK(wifi_monitor, STACK_WIFI);
@@ -38,6 +47,12 @@ THREAD_STACK(wifi_monitor, STACK_WIFI);
 static const SerialConfig _serialConfig = {
   115200
 };
+
+
+
+/* FIXME: Should check thread safety when using this */
+static char cbuf[129]; 
+
 
 
 void wifi_enable() {
@@ -89,6 +104,8 @@ void wifi_internal() {
 
 static void wifi_start_server() {
   sleep(200);
+  chprintf(_serial, "SHELL=1\r");
+  sleep(300);
   addr_t call;
   char uname[32], passwd[32];
   GET_PARAM(HTTP_USER, uname);
@@ -131,6 +148,7 @@ char* wifi_doCommand(char* cmd, char* buf) {
   return buf; 
 }
 
+
 char* wifi_status(char* buf) {
    char res[8];
    int n;
@@ -149,6 +167,54 @@ char* wifi_status(char* buf) {
   
   
   
+/*************************************************************
+ * Open internet connection
+ *************************************************************/
+
+static char** data_buf;
+static bool data_active = false; 
+
+
+int inet_open(char* host, int port) {
+  char res[10];
+  sprintf(cbuf, "NET.OPEN %d %s", port, host);
+  wifi_doCommand(cbuf, res);
+  if (strncmp("OK", res, 2) == 0){rgb_led_on(false, true, false);  return 0; } 
+  else return atoi(res+7); 
+}
+
+
+void inet_close() {
+   char res[10];
+   sprintf(cbuf, "NET.CLOSE");
+   wifi_doCommand(cbuf, res);
+}
+
+
+static FBQ* mon_queue;
+
+void inet_mon_on(bool on) {
+  mon_queue = mon_text_activate(on);
+}
+
+
+// FIXME: Rewrite this to use fbufs. Do we need mutex and semaphore? 
+int inet_read(char* buf) {
+  int ret = 0; 
+  DMUTEX_LOCK;
+  data_active = true;
+  data_buf = &buf;
+  WAIT_DATA;
+  if (!data_active) 
+     ret = ERR_DISCONNECTED; 
+  data_active = false; 
+  DMUTEX_UNLOCK;
+  return ret;
+}
+
+
+
+
 /**************************************************************
  * Connect to shell on WIFI module
  **************************************************************/
@@ -158,7 +224,7 @@ void wifi_shell(Stream* chp) {
   wifi_enable();
   
   MUTEX_LOCK;
-  chprintf(_serial, "SHELL\r\r");
+  chprintf(_serial, "SHELL=1\r\r");
   _shell = chp;
   while (true) { 
     char c; 
@@ -180,9 +246,6 @@ void wifi_shell(Stream* chp) {
 }
 
 
-
-/* FIXME: Should check thread safety when using this */
-static char cbuf[129]; 
 
 /*****************************************************************
  * Process commands coming from WIFI module that read parameters
@@ -249,6 +312,16 @@ static void cmd_getParm(char* p) {
    
    else if (strcmp("HTTP_ON", p) == 0)
      chprintf(_serial, "%s\r", PRINT_BOOL(HTTP_ON, cbuf));
+   
+   else if (strcmp("HTTP_USER", p) == 0) {
+     GET_PARAM(HTTP_USER, cbuf);
+     chprintf(_serial, "%s\r", cbuf);
+   }
+   
+   else if (strcmp("HTTP_PASSWD", p) == 0) {
+     GET_PARAM(HTTP_PASSWD, cbuf);
+     chprintf(_serial, "%s\r", cbuf);
+   }
    
    else if (strncmp("WIFIAP", p, 6) == 0) {
       int i = atoi(p+6);
@@ -326,6 +399,16 @@ static void cmd_setParm(char* p, char* val) {
     
     else if (strcmp("SOFTAP_PASSWD", p) == 0) {
       SET_PARAM(SOFTAP_PASSWD, val);
+      chprintf(_serial, "OK\r"); 
+    }
+    
+    else if (strcmp("HTTP_USER", p) == 0) {
+      SET_PARAM(HTTP_USER, val);
+      chprintf(_serial, "OK\r"); 
+    }
+    
+    else if (strcmp("HTTP_PASSWD", p) == 0) {
+      SET_PARAM(HTTP_PASSWD, val);
       chprintf(_serial, "OK\r"); 
     }
     
@@ -435,7 +518,7 @@ static THD_FUNCTION(wifi_monitor, arg)
             readline(_serial, cbuf, 8);
             if (strcmp(cbuf, "__BOOT__") == 0)
                 wifi_start_server();
-        }
+         }
          else if (c == '#') {
             /* If shell is not active and if the incoming character is a #, it is
              * initiating a command or a response. All other characters are ignored.  
@@ -447,6 +530,18 @@ static THD_FUNCTION(wifi_monitor, arg)
             else 
 	       wifi_command();
 	 }
+	 else if (c == '>') {
+             /* Incoming data */
+             FBUF input; 
+             fbuf_new(&input);
+             fbuf_streamRead(_serial, &input);
+             if (mon_queue != NULL)
+               fbq_put(mon_queue, input);
+         }
+         else if (c == '!') {
+             /* Connection closed */
+             /* FIXME */
+         }
       }
    }
 }
@@ -459,7 +554,7 @@ void wifi_init(SerialDriver* sd)
   wifi_internal();
   clearPin(WIFI_ENABLE);
   sdStart(sd, &_serialConfig);  
-  THREAD_START(wifi_monitor, NORMALPRIO+2, NULL);
+  THREAD_START(wifi_monitor, NORMALPRIO, NULL);
   if (GET_BYTE_PARAM(WIFI_ON))
      wifi_enable();
 }

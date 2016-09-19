@@ -2,6 +2,8 @@
 #define __FBUF_H__
 
 #include "ch.h"
+#include "hal.h"
+#include "defines.h"
 #include <inttypes.h>
 
 #define NILPTR        255
@@ -38,6 +40,7 @@ void  fbuf_write     (FBUF* b, const char* data, const uint8_t size);
 void  fbuf_putstr    (FBUF* b, const char *data);
 char  fbuf_getChar   (FBUF* b);
 char* fbuf_read      (FBUF* b, uint8_t size, char *buf);
+void  fbuf_print     (Stream *chp, FBUF* b); 
 void  fbuf_insert    (FBUF* b, FBUF* x, uint8_t pos);
 void  fbuf_connect   (FBUF* b, FBUF* x, uint8_t pos);
 void  fbuf_removeLast(FBUF* b);
@@ -76,7 +79,8 @@ FBUF  fbq_get   (FBQ* q);
 void  fbq_signal(FBQ* q);
 
 
-#define fbq_eof(q)    ( chSemGetCounterI(&((q)->capacity)) >= (q)->size)
+#define fbq_eof(q)    ( chSemGetCounterI(&((q)->capacity)) >= (q)->size )
+#define fbq_full(q)   ( chSemGetCounterI(&((q)->capacity)) == 0 )
 
 #define FBQ_INIT(name,size)   static FBUF name##_fbqbuf[(size)];    \
     _fbq_init(&(name), (name##_fbqbuf), (size));

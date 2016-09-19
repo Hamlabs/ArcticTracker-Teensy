@@ -25,6 +25,7 @@ typedef struct _slot {
    char      buf[FBUF_SLOTSIZE]; 
 } fbslot_t; 
 
+
 static fbslot_t _pool[FBUF_SLOTS]; 
 
 
@@ -338,7 +339,34 @@ char fbuf_getChar(FBUF* b)
     return x;          
 }
 
+/********************************************************
+    Print a buffer chain to a stream.
+ ********************************************************/ 
 
+void fbuf_print(Stream *chp, FBUF* b) 
+{
+    fbuf_reset(b);
+    for (int i=0; i < b->length; i++)
+        streamPut(chp, fbuf_getChar(b));
+}
+  
+  
+  
+void fbuf_streamRead(Stream *chp, FBUF* b)
+{
+   while (true) {
+     char c = streamGet(chp);
+     if (c=='\r') {
+       streamGet(chp);
+       break;
+     }
+     if (c=='\n')
+       break;
+     fbuf_putChar(b, c);
+   }
+}
+  
+  
 /*******************************************************
     Read a string of bytes from buffer chain. 
     (this will add 'size' to the read-position)

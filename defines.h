@@ -17,7 +17,7 @@
 
 
 /* Buffers */
-#define FBUF_SLOTS 512
+#define FBUF_SLOTS 128
 #define FBUF_SLOTSIZE 32
 
 
@@ -134,7 +134,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_MONITOR       512
 #define STACK_TRACKER      1500
 #define STACK_UI            164
-#define STACK_WIFI         1024
+#define STACK_WIFI         1500
 #define STACK_SHELL        2600
 // 
 
