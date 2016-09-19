@@ -85,7 +85,7 @@ void tracker_posReport()
  *   - posBuf_empty - return true if empty
  *******************************************************/
 
-#define MAX_BUFFERPOS 3
+#define MAX_BUFFERPOS 5
 static posdata_t pos_buf[MAX_BUFFERPOS];
 static int8_t nPos = 0, nextPos = 0;
 
@@ -296,6 +296,7 @@ static void activate_tx()
 {
       if (hdlc_enc_packets_waiting()) {
          radio_require(); 
+         sleep(10);
          radio_release();
       }
 }
@@ -457,7 +458,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
      * FIXME: Max number of reports - configurable 
      */
     int i=0;
-    while (!posBuf_empty() && i++ <= 2) {
+    while (!posBuf_empty() && i++ <= 3) {
        posdata_t p = getPos();
        send_extra_report(&packet, &p, GET_BYTE_PARAM(SYMBOL), GET_BYTE_PARAM(SYMBOL_TAB));
     }
