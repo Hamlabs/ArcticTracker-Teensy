@@ -48,6 +48,8 @@ static THD_FUNCTION(monitor, arg)
     /* And dispose the frame. Note that also an empty frame should be disposed! */
     fbuf_release(&frame);    
   }
+  if (!mon_ax25)
+    chprintf(out, "\r\n**** Connection closed ****\r\n");
 }
 
 

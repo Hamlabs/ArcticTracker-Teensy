@@ -39,6 +39,7 @@ void  fbuf_putChar   (FBUF* b, const char c);
 void  fbuf_write     (FBUF* b, const char* data, const uint8_t size);
 void  fbuf_putstr    (FBUF* b, const char *data);
 char  fbuf_getChar   (FBUF* b);
+void  fbuf_streamRead(Stream *chp, FBUF* b);
 char* fbuf_read      (FBUF* b, uint8_t size, char *buf);
 void  fbuf_print     (Stream *chp, FBUF* b); 
 void  fbuf_insert    (FBUF* b, FBUF* x, uint8_t pos);

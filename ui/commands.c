@@ -952,13 +952,11 @@ static void cmd_connect(Stream *chp, int argc, char* argv[])
    int port = atoi(argv[1]);
    int res = inet_open(argv[0], port);
    if (res == 0) {
-      chprintf(chp, "**** Connected to %s **** \r\n", argv[0]);
+      chprintf(chp, "**** Connected to %s, Ctrl-D to exit **** \r\n", argv[0]);
       inet_mon_on(true);
       sleep(10);
-      while (!shellGetLine(chp, buf, BUFSIZE)) { 
-         // FIXME: SEND TEXT
-         // FIXME: HANDLE DISCONNECTIONS FROM SERVER
-      }
+      while (!shellGetLine(chp, buf, BUFSIZE) && inet_is_connected())  
+          inet_write(buf);
       inet_close();
       inet_mon_on(false);
    }

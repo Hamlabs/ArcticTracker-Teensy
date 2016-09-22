@@ -20,7 +20,7 @@ static bool wifiEnabled = false;
 static void wifi_command(void);
 static void cmd_getParm(char* p);
 static void cmd_setParm(char* p, char* val);
-static void wifi_start_server(void);
+static void wifi_start_server(bool);
 char* parseFreq(char* val, char* buf, bool tx);
 
 
@@ -61,7 +61,6 @@ void wifi_enable() {
       SET_BYTE_PARAM(WIFI_ON, 1);
       setPin(WIFI_ENABLE);
       sleep(2000);
-//      wifi_start_server();
    }
 }
 
@@ -102,23 +101,24 @@ void wifi_internal() {
  * Start (or resume) server on WIFI module
  ***************************************************************/
 
-static void wifi_start_server() {
+static void wifi_start_server(bool boot) {
   sleep(200);
-  chprintf(_serial, "SHELL=1\r");
-  sleep(300);
-  addr_t call;
-  char uname[32], passwd[32];
-  GET_PARAM(HTTP_USER, uname);
-  GET_PARAM(HTTP_PASSWD, passwd);
-  if (GET_BYTE_PARAM(HTTP_ON))
-    chprintf(_serial, "start_http_server('%s','%s')\r", uname, passwd);
-  sleep(100);
+  if (boot) {
+     chprintf(_serial, "SHELL=1\r");
+     sleep(300);
+     addr_t call;
+     char uname[32], passwd[32];
+     GET_PARAM(HTTP_USER, uname);
+     GET_PARAM(HTTP_PASSWD, passwd);
+     if (GET_BYTE_PARAM(HTTP_ON))
+        chprintf(_serial, "start_http_server('%s','%s')\r", uname, passwd);
+     sleep(100);
   
-  GET_PARAM(MYCALL, &call);
-  GET_PARAM(SOFTAP_PASSWD, passwd);
-  chprintf(_serial, "start_softap('Arctic-%s', '%s')\r", addr2str(uname, &call), passwd);
-  sleep(100);
-  
+     GET_PARAM(MYCALL, &call);
+     GET_PARAM(SOFTAP_PASSWD, passwd);
+     chprintf(_serial, "start_softap('Arctic-%s', '%s')\r", addr2str(uname, &call), passwd);
+     sleep(100);
+  } 
   chprintf(_serial, "coroutine.resume(listener)\r");
   sleep(100);
 }
@@ -171,45 +171,54 @@ char* wifi_status(char* buf) {
  * Open internet connection
  *************************************************************/
 
-static char** data_buf;
-static bool data_active = false; 
+static bool inet_connected = false;
+static FBQ* mon_queue;
+static FBQ  read_queue;
 
 
 int inet_open(char* host, int port) {
   char res[10];
   sprintf(cbuf, "NET.OPEN %d %s", port, host);
   wifi_doCommand(cbuf, res);
-  if (strncmp("OK", res, 2) == 0){rgb_led_on(false, true, false);  return 0; } 
-  else return atoi(res+7); 
+  if (strncmp("OK", res, 2) != 0) 
+      return atoi(res+7);
+  inet_connected = true;
+  return 0; 
 }
 
 
 void inet_close() {
+   if (!inet_connected)
+      return; 
    char res[10];
    sprintf(cbuf, "NET.CLOSE");
+   wifi_doCommand(cbuf, res);
+   fbq_clear(&read_queue);
+}
+
+bool inet_is_connected()
+  { return inet_connected; }
+
+  
+void inet_mon_on(bool on) {
+   mon_queue = mon_text_activate(on);
+}
+
+
+void inet_write(char* text) {
+   char res[10];
+   sprintf(cbuf, "NET.DATA %s", text);
    wifi_doCommand(cbuf, res);
 }
 
 
-static FBQ* mon_queue;
-
-void inet_mon_on(bool on) {
-  mon_queue = mon_text_activate(on);
-}
-
-
-// FIXME: Rewrite this to use fbufs. Do we need mutex and semaphore? 
 int inet_read(char* buf) {
-  int ret = 0; 
-  DMUTEX_LOCK;
-  data_active = true;
-  data_buf = &buf;
-  WAIT_DATA;
-  if (!data_active) 
-     ret = ERR_DISCONNECTED; 
-  data_active = false; 
-  DMUTEX_UNLOCK;
-  return ret;
+   if (!inet_connected)
+      return 0;
+   FBUF b = fbq_get(&read_queue);
+   fbuf_reset(&b);
+   fbuf_read(&b, 0, buf);
+   return fbuf_length(&b);
 }
 
 
@@ -224,6 +233,7 @@ void wifi_shell(Stream* chp) {
   wifi_enable();
   
   MUTEX_LOCK;
+  sleep(50);
   chprintf(_serial, "SHELL=1\r\r");
   _shell = chp;
   while (true) { 
@@ -238,7 +248,7 @@ void wifi_shell(Stream* chp) {
   }
   _shell = NULL;
   chprintf(_serial, "\r");
-  wifi_start_server();
+  wifi_start_server(false);
   MUTEX_UNLOCK;
   
   if (!was_enabled)
@@ -514,33 +524,43 @@ static THD_FUNCTION(wifi_monitor, arg)
          if (_shell != NULL)
             /* If shell is active, just pass character on to the shell */
             streamPut(_shell, c);
+         
          else if (c == '$') {
-            readline(_serial, cbuf, 8);
+            readline(_serial, cbuf, 10);
             if (strcmp(cbuf, "__BOOT__") == 0)
-                wifi_start_server();
+                wifi_start_server(true);
          }
-         else if (c == '#') {
-            /* If shell is not active and if the incoming character is a #, it is
-             * initiating a command or a response. All other characters are ignored.  
-             */
+         
+         else if (c == '@') {
+            /* Response to command from WIFI module */
 	    if (client_active) {
 	       readline(_serial, *client_buf, 128);
 	       SIGNAL_RESPONSE;
 	    }
-            else 
-	       wifi_command();
-	 }
-	 else if (c == '>') {
+         }
+         
+         else if (c == '#')             
+             /* Command from WIFI module */
+	      wifi_command();
+	 
+	 else if (c == ':') {
              /* Incoming data */
              FBUF input; 
              fbuf_new(&input);
              fbuf_streamRead(_serial, &input);
-             if (mon_queue != NULL)
+             
+             /* Insert into queues should be nonblocking. Do not 
+              * insert if queue is full. 
+              */
+             if (mon_queue != NULL && !fbq_full(mon_queue))
                fbq_put(mon_queue, input);
+             if (!fbq_full(&read_queue))
+               fbq_put(&read_queue, input);
          }
+         
          else if (c == '!') {
              /* Connection closed */
-             /* FIXME */
+             inet_connected = false; 
          }
       }
    }
@@ -554,6 +574,7 @@ void wifi_init(SerialDriver* sd)
   wifi_internal();
   clearPin(WIFI_ENABLE);
   sdStart(sd, &_serialConfig);  
+  FBQ_INIT(read_queue, HDLC_DECODER_QUEUE_SIZE);
   THREAD_START(wifi_monitor, NORMALPRIO, NULL);
   if (GET_BYTE_PARAM(WIFI_ON))
      wifi_enable();

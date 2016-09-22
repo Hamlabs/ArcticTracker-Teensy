@@ -32,6 +32,8 @@ char* wifi_status(char* buf);
 
 int  inet_open(char* host, int port);
 void inet_close(void);
+bool inet_is_connected(void);
 int  inet_read(char* buf);
-
+void inet_write(char* text);
+void inet_mon_on(bool on);
 #endif

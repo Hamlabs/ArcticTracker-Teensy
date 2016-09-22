@@ -351,7 +351,10 @@ void fbuf_print(Stream *chp, FBUF* b)
 }
   
   
-  
+/********************************************************
+   Read from a stream into a buffer chain.
+********************************************************/   
+
 void fbuf_streamRead(Stream *chp, FBUF* b)
 {
    while (true) {
@@ -367,17 +370,18 @@ void fbuf_streamRead(Stream *chp, FBUF* b)
 }
   
   
-/*******************************************************
-    Read a string of bytes from buffer chain. 
-    (this will add 'size' to the read-position)
- *******************************************************/
+/**************************************************************
+  Read up to size bytes from buffer chain into a string. 
+  if 'size' == 0, it will try to read the rest of the buffer 
+  chain.    
+ **************************************************************/
  
 char* fbuf_read (FBUF* b, uint8_t size, char *buf)
 {
     register uint8_t n; 
     register fbindex_t bb, r=0;
     
-    if (b->length < size)
+    if (b->length < size || size == 0)
        size = b->length; 
     bb = b->head; 
     while ( bb != NILPTR )
