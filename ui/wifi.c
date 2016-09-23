@@ -52,7 +52,7 @@ static const SerialConfig _serialConfig = {
 
 /* FIXME: Should check thread safety when using this */
 static char cbuf[129]; 
-
+static bool _running = false; 
 
 
 void wifi_enable() {
@@ -121,6 +121,7 @@ static void wifi_start_server(bool boot) {
   } 
   chprintf(_serial, "coroutine.resume(listener)\r");
   sleep(100);
+  _running = true; 
 }
 
 
@@ -181,7 +182,7 @@ int inet_open(char* host, int port) {
   sprintf(cbuf, "NET.OPEN %d %s", port, host);
   wifi_doCommand(cbuf, res);
   if (strncmp("OK", res, 2) != 0) 
-      return atoi(res+7);
+      return atoi(res+6);
   inet_connected = true;
   return 0; 
 }
@@ -193,6 +194,7 @@ void inet_close() {
    char res[10];
    sprintf(cbuf, "NET.CLOSE");
    wifi_doCommand(cbuf, res);
+   /* FIXME: Be sure that no other tread is blocking on queue */
    fbq_clear(&read_queue);
 }
 
@@ -216,9 +218,11 @@ int inet_read(char* buf) {
    if (!inet_connected)
       return 0;
    FBUF b = fbq_get(&read_queue);
+   int len = fbuf_length(&b);
    fbuf_reset(&b);
-   fbuf_read(&b, 0, buf);
-   return fbuf_length(&b);
+   fbuf_read(&b, len, buf);
+   fbuf_release(&b); 
+   return len;
 }
 
 
@@ -527,9 +531,10 @@ static THD_FUNCTION(wifi_monitor, arg)
          
          else if (c == '$') {
             readline(_serial, cbuf, 10);
-            if (strcmp(cbuf, "__BOOT__") == 0)
+            if (strcmp(cbuf, "__BOOT__") == 0) 
                 wifi_start_server(true);
          }
+         else if (!_running) continue; 
          
          else if (c == '@') {
             /* Response to command from WIFI module */
@@ -541,7 +546,7 @@ static THD_FUNCTION(wifi_monitor, arg)
          
          else if (c == '#')             
              /* Command from WIFI module */
-	      wifi_command();
+	     wifi_command();
 	 
 	 else if (c == ':') {
              /* Incoming data */
@@ -550,18 +555,23 @@ static THD_FUNCTION(wifi_monitor, arg)
              fbuf_streamRead(_serial, &input);
              
              /* Insert into queues should be nonblocking. Do not 
-              * insert if queue is full. 
+              * try to insert if queue is full. 
               */
+             if (!fbq_full(&read_queue))
+               fbq_put(&read_queue, fbuf_newRef(&input));
              if (mon_queue != NULL && !fbq_full(mon_queue))
                fbq_put(mon_queue, input);
-             if (!fbq_full(&read_queue))
-               fbq_put(&read_queue, input);
+             else
+               fbuf_release(&input);
          }
          
          else if (c == '!') {
              /* Connection closed */
              inet_connected = false; 
          }
+         else if (c == '*')
+             /* Comment */
+             readline(_serial, cbuf, 128);
       }
    }
 }
@@ -569,12 +579,12 @@ static THD_FUNCTION(wifi_monitor, arg)
 
 
 void wifi_init(SerialDriver* sd)
-{  
+{
   _serial = (Stream*) sd;
   wifi_internal();
   clearPin(WIFI_ENABLE);
   sdStart(sd, &_serialConfig);  
-  FBQ_INIT(read_queue, HDLC_DECODER_QUEUE_SIZE);
+  FBQ_INIT(read_queue, INET_RX_QUEUE_SIZE);
   THREAD_START(wifi_monitor, NORMALPRIO, NULL);
   if (GET_BYTE_PARAM(WIFI_ON))
      wifi_enable();

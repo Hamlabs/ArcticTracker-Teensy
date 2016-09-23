@@ -17,8 +17,8 @@
 
 
 /* Buffers */
-#define FBUF_SLOTS 128
-#define FBUF_SLOTSIZE 32
+#define FBUF_SLOTS    256
+#define FBUF_SLOTSIZE  32
 
 
 /* ADC ports for Teensy 3.1 */
@@ -31,6 +31,8 @@
 #define AFSK_TX_QUEUE_SIZE      128
 #define HDLC_DECODER_QUEUE_SIZE   8
 #define HDLC_ENCODER_QUEUE_SIZE   8
+#define INET_RX_QUEUE_SIZE       16
+
 
 /* Hardware timers */
 #define AFSK_RX_GPT      GPTD4

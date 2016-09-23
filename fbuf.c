@@ -446,6 +446,12 @@ void _fbq_init(FBQ* q, FBUF* buf, const uint16_t sz)
 }
 
 
+/**************************************************************************** 
+ * Clear a queue. Release all items and reset semaphores. 
+ * IMPORTANT: Be sure that no thread blocks on the queue when calling this.
+ * TODO: Check that this is correct wrt thread behaviour.  
+ ****************************************************************************/
+
 void fbq_clear(FBQ* q)
 {
   chSysLock();

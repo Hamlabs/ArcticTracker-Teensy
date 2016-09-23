@@ -40,7 +40,7 @@ static THD_FUNCTION(monitor, arg)
       /* Display it */
        if (mon_ax25)
           ax25_display_frame(out, &frame);
-       else
+       else 
           fbuf_print(out, &frame);
        chprintf(out, "\r\n");
     }
@@ -76,12 +76,12 @@ void mon_activate(bool m)
       mont = THREAD_DSTART(monitor, STACK_MONITOR, NORMALPRIO, NULL);  
    }
    if (tstop) {
-      hdlc_monitor_tx(NULL);
-      hdlc_subscribe_rx(NULL, 0);
       fbq_signal(&mon);
       if (mont!=NULL) 
            chThdWait(mont);
       mont=NULL;
+      hdlc_monitor_tx(NULL);
+      hdlc_subscribe_rx(NULL, 0);
    }
 }
 
