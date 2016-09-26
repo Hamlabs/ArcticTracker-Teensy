@@ -65,7 +65,7 @@ WIFIAP                  done    done
     DONE. 
     
 * Connect internet service from MCU
-    IN PROGRESS.
+    DONE.
 
 * Igate
 
@@ -75,7 +75,7 @@ WIFIAP                  done    done
 
 * Position report logs. Store in ESP-12. 
 
-* Battery charging control? 
+* Power/battery/PA control? 
 
 * Get display up and running
 

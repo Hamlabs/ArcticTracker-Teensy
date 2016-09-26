@@ -6,7 +6,7 @@
 #include "defines.h"
 #include <inttypes.h>
 
-#define NILPTR        255
+#define NILPTR 0xFFFF
 
 
 #define fbuf_t FBUF

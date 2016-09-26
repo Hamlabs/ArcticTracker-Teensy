@@ -89,7 +89,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    /* Sync to next flag */
    flag_sync:
    rgb_led_off();
-   do {      
+   do {  
       bit = get_bit ();
    }  while (bit != HDLC_FLAG);
 
@@ -136,7 +136,6 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
       length++;
    } while (bit != HDLC_FLAG);
 
-   rgb_led_off();
    if (crc_match(&fbuf, length)) 
    {     
       /* Send packets to subscribers, if any. 
