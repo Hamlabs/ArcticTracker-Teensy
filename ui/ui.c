@@ -127,6 +127,7 @@ static void onoffhandler(void* p);
    
    chRegSetThreadName("LED Blinker");
    
+   blipUp();
    /* Test RGB LED */
    rgb_led_on(true, false, false);
    sleep(300);
@@ -136,12 +137,6 @@ static void onoffhandler(void* p);
    sleep(300);
    rgb_led_off();
    sleep(300);
-   tx_led_on();
-   sleep(300);
-   tx_led_off();
-   blipUp();
-   sleep(500);
-   beeps("--.- .-. ...-");
 
    
    /* Blink LED */
@@ -208,6 +203,6 @@ static void onoffhandler(void* p) {
  void ui_init()
  {   
    rgb_led_off();   
-   THREAD_START(ui_thread, NORMALPRIO+1, NULL);
+   THREAD_START(ui_thread, NORMALPRIO+4, NULL);
  }
  

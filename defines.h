@@ -17,7 +17,7 @@
 
 
 /* Buffers */
-#define FBUF_SLOTS    256
+#define FBUF_SLOTS     256
 #define FBUF_SLOTSIZE  32
 
 
@@ -29,9 +29,9 @@
 /* Queues for AFSK encoder/decoder */
 #define AFSK_RX_QUEUE_SIZE      128
 #define AFSK_TX_QUEUE_SIZE      128
-#define HDLC_DECODER_QUEUE_SIZE   8
-#define HDLC_ENCODER_QUEUE_SIZE   8
-#define INET_RX_QUEUE_SIZE       16
+#define HDLC_DECODER_QUEUE_SIZE  16
+#define HDLC_ENCODER_QUEUE_SIZE  16
+#define INET_RX_QUEUE_SIZE       32
 
 
 /* Hardware timers */
@@ -138,6 +138,8 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_UI            164
 #define STACK_WIFI         1500
 #define STACK_SHELL        2600
+#define STACK_DIGIPEATER    512
+#define STACK_HLIST_TICK    256  // NEED THIS? 
 // 
 
 

@@ -24,6 +24,7 @@
 #include "ui/wifi.h"
 #include "gps.h"
 #include "tracker.h"
+#include "digipeater.h"
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
@@ -61,6 +62,7 @@ static void cmd_symbol(Stream *chp, int argc, char* argv[]);
 static void cmd_turnlimit(Stream *chp, int argc, char *argv[]);
 static void cmd_webserver(Stream *chp, int argc, char* argv[]);
 static void cmd_connect(Stream *chp, int argc, char* argv[]);
+static void cmd_digipeater(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
@@ -81,6 +83,8 @@ CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
 CMD_BOOL_SETTING(TXMON_ON,        "TXMON");
 CMD_BOOL_SETTING(REPEAT_ON,       "REPEAT");
 CMD_BOOL_SETTING(EXTRATURN_ON,    "EXTRATURN");
+CMD_BOOL_SETTING(DIGIP_WIDE1_ON,  "DIGIP_WIDE1");
+CMD_BOOL_SETTING(DIGIP_SAR_ON,    "DIGIP_SAR");
 CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
 CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
 CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
@@ -137,7 +141,10 @@ static const ShellCommand shell_commands[] =
   { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
   { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
   { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
-  { "connect",    "Open internet connectio (host,port)",       4, cmd_connect },
+  { "digipeater", "Digipeater on/off",                         7, cmd_digipeater },
+  { "digi-wide1", "Digipeater - standard WIDE1 mode",          6, cmd_DIGIP_WIDE1_ON},
+  { "digi-sar",   "Digipeater - Preemption on SAR alias",      6, cmd_DIGIP_SAR_ON },
+  { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
   
   {NULL, NULL, 0, NULL}
 };
@@ -966,3 +973,20 @@ static void cmd_connect(Stream *chp, int argc, char* argv[])
 
 
 
+/*****************************************************************************
+ * Digipeater on/off
+ *****************************************************************************/
+
+static void cmd_digipeater(Stream *chp, int argc, char* argv[]) 
+{
+   if (argc < 1) {
+     chprintf(chp, "Usage: digipeater on|off\r\n");
+     return;
+   }
+   radio_require();
+   if (strncmp(argv[0], "on", 2) == 0)
+     digipeater_on(true);
+   else
+     digipeater_on(false);
+   radio_release();
+}

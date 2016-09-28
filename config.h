@@ -84,13 +84,16 @@ DEFINE_PARAM ( REPEAT_ON,          181, Byte );
 DEFINE_PARAM ( EXTRATURN_ON,       183, Byte );
 DEFINE_PARAM ( FAKE_REPORTS_ON,    185, Byte );
 DEFINE_PARAM ( GPS_POWERSAVE_ON,   187, Byte );
-DEFINE_PARAM ( TXMON_ON,           189, Byte  );
-DEFINE_PARAM ( WIFI_ON,            191, Byte );
-DEFINE_PARAM ( HTTP_ON,            193, Byte );
-DEFINE_PARAM ( HTTP_USER,          195, credential );
-DEFINE_PARAM ( HTTP_PASSWD,        228, credential );
-DEFINE_PARAM ( SOFTAP_PASSWD,      261, credential );
-DEFINE_PARAM ( WIFIAP,             294, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( TXMON_ON,           189, Byte );
+DEFINE_PARAM ( DIGIP_WIDE1_ON,     191, Byte );
+DEFINE_PARAM ( DIGIP_SAR_ON,       193, Byte );
+DEFINE_PARAM ( DIGIPEATER_ON,      195, Byte );
+DEFINE_PARAM ( WIFI_ON,            197, Byte );
+DEFINE_PARAM ( HTTP_ON,            199, Byte );
+DEFINE_PARAM ( HTTP_USER,          201, credential );
+DEFINE_PARAM ( HTTP_PASSWD,        234, credential );
+DEFINE_PARAM ( SOFTAP_PASSWD,      267, credential );
+DEFINE_PARAM ( WIFIAP,             300, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 
@@ -133,6 +136,9 @@ DEFAULT_PARAM( EXTRATURN_ON )        = 0;
 DEFAULT_PARAM( FAKE_REPORTS_ON )     = 0;
 DEFAULT_PARAM( GPS_POWERSAVE_ON )    = 0;
 DEFAULT_PARAM( TXMON_ON )            = 0;
+DEFAULT_PARAM( DIGIP_WIDE1_ON )      = 0; 
+DEFAULT_PARAM( DIGIP_SAR_ON )        = 0;
+DEFAULT_PARAM( DIGIPEATER_ON )       = 0;
 DEFAULT_PARAM( WIFI_ON )             = 1;
 DEFAULT_PARAM( HTTP_ON )             = 1;
 DEFAULT_PARAM( HTTP_USER )           = "user";

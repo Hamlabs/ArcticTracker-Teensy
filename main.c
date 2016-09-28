@@ -46,6 +46,7 @@ static void ext_init() {
 }
 
 
+
 /******************************************************
  * Application entry point.
  ******************************************************/
@@ -53,7 +54,6 @@ static void ext_init() {
 int main(void) 
 {     
    thread_t *shelltp = NULL;
-   
    halInit();
    chSysInit();
    eeprom_initialize(); 
@@ -68,6 +68,8 @@ int main(void)
    // FIXME: Rename to afsk_tx_enable
    gps_init(&GPS_SERIAL, (Stream*) &SHELL_SERIAL);
    tracker_init();
+   sleep(100);
+   digipeater_init();
    mon_init((Stream*) &SHELL_SERIAL);
    wifi_init((Stream*) &WIFI_SERIAL);
    shellInit();
