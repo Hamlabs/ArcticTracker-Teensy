@@ -34,6 +34,9 @@ int  inet_open(char* host, int port);
 void inet_close(void);
 bool inet_is_connected(void);
 int  inet_read(char* buf);
+FBUF inet_readFB(void);
+void inet_ignoreInput(void);
 void inet_write(char* text);
+void inet_writeFB(FBUF *fb);
 void inet_mon_on(bool on);
 #endif

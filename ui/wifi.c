@@ -214,6 +214,16 @@ void inet_write(char* text) {
 }
 
 
+/* FIXME: Could this be done more efficiently */
+
+void inet_writeFB(FBUF *fb) {
+  char res[10];
+  sprintf(cbuf, "NET.DATA ");
+  fbuf_read(fb, 80, cbuf+9);
+  wifi_doCommand(cbuf, res);
+}
+
+
 int inet_read(char* buf) {
    if (!inet_connected)
       return 0;
@@ -225,6 +235,18 @@ int inet_read(char* buf) {
    return len;
 }
 
+
+FBUF inet_readFB() {
+  return fbq_get(&read_queue);
+}
+
+
+void inet_ignoreInput() {
+   if (!inet_connected)
+      return;
+   FBUF b = fbq_get(&read_queue);
+   fbuf_release(&b);
+}
 
 
 

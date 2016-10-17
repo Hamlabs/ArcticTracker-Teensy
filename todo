@@ -40,6 +40,9 @@ HTTP_USER               done    done
 HTTP_PASSWD             done    done
 SOFTAP_PASSWD           done    done
 WIFIAP                  done    done  
+DIGIPEATER_ON           tbd     done 
+DIGIP_WIDE1_ON          tbd     done
+DIGIP_SAR_ON            tbd     done
 
 --------------------------------------------------------
 
@@ -68,6 +71,7 @@ WIFIAP                  done    done
     DONE.
 
 * Igate
+    IN PROGRESS.
 
 * Digipeater
     DONE. Need testing. 

@@ -139,8 +139,10 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_WIFI         1500
 #define STACK_SHELL        2600
 #define STACK_DIGIPEATER    512
+#define STACK_IGATE         512
+#define STACK_IGATE_RADIO   512
 #define STACK_HLIST_TICK    256  // NEED THIS? 
-// 
+
 
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)

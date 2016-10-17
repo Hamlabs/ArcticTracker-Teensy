@@ -35,6 +35,7 @@ const name##_type name##_default
 #define COMMENT_LENGTH 40
 #define OBJID_LENGTH 10
 #define CRED_LENGTH 32
+#define INET_NAME_LENGTH 40
 
 typedef uint8_t Byte; 
 typedef uint16_t Word; 
@@ -44,6 +45,8 @@ typedef addr_t __digilist_t[7];
 typedef char comment[COMMENT_LENGTH];
 typedef char credential[CRED_LENGTH];
 typedef char obj_id_t[OBJID_LENGTH];
+typedef char inet_name[INET_NAME_LENGTH]; 
+
 typedef ap_config_t __aplist_t;        // 64 bytes
    
 
@@ -88,12 +91,18 @@ DEFINE_PARAM ( TXMON_ON,           189, Byte );
 DEFINE_PARAM ( DIGIP_WIDE1_ON,     191, Byte );
 DEFINE_PARAM ( DIGIP_SAR_ON,       193, Byte );
 DEFINE_PARAM ( DIGIPEATER_ON,      195, Byte );
-DEFINE_PARAM ( WIFI_ON,            197, Byte );
-DEFINE_PARAM ( HTTP_ON,            199, Byte );
-DEFINE_PARAM ( HTTP_USER,          201, credential );
-DEFINE_PARAM ( HTTP_PASSWD,        234, credential );
-DEFINE_PARAM ( SOFTAP_PASSWD,      267, credential );
-DEFINE_PARAM ( WIFIAP,             300, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( IGATE_ON,           197, Byte );
+DEFINE_PARAM ( IGATE_HOST,         199, inet_name); 
+DEFINE_PARAM ( IGATE_PORT,         240, Word );
+DEFINE_PARAM ( IGATE_USERNAME,     243, credential );              
+DEFINE_PARAM ( IGATE_PASSCODE,     275, Word );
+DEFINE_PARAM ( IGATE_FILTER,       278, credential );   
+DEFINE_PARAM ( WIFI_ON,            311, Byte );
+DEFINE_PARAM ( HTTP_ON,            313, Byte );
+DEFINE_PARAM ( HTTP_USER,          315, credential );
+DEFINE_PARAM ( HTTP_PASSWD,        348, credential );
+DEFINE_PARAM ( SOFTAP_PASSWD,      381, credential );
+DEFINE_PARAM ( WIFIAP,             414, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 
@@ -139,6 +148,12 @@ DEFAULT_PARAM( TXMON_ON )            = 0;
 DEFAULT_PARAM( DIGIP_WIDE1_ON )      = 0; 
 DEFAULT_PARAM( DIGIP_SAR_ON )        = 0;
 DEFAULT_PARAM( DIGIPEATER_ON )       = 0;
+DEFAULT_PARAM( IGATE_ON )            = 0;
+DEFAULT_PARAM( IGATE_HOST )          = "aprs.no";  
+DEFAULT_PARAM( IGATE_PORT )          = 14580;
+DEFAULT_PARAM( IGATE_USERNAME )      = "nocall";
+DEFAULT_PARAM( IGATE_PASSCODE )      = 0; 
+DEFAULT_PARAM( IGATE_FILTER )        = "";
 DEFAULT_PARAM( WIFI_ON )             = 1;
 DEFAULT_PARAM( HTTP_ON )             = 1;
 DEFAULT_PARAM( HTTP_USER )           = "user";

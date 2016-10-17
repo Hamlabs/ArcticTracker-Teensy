@@ -93,6 +93,25 @@ uint8_t args2digis(addr_t* digis, int ndigis, char *argv[])
 }
 
 
+/***********************************************************************
+ * Search for a string in digipeater list
+ ***********************************************************************/
+
+bool ax25_search_digis(addr_t* digis, int ndigis, char *argv[])
+{
+   int i=0;
+   char buf[8];
+   
+   while (true) {
+     if (argv[i] == NULL)
+       break;
+     for (uint8_t j=0; j<ndigis; j++)
+       if (strncmp(argv[i], addr2str(buf, &digis[j]), strlen(argv[i])) == 0)
+          return true;
+     i++;
+   }
+   return false;
+}
 
 
 /**********************************************************************
