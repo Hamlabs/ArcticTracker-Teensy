@@ -25,6 +25,7 @@
 #include "gps.h"
 #include "tracker.h"
 #include "digipeater.h"
+#include "igate.h"
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
@@ -63,9 +64,12 @@ static void cmd_turnlimit(Stream *chp, int argc, char *argv[]);
 static void cmd_webserver(Stream *chp, int argc, char* argv[]);
 static void cmd_connect(Stream *chp, int argc, char* argv[]);
 static void cmd_digipeater(Stream *chp, int argc, char* argv[]);
+static void cmd_igate(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
+static void _parameter_setting_string(Stream*, int, char**, int, uint16_t, const void*, uint8_t, char*);
+static void _parameter_setting_uint(Stream*, int, char**, int, uint16_t, const void*, char*, uint16_t, uint16_t );
 
 
 #define CMD_BOOL_SETTING(x, name) \
@@ -75,7 +79,14 @@ static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*,
 #define CMD_BYTE_SETTING(x, name, llimit, ulimit) \
       static inline void cmd_##x(Stream* out, int argc, char** argv) \
       { _parameter_setting_byte(out, argc, argv, x##_offset, &x##_default, name, llimit, ulimit); }    
-      
+
+#define STRING_SETTING(out, x, name, size, start) \
+      _parameter_setting_string(out, argc, argv, start, x##_offset, x##_default, size, name);
+   
+#define UINT_SETTING(out, x, name, start, llimit, ulimit) \
+     _parameter_setting_uint(out, argc, argv, start, x##_offset, (void*) &x##_default, name, llimit, ulimit);
+   
+   
 CMD_BOOL_SETTING(TIMESTAMP_ON,    "TIMESTAMP");
 CMD_BOOL_SETTING(COMPRESS_ON,     "COMPRESS");
 CMD_BOOL_SETTING(ALTITUDE_ON,     "ALTITUDE");
@@ -144,6 +155,7 @@ static const ShellCommand shell_commands[] =
   { "digipeater", "Digipeater on/off",                         7, cmd_digipeater },
   { "digi-wide1", "Digipeater - standard WIDE1 mode",          6, cmd_DIGIP_WIDE1_ON},
   { "digi-sar",   "Digipeater - Preemption on SAR alias",      6, cmd_DIGIP_SAR_ON },
+  { "igate",      "Igate on/off",                              4, cmd_igate },
   { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
   
   {NULL, NULL, 0, NULL}
@@ -189,6 +201,50 @@ static void _parameter_setting_byte(Stream* out, int argc, char** argv,
   else
     chprintf(out, "%s\r\n", parseByteSetting(ee_addr, argv[0], llimit, ulimit, buf));
 }
+
+
+/********************************************************** 
+ * Generic getter/setter method for string settings 
+ **********************************************************/
+
+static void _parameter_setting_string(Stream* out, int argc, char** argv, int start,
+                   uint16_t ee_addr, const void* default_val, uint8_t size, char* name )
+{
+    char data[size];
+    if (argc < start+1) {
+       get_param(ee_addr, data, size, default_val);
+       chprintf(out, "%s %s\r\n", name, data);
+    }
+    else {
+       set_param(ee_addr, argv[start], size);
+       chprintf(out, "OK\r\n");
+    }
+}
+
+
+/********************************************************** 
+ * Generic getter/setter method for uint16 settings 
+ **********************************************************/
+
+static void _parameter_setting_uint(Stream* out, int argc, char** argv, int start,
+             uint16_t ee_addr, const void* default_val, char* name, uint16_t llimit, uint16_t ulimit )
+{
+  uint16_t data;
+  if (argc < start+1) {
+    get_param(ee_addr, &data, sizeof(uint16_t), default_val);
+    chprintf(out, "%s %d\r\n", name, data);
+  }
+  else {
+    sscanf(argv[start], "%hu", &data); // FIXME: error msg if input is not numeric
+    if (data < llimit || data > ulimit) 
+       chprintf(out, "ERROR: out of bounds\r\n"); 
+    else {
+       set_param(ee_addr, (uint16_t*) &data, sizeof(uint16_t));
+       chprintf(out, "OK\r\n");
+    }
+  }
+}
+
 
 
 static const ShellConfig shell_cfg = {
@@ -961,11 +1017,13 @@ static void cmd_connect(Stream *chp, int argc, char* argv[])
    if (res == 0) {
       chprintf(chp, "**** Connected to %s, Ctrl-D to exit **** \r\n", argv[0]);
       inet_mon_on(true);
+      inet_disable_read(true);
       sleep(10);
       while (!shellGetLine(chp, buf, BUFSIZE) && inet_is_connected())  
           inet_write(buf);
       inet_close();
       inet_mon_on(false);
+      inet_disable_read(false);
    }
    else
      chprintf(chp, "ERROR. Cannot connect: %d\r\n", res);
@@ -983,10 +1041,48 @@ static void cmd_digipeater(Stream *chp, int argc, char* argv[])
      chprintf(chp, "Usage: digipeater on|off\r\n");
      return;
    }
-   radio_require();
    if (strncmp(argv[0], "on", 2) == 0)
      digipeater_on(true);
    else
      digipeater_on(false);
-   radio_release();
 }
+
+
+
+/*****************************************************************************
+ * Igate on/off
+ *****************************************************************************/
+
+static void cmd_igate(Stream *chp, int argc, char* argv[]) 
+{
+   if (argc < 1) {
+      chprintf(chp, "Usage: webserver on|off|host|port|user|passcode|filter\r\n");
+   }
+   else if (strncasecmp("on", argv[0], 2) == 0) { 
+      chprintf(chp, "***** IGATE ON *****\r\n");
+      igate_on(true);
+   }
+   else if (strncasecmp("off", argv[0], 2) == 0) {
+      chprintf(chp, "***** IGATE OFF *****\r\n");
+      igate_on(false);
+   }
+   else if (strncasecmp("host", argv[0], 2) == 0) {
+      STRING_SETTING( chp, IGATE_HOST, "IGATE_HOST", CRED_LENGTH, 1 );
+   }
+   else if (strncasecmp("username", argv[0], 4) == 0) {
+      STRING_SETTING( chp, IGATE_USERNAME, "IGATE_USERNAME", CRED_LENGTH, 1 );
+   }
+   else if (strncasecmp("filter", argv[0], 4) == 0) {
+      STRING_SETTING( chp, IGATE_FILTER, "IGATE_FILTER", CRED_LENGTH, 1 );
+   }
+   else if (strncasecmp("port", argv[0], 4) == 0) {
+      UINT_SETTING(chp, IGATE_PORT, "IGATE_PORT", 1, 1024, 65000);
+   }
+   else if (strncasecmp("passcode", argv[0], 4) ==0) {
+      UINT_SETTING(chp, IGATE_PASSCODE, "IGATE_PASSCODE", 1, 0, 65000);
+   }
+}
+
+
+
+

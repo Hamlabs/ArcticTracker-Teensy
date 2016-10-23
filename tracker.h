@@ -3,6 +3,7 @@
 #define __DEF_TRACKER_H__
 
 
+void tracker_setGate(FBQ* gt);
 void tracker_on(void);
 void tracker_off(void);
 void tracker_posReport(void);

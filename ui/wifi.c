@@ -173,6 +173,7 @@ char* wifi_status(char* buf) {
  *************************************************************/
 
 static bool inet_connected = false;
+static bool read_disable = false;
 static FBQ* mon_queue;
 static FBQ  read_queue;
 
@@ -194,8 +195,11 @@ void inet_close() {
    char res[10];
    sprintf(cbuf, "NET.CLOSE");
    wifi_doCommand(cbuf, res);
-   /* FIXME: Be sure that no other tread is blocking on queue */
-   fbq_clear(&read_queue);
+   /*
+    * FIXME: Do we need to call fbq_clear? If so, be sure 
+    * that no other tread is blocking on queue 
+    */
+//   fbq_clear(&read_queue);
 }
 
 bool inet_is_connected()
@@ -205,6 +209,12 @@ bool inet_is_connected()
 void inet_mon_on(bool on) {
    mon_queue = mon_text_activate(on);
 }
+
+
+void inet_disable_read(bool on) {
+  read_disable = on; 
+}
+
 
 
 void inet_write(char* text) {
@@ -238,6 +248,11 @@ int inet_read(char* buf) {
 
 FBUF inet_readFB() {
   return fbq_get(&read_queue);
+}
+
+
+void inet_signalReader() {
+  fbq_signal(&read_queue);
 }
 
 
@@ -579,7 +594,7 @@ static THD_FUNCTION(wifi_monitor, arg)
              /* Insert into queues should be nonblocking. Do not 
               * try to insert if queue is full. 
               */
-             if (!fbq_full(&read_queue))
+             if (!read_disable && !fbq_full(&read_queue))
                fbq_put(&read_queue, fbuf_newRef(&input));
              if (mon_queue != NULL && !fbq_full(mon_queue))
                fbq_put(mon_queue, input);

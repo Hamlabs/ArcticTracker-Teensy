@@ -25,6 +25,8 @@ posdata_t prev_pos_gps;
 int16_t course=-1, prev_course=-1, prev_gps_course=-1;
 
 extern fbq_t* outframes;  
+static fbq_t* gate; 
+
 static bool maxpause_reached = false;
 static uint8_t pause_count = 0;
 static bool waited = false;
@@ -59,6 +61,12 @@ double log(double);
 long lround(double);
 
 
+/***********************************************************
+ * Set packet queue to igate
+ ***********************************************************/
+
+void tracker_setGate(FBQ* gt)
+{ gate = gt; }
 
 
 /***********************************************************
@@ -221,11 +229,13 @@ static THD_FUNCTION(tracker, arg)
         if (gps_is_fixed()) {
            if (should_update(&prev_pos_gps, &prev_pos, &current_pos)) {
               if (GET_BYTE_PARAM(REPORT_BEEP_ON)) 
-                 { beep(3); }
+                 { beep(10); }
             
               report_station_position(&current_pos, false);
               prev_pos = current_pos;                      
            }
+           else
+              report_station_position(&current_pos, true);
         
            prev_pos_gps = current_pos;
            activate_tx();
@@ -436,6 +446,8 @@ extern fbq_t *mqueue;
 
 static void report_station_position(posdata_t* pos, bool no_tx)
 {
+    if (no_tx && gate == NULL)
+       return;
     static uint8_t ccount;
     FBUF packet;    
     char comment[COMMENT_LENGTH+1];
@@ -462,7 +474,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
        posdata_t p = getPos();
        send_extra_report(&packet, &p, GET_BYTE_PARAM(SYMBOL), GET_BYTE_PARAM(SYMBOL_TAB));
     }
-    /* TEST: re-send report in next transmission */
+    /* Re-send report in next transmission */
     if (GET_BYTE_PARAM(REPEAT_ON) != 0)
           putPos(*pos);
      
@@ -477,18 +489,11 @@ static void report_station_position(posdata_t* pos, bool no_tx)
        ccount = COMMENT_PERIOD; 
     }
 
-    
     /* Send packet.
      * if no_tx flag was set, put it on monitor-queue instead (if active)
      */
-    if (no_tx) {
-      if (mqueue) {
-            fbuf_putChar(&packet, 0xff);fbuf_putChar(&packet, 0xff);
-            fbq_put(mqueue, packet); 
-         }
-      else
-         fbuf_release(&packet); 
-    }
+    if (no_tx) 
+        fbq_put(gate, packet); 
     else
         fbq_put(outframes, packet);
 }

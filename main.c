@@ -17,6 +17,8 @@
 #include "ui/commands.h"
 #include "adc_input.h"
 #include "tracker.h"
+#include "digipeater.h"
+
 
 static void ext_init(void);
 extern void usb_initialize(void);
@@ -70,8 +72,9 @@ int main(void)
    tracker_init();
    sleep(100);
    digipeater_init();
+   igate_init();
    mon_init((Stream*) &SHELL_SERIAL);
-   wifi_init((Stream*) &WIFI_SERIAL);
+   wifi_init(&WIFI_SERIAL);
    shellInit();
 
    while (!chThdShouldTerminateX()) {

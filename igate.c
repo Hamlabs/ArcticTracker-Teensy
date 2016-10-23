@@ -65,7 +65,7 @@ static THD_FUNCTION(igate_radio, arg)
 {
   (void) arg;
   chRegSetThreadName("Igate Radio");
-  
+  sleep(100); 
   while(_igate_on) {
     FBUF frame = fbq_get(&rxqueue);
     if (!fbuf_empty(&frame)) {
@@ -94,11 +94,11 @@ static THD_FUNCTION(igate_main, arg)
   GET_PARAM(IGATE_HOST, host);
   GET_PARAM(IGATE_PORT, &port);
   int res = inet_open(host, port);
-  
+
   if (res == 0) {
     /* Connected ok. Await welcome text */
     inet_ignoreInput();
-    beeps(".. --.");
+    beeps("--.  "); blipUp();
     
     // Login using username/passcode and (option) sende filter-string
     char uname[CRED_LENGTH];
@@ -115,18 +115,20 @@ static THD_FUNCTION(igate_main, arg)
     
     /* Listen for data from APRS/IS server */
     while (inet_is_connected() && _igate_on) {
+      rgb_led_mix(2, 0, 10, 10);
       FBUF frame = inet_readFB();
       if (!fbuf_empty(&frame) && fbuf_getChar(&frame) != '#')
         inet2rf(&frame);
       fbuf_release(&frame);
     }
+    rgb_led_off();
     
     /* Unsubscribe and terminate child thread */
     hdlc_subscribe_rx(NULL, 2);
     fbq_signal(&rxqueue);
     chThdWait(igt);
     sleep(500);
-    beeps("--. ..-.");
+    beeps("--.  "); blipDown();
   }
   else
   {} /* Connection unsuccessful */
@@ -172,8 +174,9 @@ void igate_activate(bool m)
    FBQ* mq = (_igate_on? &rxqueue : NULL);
   
    if (tstart) {
-      /* Subscribe to RX packets and start treads */
+      /* Subscribe to RX (and tracker) packets and start treads */
       hdlc_subscribe_rx(mq, 2);
+      tracker_setGate(mq);
       THREAD_DSTART(igate_main, STACK_IGATE, NORMALPRIO, NULL);  
     
       /* Turn on radio and decoder */
@@ -186,9 +189,14 @@ void igate_activate(bool m)
       afsk_rx_disable();  // ????
       radio_release();
     
+      /* Close internet connection */
+      inet_close(); 
+      
       /* Unsubscribe to RX packets and stop threads */
-      hdlc_subscribe_rx(NULL, 1);
+      hdlc_subscribe_rx(NULL, 2);
+      tracker_setGate(NULL);
       fbq_signal(&rxqueue);
+      inet_signalReader();
    }
 }
 

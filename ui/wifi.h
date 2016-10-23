@@ -39,4 +39,7 @@ void inet_ignoreInput(void);
 void inet_write(char* text);
 void inet_writeFB(FBUF *fb);
 void inet_mon_on(bool on);
+void inet_disable_read(bool on);
+void inet_signalReader(void);
+
 #endif
