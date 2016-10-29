@@ -166,6 +166,14 @@ char* wifi_status(char* buf) {
    return buf;
 }
   
+bool wifi_is_connected() {
+   char res[8]; 
+   int n; 
+   wifi_doCommand("STATUS", res);
+   n = atoi(res);
+   return (n == 5);
+}
+
   
   
 /*************************************************************
@@ -229,7 +237,7 @@ void inet_write(char* text) {
 void inet_writeFB(FBUF *fb) {
   char res[10];
   sprintf(cbuf, "NET.DATA ");
-  fbuf_read(fb, 80, cbuf+9);
+  fbuf_read(fb, 128, cbuf+9);
   wifi_doCommand(cbuf, res);
 }
 

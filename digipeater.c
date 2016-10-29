@@ -20,9 +20,9 @@
 #include "ax25.h"
 #include "afsk.h"
 #include "hdlc.h"
-#include "util/crc16.h"
 #include "ui/ui.h"
 #include "radio.h"
+#include "heardlist.h"
 #include "digipeater.h"
 #include <string.h>
    
@@ -32,8 +32,6 @@ static FBQ rxqueue;
 extern fbq_t* outframes; 
 extern fbq_t* mon_q;
 
-static bool duplicate_packet(addr_t* from, addr_t* to, FBUF* f, uint8_t ndigis);
-static uint16_t digi_checksum(addr_t* from, addr_t* to, FBUF* f, uint8_t ndigis);
 static void check_frame(FBUF *f);
 
 
@@ -66,18 +64,6 @@ static THD_FUNCTION(digipeater, arg)
   }
   sleep(500);
   beeps("-.. ..-.");
-}
-
-
-/* FIXME: Consider using virtual timer */
-static THD_FUNCTION(hlist, arg)
-{
-  (void) arg;
-  chRegSetThreadName("Heardlist tick");
-  while (digi_on) {
-    sleep(5000);
-    hlist_tick();
-  }
 }
 
 
@@ -123,7 +109,7 @@ void digipeater_activate(bool m)
       /* Subscribe to RX packets and start treads */
       hdlc_subscribe_rx(mq, 1);
       THREAD_DSTART(digipeater, STACK_DIGIPEATER, NORMALPRIO, NULL);  
-      THREAD_DSTART(hlist, STACK_HLIST_TICK, NORMALPRIO, NULL);
+      hlist_start();
       
       /* Turn on radio and decoder */
       radio_require();
@@ -138,44 +124,6 @@ void digipeater_activate(bool m)
       hdlc_subscribe_rx(NULL, 1);
       fbq_signal(&rxqueue);
    }
-}
-
-
-/*******************************************************************************
- * Return true if packet is heard earlier. 
- * If not, put it into the heard list. 
- *******************************************************************************/
-
-static bool duplicate_packet(addr_t* from, addr_t* to, FBUF* f, uint8_t ndigis)
-{ 
-   uint16_t cs = digi_checksum(from, to, f, ndigis);
-   bool hrd = hlist_exists(cs);
-   if (!hrd) hlist_add(cs);
-   return hrd;
-}
-
-
-
-/*********************************************************************************
- * Compute a checksum (hash) from source-callsign + destination-callsign 
- * + message. This is used to check for duplicate packets. 
- *********************************************************************************/
-
-static uint16_t digi_checksum(addr_t* from, addr_t* to, FBUF* f, uint8_t ndigis)
-{
-  uint16_t crc = 0xFFFF;
-  uint8_t i = 0;
-  while (from->callsign[i] != 0)
-    crc = _crc_ccitt_update(crc, from->callsign[i++]); 
-  crc = _crc_ccitt_update(crc, from->ssid);
-  i=0;
-  while (to->callsign[i] != 0)
-    crc = _crc_ccitt_update(crc, to->callsign[i++]);
-  crc = _crc_ccitt_update(crc, to->ssid);
-  fbuf_rseek(f, 14+2+ndigis*7); 
-  for (i=0; i<fbuf_length(f)-2; i++)
-     crc = _crc_ccitt_update(crc, fbuf_getChar(f)); 
-  return crc;
 }
 
 
@@ -196,7 +144,7 @@ static void check_frame(FBUF *f)
    int8_t  sar_pos = -1;
    uint8_t ndigis =  ax25_decode_header(f, &from, &to, digis, &ctrl, &pid);
 
-   if (duplicate_packet(&from, &to, f, ndigis))
+   if (hlist_duplicate(&from, &to, f, ndigis))
        return;
    GET_PARAM(MYCALL, &mycall);
 

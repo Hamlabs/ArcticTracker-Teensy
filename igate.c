@@ -37,6 +37,7 @@
 #include "hdlc.h"
 #include "afsk.h"
 #include "radio.h"
+#include "heardlist.h"
 #include "igate.h"
 
 
@@ -45,6 +46,8 @@ static void rf2inet(FBUF *);
 static void inet2rf(FBUF *);
 
 static bool _igate_on = false;
+static bool _igate_run = false; 
+
 static FBQ rxqueue;           /* Frames from radio or tracker */
 
 extern fbq_t* outframes;      /* Frames to be transmitted on radio */
@@ -52,6 +55,9 @@ extern fbq_t* mon_q;          /* Do we need to monitor igate? */
 
 static char buf[128];
 static thread_t* igt=NULL;
+static thread_t* igtm=NULL;
+
+
 
 
 
@@ -66,12 +72,14 @@ static THD_FUNCTION(igate_radio, arg)
   (void) arg;
   chRegSetThreadName("Igate Radio");
   sleep(100); 
-  while(_igate_on) {
+  while(_igate_run) {
     FBUF frame = fbq_get(&rxqueue);
-    if (!fbuf_empty(&frame)) {
+    if (fbuf_length(&frame) > 2) {
+      beeps("- ");
       rf2inet(&frame);
     }   
     fbuf_release(&frame);
+    sleep(100);
   }
 }
 
@@ -88,51 +96,66 @@ static THD_FUNCTION(igate_main, arg)
   chRegSetThreadName("Igate Main");
   sleep(1000);
   
-  /* connect-to-aprs-is */
-  char host[INET_NAME_LENGTH]; 
-  uint16_t port;
-  GET_PARAM(IGATE_HOST, host);
-  GET_PARAM(IGATE_PORT, &port);
-  int res = inet_open(host, port);
-
-  if (res == 0) {
-    /* Connected ok. Await welcome text */
-    inet_ignoreInput();
-    beeps("--.  "); blipUp();
+  while (_igate_on) {
+     /* connect-to-aprs-is */
+     char host[INET_NAME_LENGTH]; 
+     uint16_t port;
+     GET_PARAM(IGATE_HOST, host);
+     GET_PARAM(IGATE_PORT, &port);
+     int res = -1, tries=0;
     
-    // Login using username/passcode and (option) sende filter-string
-    char uname[CRED_LENGTH];
-    char filter[CRED_LENGTH];
-    uint16_t pass;
-    GET_PARAM(IGATE_USERNAME, uname); 
-    GET_PARAM(IGATE_PASSCODE, &pass);
-    GET_PARAM(IGATE_FILTER, filter);         
-    igate_login(uname, pass, filter);
+     while (!wifi_is_connected() 
+            || (res=inet_open(host, port) != 0 && tries++ < 3))
+        sleep(10000);
+  
+     if (_igate_on && res == 0) {
+       /* Connected ok. Await welcome text */
+       inet_ignoreInput();
+       beeps("--.  "); blipUp();
+       _igate_run = true;
     
-    /* Start child thread to listen for frames from radio or tracker */
-    igt = THREAD_DSTART(igate_radio, STACK_IGATE_RADIO, NORMALPRIO, NULL);
-    hdlc_subscribe_rx(&rxqueue, 2);
+       // Login using username/passcode and (option) sende filter-string
+       char uname[CRED_LENGTH];
+       char filter[CRED_LENGTH];
+       uint16_t pass;
+       GET_PARAM(IGATE_USERNAME, uname); 
+       GET_PARAM(IGATE_PASSCODE, &pass);
+       GET_PARAM(IGATE_FILTER, filter);         
+       igate_login(uname, pass, filter);
     
-    /* Listen for data from APRS/IS server */
-    while (inet_is_connected() && _igate_on) {
-      rgb_led_mix(2, 0, 10, 10);
-      FBUF frame = inet_readFB();
-      if (!fbuf_empty(&frame) && fbuf_getChar(&frame) != '#')
-        inet2rf(&frame);
-      fbuf_release(&frame);
-    }
-    rgb_led_off();
+       /* Start child thread to listen for frames from radio or tracker */
+       igt = THREAD_DSTART(igate_radio, STACK_IGATE_RADIO, NORMALPRIO, NULL);
+       hdlc_subscribe_rx(&rxqueue, 2);
+       
+       /* Listen for data from APRS/IS server */
+       while (inet_is_connected() && _igate_on) {
+          rgb_led_mix(2, 0, 10, 10);
+          FBUF frame = inet_readFB();
+          if (!fbuf_empty(&frame) && fbuf_getChar(&frame) != '#')
+             inet2rf(&frame);
+          fbuf_release(&frame);
+       }
+       rgb_led_off();
     
-    /* Unsubscribe and terminate child thread */
-    hdlc_subscribe_rx(NULL, 2);
-    fbq_signal(&rxqueue);
-    chThdWait(igt);
-    sleep(500);
-    beeps("--.  "); blipDown();
+       /* Unsubscribe and terminate child thread */
+       _igate_run = false; 
+       fbq_signal(&rxqueue);
+       sleep(10);
+       hdlc_subscribe_rx(NULL, 2);
+       
+       if (igt!=NULL) 
+          chThdWait(igt);
+       igt=NULL;
+       
+       /* Connection failure. Wait for 2 minutes */
+       if (_igate_on) {
+          beeps(" --. ..-.");
+          for (int i=0; i<60 && _igate_on; i++)
+            sleep(2000);
+       }  
+     }
   }
-  else
-  {} /* Connection unsuccessful */
-  ;
+  beeps("--.  "); blipDown();
 }
 
 
@@ -172,12 +195,13 @@ void igate_activate(bool m)
   
    _igate_on = m;
    FBQ* mq = (_igate_on? &rxqueue : NULL);
-  
+   
    if (tstart) {
       /* Subscribe to RX (and tracker) packets and start treads */
       hdlc_subscribe_rx(mq, 2);
       tracker_setGate(mq);
-      THREAD_DSTART(igate_main, STACK_IGATE, NORMALPRIO, NULL);  
+      igtm = THREAD_DSTART(igate_main, STACK_IGATE, NORMALPRIO, NULL);  
+      hlist_start();
     
       /* Turn on radio and decoder */
       /* FIXME: Need to turn on internet as well */
@@ -191,12 +215,14 @@ void igate_activate(bool m)
     
       /* Close internet connection */
       inet_close(); 
+      sleep(100);
       
-      /* Unsubscribe to RX packets and stop threads */
-      hdlc_subscribe_rx(NULL, 2);
-      tracker_setGate(NULL);
-      fbq_signal(&rxqueue);
       inet_signalReader();
+      if (igtm!=NULL)
+        chThdWait(igtm);
+      igtm=NULL;
+      
+      tracker_setGate(NULL);
    }
 }
 
@@ -209,28 +235,40 @@ void igate_activate(bool m)
 
 static void rf2inet(FBUF *frame) 
 {
+
+  
   FBUF newHdr;
   addr_t from, to, mycall; 
   addr_t digis[7];
   uint8_t ctrl, pid;
+  GET_PARAM(MYCALL, &mycall);
   fbuf_reset(frame);
   uint8_t ndigis =  ax25_decode_header(frame, &from, &to, digis, &ctrl, &pid);
   char type = fbuf_getChar(frame);
+  bool own = addrCmp(&mycall, &from); 
+  
+  if (hlist_duplicate(&from, &to, frame, ndigis))
+    return;
   
   static const char* nogate[8] = {"TCP", "NOGATE", "RFONLY", NULL};
   if ( type == '?' /* QUERY */ ||
-     ax25_search_digis( digis, ndigis, (char**) nogate)) 
+     ( !own && ax25_search_digis( digis, ndigis, (char**) nogate)))
     return;
- 
+
   /* Write header in plain text -> newHdr */
   fbuf_new(&newHdr);
   fbuf_putstr(&newHdr, addr2str(buf,&from)); 
   fbuf_putstr(&newHdr, ">");
   fbuf_putstr(&newHdr, addr2str(buf,&to));
+  fbuf_putstr(&newHdr, ",");
   fbuf_putstr(&newHdr, digis2str(buf, ndigis, digis));
-  fbuf_putstr(&newHdr, ",qAR,");
-  GET_PARAM(MYCALL, &mycall);
-  fbuf_putstr(&newHdr, addr2str(buf, &mycall));   
+  if (own && strncmp(buf, "TCPIP", 5) == 0)
+     fbuf_putstr(&newHdr, "*");
+  else {
+     fbuf_putstr(&newHdr, ",qAR,");
+     fbuf_putstr(&newHdr, addr2str(buf, &mycall));  
+  }
+  fbuf_putstr(&newHdr, ":");
   
   /* Replace header in original packet with new header. 
    * Do this non-destructively: Just add rest of existing packet to new header 
@@ -239,6 +277,7 @@ static void rf2inet(FBUF *frame)
   
   /* Send to internet server */
   inet_writeFB(&newHdr);
+  fbuf_release(&newHdr);
 }
 
 

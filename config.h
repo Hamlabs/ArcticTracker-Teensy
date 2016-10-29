@@ -85,24 +85,23 @@ DEFINE_PARAM ( REPORT_COMMENT,     138, comment );
 DEFINE_PARAM ( REPORT_BEEP_ON,     179, Byte );
 DEFINE_PARAM ( REPEAT_ON,          181, Byte );
 DEFINE_PARAM ( EXTRATURN_ON,       183, Byte );
-DEFINE_PARAM ( FAKE_REPORTS_ON,    185, Byte );
-DEFINE_PARAM ( GPS_POWERSAVE_ON,   187, Byte );
-DEFINE_PARAM ( TXMON_ON,           189, Byte );
-DEFINE_PARAM ( DIGIP_WIDE1_ON,     191, Byte );
-DEFINE_PARAM ( DIGIP_SAR_ON,       193, Byte );
-DEFINE_PARAM ( DIGIPEATER_ON,      195, Byte );
-DEFINE_PARAM ( IGATE_ON,           197, Byte );
-DEFINE_PARAM ( IGATE_HOST,         199, inet_name); 
-DEFINE_PARAM ( IGATE_PORT,         240, Word );
-DEFINE_PARAM ( IGATE_USERNAME,     243, credential );              
-DEFINE_PARAM ( IGATE_PASSCODE,     275, Word );
-DEFINE_PARAM ( IGATE_FILTER,       278, credential );   
-DEFINE_PARAM ( WIFI_ON,            311, Byte );
-DEFINE_PARAM ( HTTP_ON,            313, Byte );
-DEFINE_PARAM ( HTTP_USER,          315, credential );
-DEFINE_PARAM ( HTTP_PASSWD,        348, credential );
-DEFINE_PARAM ( SOFTAP_PASSWD,      381, credential );
-DEFINE_PARAM ( WIFIAP,             414, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( GPS_POWERSAVE_ON,   185, Byte );
+DEFINE_PARAM ( TXMON_ON,           187, Byte );
+DEFINE_PARAM ( DIGIP_WIDE1_ON,     189, Byte );
+DEFINE_PARAM ( DIGIP_SAR_ON,       191, Byte );
+DEFINE_PARAM ( DIGIPEATER_ON,      193, Byte );
+DEFINE_PARAM ( IGATE_ON,           195, Byte );
+DEFINE_PARAM ( IGATE_HOST,         197, inet_name); 
+DEFINE_PARAM ( IGATE_PORT,         238, Word );
+DEFINE_PARAM ( IGATE_USERNAME,     241, credential );               
+DEFINE_PARAM ( IGATE_PASSCODE,     274, Word );
+DEFINE_PARAM ( IGATE_FILTER,       277, credential );   
+DEFINE_PARAM ( WIFI_ON,            310, Byte );
+DEFINE_PARAM ( HTTP_ON,            312, Byte );
+DEFINE_PARAM ( HTTP_USER,          314, credential );
+DEFINE_PARAM ( HTTP_PASSWD,        347, credential );
+DEFINE_PARAM ( SOFTAP_PASSWD,      380, credential ); // 380
+DEFINE_PARAM ( WIFIAP,             413, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 
@@ -142,7 +141,6 @@ DEFAULT_PARAM( REPORT_COMMENT )      = "Arctic Tracker";
 DEFAULT_PARAM( REPORT_BEEP_ON )      = 0;
 DEFAULT_PARAM( REPEAT_ON )           = 0;
 DEFAULT_PARAM( EXTRATURN_ON )        = 0;
-DEFAULT_PARAM( FAKE_REPORTS_ON )     = 0;
 DEFAULT_PARAM( GPS_POWERSAVE_ON )    = 0;
 DEFAULT_PARAM( TXMON_ON )            = 0;
 DEFAULT_PARAM( DIGIP_WIDE1_ON )      = 0; 

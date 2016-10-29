@@ -66,7 +66,7 @@ long lround(double);
  ***********************************************************/
 
 void tracker_setGate(FBQ* gt)
-{ gate = gt; }
+  { gate = gt; }
 
 
 /***********************************************************
@@ -470,12 +470,14 @@ static void report_station_position(posdata_t* pos, bool no_tx)
      * FIXME: Max number of reports - configurable 
      */
     int i=0;
-    while (!posBuf_empty() && i++ <= 3) {
-       posdata_t p = getPos();
-       send_extra_report(&packet, &p, GET_BYTE_PARAM(SYMBOL), GET_BYTE_PARAM(SYMBOL_TAB));
-    }
+    if (!no_tx) 
+       while (!posBuf_empty() && i++ <= 3) {
+          posdata_t p = getPos();
+          send_extra_report(&packet, &p, GET_BYTE_PARAM(SYMBOL), GET_BYTE_PARAM(SYMBOL_TAB));
+       }
+       
     /* Re-send report in next transmission */
-    if (GET_BYTE_PARAM(REPEAT_ON) != 0)
+    if (!no_tx && GET_BYTE_PARAM(REPEAT_ON) != 0)
           putPos(*pos);
      
     /* Comment */
@@ -490,12 +492,17 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     }
 
     /* Send packet.
-     * if no_tx flag was set, put it on monitor-queue instead (if active)
+     *   send it on radio if no_tx flag is not set
+     *   put it on igate-queue (if igate is active)
      */
-    if (no_tx) 
-        fbq_put(gate, packet); 
+    bool savetx = false; 
+    
+    if (!no_tx || !savetx)
+       fbq_put(outframes, fbuf_newRef(&packet));
+    if (gate != NULL) 
+       fbq_put(gate, packet);
     else
-        fbq_put(outframes, packet);
+       fbuf_release(&packet);
 }
 
 
@@ -580,7 +587,7 @@ static void send_extra_report(FBUF* packet, posdata_t* pos, char sym, char symta
    send_pos_report(packet, pos, sym, symtab, true, true);
 }
 
-
+ 
 
 static void send_latlong_compressed(FBUF* packet, double pos, bool is_longitude)
 {
@@ -627,7 +634,7 @@ static void send_header(FBUF* packet, bool no_tx)
     uint8_t ndigis = 0;
     if (no_tx) {
        ndigis = 1;
-       str2addr(&digis[0], "NO_TX", false);
+       str2addr(&digis[0], "TCPIP", false);
     }
     else {
        ndigis = GET_BYTE_PARAM(NDIGIS);

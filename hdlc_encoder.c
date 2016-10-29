@@ -132,9 +132,7 @@ static THD_FUNCTION(hdlc_txencoder, arg)
      /* Wait until channel is free 
       * P-persistence algorithm 
       */
-     rgb_led_on(false,true,false);
      radio_wait_enabled();  
-     rgb_led_off();
      hdlc_idle = false;
      for (;;) {
         wait_channel_ready(); 

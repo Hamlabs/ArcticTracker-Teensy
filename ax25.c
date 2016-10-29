@@ -18,6 +18,12 @@ static void encode_addr(FBUF *, char*, uint8_t, uint8_t);
 static uint8_t decode_addr(FBUF *, addr_t* );
 
 
+
+bool addrCmp(addr_t* a1, addr_t* a2)
+{ 
+   return (strncmp(a1->callsign, a2->callsign, 7)==0 && a1->ssid == a2->ssid); 
+}
+
    
 /*************************************************************************
  * Convert string into AX.25 address field

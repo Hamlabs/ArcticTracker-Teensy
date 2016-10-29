@@ -43,7 +43,12 @@ WIFIAP                  done    done
 DIGIPEATER_ON           tbd     done 
 DIGIP_WIDE1_ON          tbd     done
 DIGIP_SAR_ON            tbd     done
-
+IGATE_ON,               ?       done 
+IGATE_HOST,             tbd     done
+IGATE_PORT,             tbd     done
+IGATE_USERNAME,         tbd     done              
+IGATE_PASSCODE,         tbd     done
+IGATE_FILTER,           tbd     done   
 --------------------------------------------------------
 
 * GPS data decoding.
@@ -71,7 +76,7 @@ DIGIP_SAR_ON            tbd     done
     DONE.
 
 * Igate
-    IN PROGRESS.
+    DONE. Need more testing. inet2rf not implemented.
 
 * Digipeater
     DONE. Need testing. 

@@ -47,6 +47,7 @@ typedef struct {
 } addr_t;
 
 
+bool addrCmp(addr_t*, addr_t*);
 addr_t* addr(addr_t*, char*, uint8_t); 
 char* addr2str(char*, const addr_t*);
 void str2addr(addr_t* a, const char* str, bool d);
