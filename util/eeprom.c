@@ -1,6 +1,8 @@
 /* Teensyduino Core Library
  * http://www.pjrc.com/teensy/
  * Copyright (c) 2013 PJRC.COM, LLC.
+ * 
+ * Hacked to be used in Arctic Tracker by LA7ECA Øyvind Hanssen
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -32,21 +34,25 @@
 #include "util/eeprom.h"
 #include <stdint.h>
 #include "hal.h"
+#include "ui/ui.h"
 
 //#include "HardwareSerial.h"
 
 #define __disable_irq() chSysLock()
 #define __enable_irq()  chSysUnlock()
 
-/* "Borrowed" from Teensyduino kinetis.h */
 #define FTFL_FSTAT              (*(volatile uint8_t  *)0x40020000) // Flash Status Register
 #define FTFL_FCNFG              (*(volatile uint8_t  *)0x40020001) // Flash Configuration Register
 #define FTFL_FCNFG_RAMRDY       ((uint8_t)0x02)                    // RAM Ready
 #define FTFL_FCNFG_EEERDY       ((uint8_t)0x01)                    // EEPROM Ready
 #define FTFL_FCCOB0             (*(volatile uint8_t  *)0x40020007)
+#define FTFL_FCCOB1             (*(volatile uint8_t  *)0x40020006)
+#define FTFL_FCCOB2             (*(volatile uint8_t  *)0x40020005)
+#define FTFL_FCCOB3             (*(volatile uint8_t  *)0x40020004)  
 #define FTFL_FCCOB5             (*(volatile uint8_t  *)0x4002000A)
 #define FTFL_FCCOB4             (*(volatile uint8_t  *)0x4002000B)
-
+#define FTFL_FCCOB6             (*(volatile uint8_t  *)0x40020009)
+#define FTFL_FCCOB8             (*(volatile uint8_t  *)0x4002000F)
 
 #if defined(KINETISK)
 
@@ -58,7 +64,8 @@
 // (aligned to 2 or 4 byte boundaries) has twice the endurance
 // compared to writing 8 bit bytes.
 //
-#define EEPROM_SIZE 512
+#define EEPROM_SIZE 1024
+
 
 // Writing unaligned 16 or 32 bit data is handled automatically when
 // this is defined, but at a cost of extra code size.  Without this,
@@ -86,28 +93,76 @@
   #define EEESIZE 0x39
 #endif
 
+
+#define CCIF     0x80  /* 0:command in progress, 1:command completed. Write 1 to launch command. */
+#define RDCOLERR 0x40  /* Flash read collision error */
+#define ACCERR   0x20  /* Flash Access Error */
+#define FPVIOL   0x10  /* Flash protection violation */
+#define ERSALL   0x44  /* Erase all blocks */
+#define PGMPART  0x80  /* Program Partition Command */
+#define SETRAM   0x81  /* Set FlexRAM */
+#define RDRSRC   0x03  /* Read config info */
+
+
+
+__attribute__((section(".ramfunccode"))) __attribute__((aligned(4)))
+void ram_func(void) {
+  while(!(FTFL_FSTAT & CCIF));
+  FTFL_FCCOB0 = PGMPART; // Program Partition Command
+  FTFL_FCCOB3 = 0;
+  FTFL_FCCOB4 = EEESIZE; // EEPROM Size
+  FTFL_FCCOB5 = 0x03;    // 0K for Dataflash, 32K for EEPROM backup
+  FTFL_FSTAT |= 0xF0;
+  while(!(FTFL_FSTAT & CCIF));
+  FTFL_FCCOB0 = SETRAM;
+  FTFL_FCCOB1 = 0x00;
+  FTFL_FSTAT |= 0xF0;
+  while(!(FTFL_FSTAT & CCIF));
+}
+
+
+__attribute__((section(".ramfunccode0"))) __attribute__((aligned(4)))
+void ram_func0(void) {
+  while(!(FTFL_FSTAT & CCIF));
+  FTFL_FCCOB0 = ERSALL; // Erase All Blocks
+  FTFL_FSTAT |= 0xF0;
+  while(!(FTFL_FSTAT & CCIF));
+}
+
+
+
 void eeprom_initialize(void)
 {
 	uint32_t count=0;
-	uint16_t do_flash_cmd[] = {
-		0xf06f, 0x037f, 0x7003, 0x7803,
-		0xf013, 0x0f80, 0xd0fb, 0x4770};
 	uint8_t status;
-
-	if (FTFL_FCNFG & FTFL_FCNFG_RAMRDY) {
-		// FlexRAM is configured as traditional RAM
-		// We need to reconfigure for EEPROM usage
-		FTFL_FCCOB0 = 0x80; // PGMPART = Program Partition Command
-		FTFL_FCCOB4 = EEESIZE; // EEPROM Size
-		FTFL_FCCOB5 = 0x03; // 0K for Dataflash, 32K for EEPROM backup
+        
+    /* 
+     * If you change the size of the EEPROM, uncomment this and run once.  
+     * 
+           __disable_irq();
+            void (*fp)() = (void(*)())((uint32_t) ram_func0 | 0x1);
+            fp();
+           __enable_irq();
+            while(1) asm volatile("nop");
+      */
+    
+    
+	if (FTFL_FCNFG & FTFL_FCNFG_RAMRDY)
+        {
 		__disable_irq();
-		// do_flash_cmd() must execute from RAM.  Luckily the C syntax is simple...
-		(*((void (*)(volatile uint8_t *))((uint32_t)do_flash_cmd | 1)))(&FTFL_FSTAT);
+                 void (*fp)() = (void(*)())((uint32_t) ram_func | 0x1);
+                 fp();
 		__enable_irq();
+                
 		status = FTFL_FSTAT;
 		if (status & 0x70) {
 			FTFL_FSTAT = (status & 0x70);
-			return; // error
+                        tx_led_on();
+                        if (status & RDCOLERR) rgb_led_on(true, false, false);
+                        else if (status & ACCERR) rgb_led_on(true, false, true);
+                        else if (status & FPVIOL) rgb_led_on(false, false, true);
+                        while(1) asm volatile("nop");
+			
 		}
 	}
 	// wait for eeprom to become ready (is this really necessary?)
@@ -118,7 +173,8 @@ void eeprom_initialize(void)
 
 #define FlexRAM ((uint8_t *)0x14000000)
 
-uint8_t eeprom_read_byte(const uint8_t *addr)
+
+uint8_t eeprom_read_byte(const uint16_t *addr)
 {
   uint32_t offset = (uint32_t)addr;
   if (offset >= EEPROM_SIZE) return 0;
@@ -134,7 +190,7 @@ uint16_t eeprom_read_word(const uint16_t *addr)
   return *(uint16_t *)(&FlexRAM[offset]);
 }
 
-uint32_t eeprom_read_dword(const uint32_t *addr)
+uint32_t eeprom_read_dword(const uint16_t *addr)
 {
   uint32_t offset = (uint32_t)addr;
   if (offset >= EEPROM_SIZE-3) return 0;
@@ -148,9 +204,9 @@ void eeprom_read_block(void *buf, const void *addr, uint32_t len)
   uint32_t offset = (uint32_t)addr;
   uint8_t *dest = (uint8_t *)buf;
   uint32_t end = offset + len;
-  
   if (!(FTFL_FCNFG & FTFL_FCNFG_EEERDY)) eeprom_initialize();
   if (end > EEPROM_SIZE) end = EEPROM_SIZE;
+  
   while (offset < end) {
     *dest++ = FlexRAM[offset++];
   }
@@ -169,7 +225,7 @@ static void flexram_wait(void)
 	}
 }
 
-void eeprom_write_byte(uint8_t *addr, uint8_t value)
+void eeprom_write_byte(uint16_t *addr, uint8_t value)
 {
   uint32_t offset = (uint32_t)addr;
   
@@ -208,7 +264,7 @@ void eeprom_write_word(uint16_t *addr, uint16_t value)
   #endif
 }
 
-void eeprom_write_dword(uint32_t *addr, uint32_t value)
+void eeprom_write_dword(uint16_t *addr, uint32_t value)
 {
   uint32_t offset = (uint32_t)addr;
   

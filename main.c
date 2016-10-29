@@ -58,23 +58,23 @@ int main(void)
    thread_t *shelltp = NULL;
    halInit();
    chSysInit();
-   eeprom_initialize(); 
    ext_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
    ui_init();
+   eeprom_initialize(); 
    adc_init();
    hdlc_init_decoder(afsk_rx_init());
    outframes = hdlc_init_encoder(afsk_tx_init());
    afsk_tx_start(); // Call this only when needed and stop it when not needed??
    // FIXME: Rename to afsk_tx_enable
    gps_init(&GPS_SERIAL, (Stream*) &SHELL_SERIAL);
-   tracker_init();
+   tracker_init(); 
    sleep(100);
    digipeater_init();
-   igate_init();
    mon_init((Stream*) &SHELL_SERIAL);
    wifi_init(&WIFI_SERIAL);
+   igate_init(); 
    shellInit();
 
    while (!chThdShouldTerminateX()) {
