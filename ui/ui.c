@@ -18,6 +18,14 @@ static void onoffhandler(void* p);
  static virtual_timer_t vt; 
  
  
+ static struct {
+   bool mix;
+   bool red, green, blue;
+   bool on, pri_on;
+ } _ledstate;
+ 
+ 
+ 
  
  static void chandler(void *p)
  {  
@@ -58,10 +66,14 @@ static void onoffhandler(void* p);
  }
  
  
+ 
  void rgb_led_mix(uint8_t red, uint8_t green, uint8_t blue, uint8_t off)
- {
-    _red=red; _green=green; _blue=blue; _off=off;
-   
+ {   
+     if (_ledstate.pri_on)
+        return;
+     _red=red; _green=green; _blue=blue; _off=off;
+     _ledstate.mix = true;
+     _ledstate.on = true;
      cstate = 1; 
      chVTSet( &vt, MS2ST(_off==0 ? 1 : _off), chandler, NULL);
  }
@@ -71,15 +83,27 @@ static void onoffhandler(void* p);
   * Turn on specified RGB led(s)
   ************************************************************************/
  
- void rgb_led_on(bool red, bool green, bool blue)
+ static void _rgb_led_on(bool red, bool green, bool blue)
  {
-   _rgb_led_off();
    if (red)
      setPin(LED_R);
    if (green)
      setPin(LED_G);
    if (blue)
      setPin(LED_B);
+ }
+ 
+ 
+ void rgb_led_on(bool red, bool green, bool blue)
+ {
+   if (_ledstate.pri_on)
+     return;
+   _rgb_led_off();
+   _ledstate.red = red; 
+   _ledstate.green = green; 
+   _ledstate.blue = blue;
+   _ledstate.on = true; 
+   _rgb_led_on(red, green, blue);
  }
  
  
@@ -95,9 +119,40 @@ static void onoffhandler(void* p);
  }
  
  void rgb_led_off() {
+   if (_ledstate.pri_on)
+     return;
    cstate = -1;
+   _ledstate.on = false; 
+   _ledstate.mix = false;
    _rgb_led_off();
  }
+ 
+ 
+ /************************************************************************
+  * Turn on priority RGB led(s). This cannot be overridden and can only
+  * be turned off by pri_rgb_led_off()
+  ************************************************************************/
+ 
+ void pri_rgb_led_on(bool red, bool green, bool blue)
+ {
+   cstate = -1;
+   _rgb_led_off();
+   _rgb_led_on(red, green, blue);
+   _ledstate.pri_on = true;
+ }
+ 
+ 
+ void pri_rgb_led_off()
+ {
+   _ledstate.pri_on = false;
+   if (_ledstate.on) {
+     if (_ledstate.mix) { cstate = 1; rgb_led_mix(_red, _green, _blue, _off); }
+     else _rgb_led_on(_ledstate.red, _ledstate.green, _ledstate.blue);
+   } 
+   else 
+     _rgb_led_off();
+ }
+ 
  
  
  /*********************************************************************
@@ -204,5 +259,6 @@ static void onoffhandler(void* p) {
  {   
    rgb_led_off();   
    THREAD_START(ui_thread, NORMALPRIO+4, NULL);
+   _ledstate.on = false; _ledstate.mix = false; _ledstate.pri_on = false; 
  }
  

@@ -17,7 +17,7 @@
 
 
 /* Buffers */
-#define FBUF_SLOTS     256
+#define FBUF_SLOTS   1100
 #define FBUF_SLOTSIZE  32
 
 
@@ -99,12 +99,20 @@
 
 
 /* RGB LED */
+/* First board 
 #define LED_R            TEENSY_PIN3
 #define LED_G            TEENSY_PIN2
 #define LED_B            TEENSY_PIN4
 #define LED_R_IOPORT     TEENSY_PIN3_IOPORT
 #define LED_G_IOPORT     TEENSY_PIN2_IOPORT
 #define LED_B_IOPORT     TEENSY_PIN4_IOPORT
+*/
+#define LED_R            TEENSY_PIN2
+#define LED_G            TEENSY_PIN4
+#define LED_B            TEENSY_PIN3
+#define LED_R_IOPORT     TEENSY_PIN2_IOPORT
+#define LED_G_IOPORT     TEENSY_PIN4_IOPORT
+#define LED_B_IOPORT     TEENSY_PIN3_IOPORT
 
 
 /* DCD LED */
@@ -128,28 +136,34 @@ extern uint16_t blink_length, blink_interval;
 #define BLINK_GPS_SEARCHING { blink_length = 450; blink_interval = 450; }
 
 
-/* Stack sizes for threads */
+/* Stack sizes for static threads */
 #define STACK_NMEALISTENER 1500
-#define STACK_HDLCDECODER   400
+#define STACK_HDLCDECODER   600
 #define STACK_HDLCENCODER   500
-#define STACK_HDLC_TEST     256
-#define STACK_MONITOR       512
-#define STACK_TRACKER      1500
 #define STACK_UI            164
 #define STACK_WIFI         1500
-#define STACK_SHELL        2600
-#define STACK_DIGIPEATER    512
+#define STACK_SHELL        2700
+
+/* Dynamic threads */
+/* FIXME: Check sizes and order of startup to minimize memory 
+ * fragmentation */
+#define STACK_HDLC_TEST     256
+#define STACK_MONITOR       512
+#define STACK_TRACKER      1536
+#define STACK_DIGIPEATER   1024
 #define STACK_IGATE         512
 #define STACK_IGATE_RADIO   512
 #define STACK_HLIST_TICK    256  // NEED THIS? 
-
 
 
 #define THREAD_STACK(n, st)  static THD_WORKING_AREA(wa_##n, st)
 #define THREAD_START(n, prio, arg) chThdCreateStatic(wa_##n, sizeof(wa_##n), (prio), n, arg)
 #define THREAD_DSTART(n, size, prio, arg) \
    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE((size)), "-", (prio), n, arg)
-   
+#define THREAD_WAIT(x) \
+  if ((x)!=NULL) chThdWait((x)); (x)=NULL;
+
+
 #define sleep(n)  chThdSleepMilliseconds(n)
 #define t_yield   chThdYield
 

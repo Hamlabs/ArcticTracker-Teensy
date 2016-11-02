@@ -15,7 +15,8 @@
 #define FLAG_LO_POWER   0x04
 
 
-static bool     _on = FALSE; 
+static bool     _on = false;
+static bool     _sq_on = false; 
 static uint8_t  _widebw; 
 static uint8_t  _flags;        
 static uint32_t _txfreq;       // TX frequency in 100 Hz units
@@ -147,7 +148,6 @@ bool radio_setSquelch(uint8_t sq)
 }
 
 
-
 /************************************************
  * Squelch handler. 
  ************************************************/
@@ -156,10 +156,16 @@ void squelch_handler(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
   
-  if (pinIsHigh(TRX_SQ))
-    rgb_led_on(true, false, true);
-  else
-    rgb_led_off();
+  if (!_sq_on && radio_rdy && !pinIsHigh(TRX_SQ)) {
+    _sq_on = true;
+    pri_rgb_led_on(true, true, false);
+    afsk_rx_enable();
+  }
+  else if (_sq_on) {
+    _sq_on = false; 
+    pri_rgb_led_off();
+    afsk_rx_disable();
+  }
 }
 
 
@@ -264,6 +270,11 @@ bool radio_setLowTxPower(bool on)
   else
     _flags |= FLAG_LO_POWER;
   return _setGroupParm();
+}
+
+
+bool radio_isLowTxPower() {
+  return !(_flags & FLAG_LO_POWER);
 }
 
 

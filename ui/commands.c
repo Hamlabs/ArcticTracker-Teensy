@@ -836,11 +836,9 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
   
   chprintf(chp, "***** LISTEN ON RECEIVER *****\r\n");
   radio_require();
-  afsk_rx_enable();
   mon_activate(true);
   getch(chp);
   mon_activate(false);
-  afsk_rx_disable();
   radio_release();
 }
 
@@ -858,7 +856,6 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
   static FBUF packet; 
   chprintf(chp, "***** CONVERSE MODE. Ctrl-D to exit *****\r\n");
   radio_require();
-  afsk_rx_enable();
   mon_activate(true); 
   fbq_t* outframes = hdlc_get_encoder_queue();
   
@@ -875,7 +872,6 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
     fbq_put(outframes, packet);
   }
   mon_activate(false);
-  afsk_rx_disable();
   radio_release();
 }
 

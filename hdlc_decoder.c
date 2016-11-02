@@ -54,9 +54,8 @@ static uint8_t get_bit ()
 {
    static uint16_t bits = 0xffff;
    static uint8_t bit_count = 0;
-  
    if (bit_count < 8) {
-     register uint8_t byte = iqGet(inq);
+      register uint8_t byte = iqGet(inq);
       bits |= ((uint16_t) byte << bit_count);
       bit_count += 8;
    }
@@ -88,7 +87,6 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    
    /* Sync to next flag */
    flag_sync:
-   rgb_led_off();
    do {  
       bit = get_bit ();
    }  while (bit != HDLC_FLAG);
@@ -96,8 +94,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    
    /* Sync to next frame */
    frame_sync:
-   rgb_led_off();
-   do {      
+   do {     
       bit = get_bit ();
    }  while (bit == HDLC_FLAG);
 
@@ -108,7 +105,6 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    uint16_t length = 0;
    uint8_t octet = 0;
    
-   rgb_led_on(true,true,false);
    fbuf_release (&fbuf); // In case we had an abort or checksum
    fbuf_new(&fbuf);      // mismatch on the previous frame
    do {
@@ -122,9 +118,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
          else ones_count = 0; 
          if (bit == HDLC_FLAG)    // Not very likely, but could happen
             goto frame_sync;
-         
          bit = get_bit ();
-
          if (ones_count == 5) {
             if (bit)              // Got more than five consecutive one bits,
                goto flag_sync;    // which is a certain error
@@ -148,7 +142,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
       if (mqueue[0] || mqueue[1] || mqueue[2]) { 
          if (mqueue[0]) fbq_put( mqueue[0], fbuf);               /* Monitor */
          if (mqueue[1]) fbq_put( mqueue[1], fbuf_newRef(&fbuf)); /* Digipeater */
-         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf));
+         if (mqueue[2]) fbq_put( mqueue[2], fbuf_newRef(&fbuf)); /* Igate */
       }
       if (mqueue[0]==NULL)
          fbuf_release(&fbuf); 
