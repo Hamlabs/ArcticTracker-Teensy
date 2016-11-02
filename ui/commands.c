@@ -551,6 +551,7 @@ static void cmd_testpacket(Stream *chp, int argc, char *argv[])
   addr_t digis[7];
   
   radio_require();
+  sleep(100);
   GET_PARAM(MYCALL, &from);
   GET_PARAM(DEST, &to);       
   uint8_t ndigis = GET_BYTE_PARAM(NDIGIS); 

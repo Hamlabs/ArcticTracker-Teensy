@@ -16,6 +16,6 @@
  bool radio_powerSave(bool on);
  bool radio_setLowTxPower(bool on); 
  void squelch_handler(EXTDriver *extp, expchannel_t channel);
- 
+ void wait_channel_ready(void);
  
 #endif

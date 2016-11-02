@@ -151,14 +151,6 @@ static THD_FUNCTION(hdlc_txencoder, arg)
 
 
 
-static void wait_channel_ready()
-{
-    /* Wait to radio is on and squelch is closed */
-    /* TODO: Implement this in sr_frs.c */
-}
-
-
-
 /*************************************************************
  * Initialize hdlc encoder
  *************************************************************/

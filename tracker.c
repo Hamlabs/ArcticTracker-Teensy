@@ -306,7 +306,7 @@ static void activate_tx()
 {
       if (hdlc_enc_packets_waiting()) {
          radio_require(); 
-         sleep(10);
+         sleep(100);
          radio_release();
       }
 }

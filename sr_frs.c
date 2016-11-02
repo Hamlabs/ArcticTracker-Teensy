@@ -39,6 +39,10 @@ MUTEX_DECL(radio_mutex);
 #define MUTEX_LOCK chMtxLock(&radio_mutex)
 #define MUTEX_UNLOCK chMtxUnlock(&radio_mutex)
 
+MUTEX_DECL(radio2_mutex);
+#define MUTEX2_LOCK chMtxLock(&radio2_mutex)
+#define MUTEX2_UNLOCK chMtxUnlock(&radio2_mutex)
+
 BSEMAPHORE_DECL(tx_off, true);
 #define WAIT_TX_OFF chBSemWait(&tx_off)
 #define SIGNAL_TX_OFF chBSemSignal(&tx_off)
@@ -47,6 +51,10 @@ CONDVAR_DECL(_radio_rdy);
 #define WAIT_RADIO_READY chCondWait(&_radio_rdy)
 #define SIGNAL_RADIO_READY chCondBroadcast(&_radio_rdy)
 bool radio_rdy = false;
+
+CONDVAR_DECL(_channel_rdy);
+#define WAIT_CHANNEL_READY chCondWait(&_channel_rdy)
+bool channel_rdy = true;
 
 
 
@@ -156,16 +164,22 @@ void squelch_handler(EXTDriver *extp, expchannel_t channel) {
   (void)extp;
   (void)channel;
   
+  chSysLock();
   if (!_sq_on && radio_rdy && !pinIsHigh(TRX_SQ)) {
     _sq_on = true;
-    pri_rgb_led_on(true, true, false);
+    rgb_led_on(true, true, false);
     afsk_rx_enable();
+    channel_rdy = false;
   }
   else if (_sq_on) {
     _sq_on = false; 
-    pri_rgb_led_off();
+    rgb_led_off();
     afsk_rx_disable();
+    channel_rdy = true;
+    chCondBroadcastI(&_channel_rdy);
+    chSchRescheduleS();
   }
+  chSysUnlock();
 }
 
 
@@ -179,6 +193,23 @@ void radio_wait_enabled() {
      WAIT_RADIO_READY;
   MUTEX_UNLOCK;
 }
+
+
+/************************************************
+ * Wait to channel is ready 
+ ************************************************/
+void wait_channel_ready()
+{
+  MUTEX2_LOCK;
+  /* Wait to radio is on and squelch is closed */
+  rgb_led_on(false, false, true);
+  while (!channel_rdy)
+     WAIT_CHANNEL_READY;
+  rgb_led_off();
+  MUTEX2_UNLOCK;
+}
+
+
 
 /************************************************
  * Power on
