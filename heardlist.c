@@ -140,8 +140,8 @@
    while (to->callsign[i] != 0)
      crc = _crc_ccitt_update(crc, to->callsign[i++]);
    crc = _crc_ccitt_update(crc, to->ssid);
-   fbuf_rseek(f, 14+2+ndigis*7); 
-   for (i=0; i<fbuf_length(f)-2; i++)
+   fbuf_rseek(f, AX25_HDR_LEN(ndigis)); 
+   for (i=AX25_HDR_LEN(ndigis); i<fbuf_length(f); i++)
      crc = _crc_ccitt_update(crc, fbuf_getChar(f)); 
    return crc;
  }

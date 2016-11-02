@@ -28,6 +28,7 @@
    
 static bool digi_on = false;
 static FBQ rxqueue;
+static thread_t* digithr=NULL;
 
 extern fbq_t* outframes; 
 extern fbq_t* mon_q;
@@ -44,8 +45,8 @@ static THD_FUNCTION(digipeater, arg)
 {
   (void) arg;
   chRegSetThreadName("Digipeater");
-  sleep(1000);
-  beeps("-.. ..");
+  sleep(2000);
+  beeps("-.. "); blipUp();
   while (digi_on)
   {
     /* Wait for frame. 
@@ -63,7 +64,7 @@ static THD_FUNCTION(digipeater, arg)
     fbuf_release(&frame);
   }
   sleep(500);
-  beeps("-.. ..-.");
+  beeps("-.. "); blipDown();
 }
 
 
@@ -108,21 +109,22 @@ void digipeater_activate(bool m)
    if (tstart) {
       /* Subscribe to RX packets and start treads */
       hdlc_subscribe_rx(mq, 1);
-      THREAD_DSTART(digipeater, STACK_DIGIPEATER, NORMALPRIO, NULL);  
+      digithr = THREAD_DSTART(digipeater, STACK_DIGIPEATER, NORMALPRIO, NULL);  
       hlist_start();
       
-      /* Turn on radio and decoder */
+      /* Turn on radio */
       radio_require();
-      afsk_rx_enable();
    } 
    if (tstop) {
-     /* Turn off radio and decoder */
-      afsk_rx_disable();
+     /* Turn off radio */
       radio_release();
       
       /* Unsubscribe to RX packets and stop threads */
-      hdlc_subscribe_rx(NULL, 1);
       fbq_signal(&rxqueue);
+      if (digithr != NULL)
+        chThdWait(digithr);
+      digithr = NULL;
+      hdlc_subscribe_rx(NULL, 1);
    }
 }
 
@@ -143,7 +145,7 @@ static void check_frame(FBUF *f)
    uint8_t i, j; 
    int8_t  sar_pos = -1;
    uint8_t ndigis =  ax25_decode_header(f, &from, &to, digis, &ctrl, &pid);
-
+   
    if (hlist_duplicate(&from, &to, f, ndigis))
        return;
    GET_PARAM(MYCALL, &mycall);
@@ -174,7 +176,7 @@ static void check_frame(FBUF *f)
    /* Return if no SAR preemtion and WIDE1 alias not found first */
    if (sar_pos < 0 && !widedigi)
       return;
-
+   
    /* Mark as digipeated through mycall */
    j = i;
    mycall.flags = FLAG_DIGI;
@@ -206,7 +208,7 @@ static void check_frame(FBUF *f)
    fbuf_connect(&newHdr, f, AX25_HDR_LEN(ndigis) );
 
    /* Send packet */
-   beeps("..");
+   beeps("- ");
    fbq_put(outframes, newHdr);  
 }
 
