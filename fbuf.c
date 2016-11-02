@@ -181,7 +181,7 @@ void fbuf_putChar (FBUF* b, const char c)
     if (pos == FBUF_SLOTSIZE || b->head == NILPTR)
     {
         pos = 0; 
-        register uint8_t newslot = _fbuf_newslot();
+        register fbindex_t newslot = _fbuf_newslot();
         if (newslot == NILPTR) {
             if (memFullError != NULL)
                (*memFullError)();
@@ -423,6 +423,7 @@ void fbuf_removeLast(FBUF* x)
       _free_slots++;
     _pool[prev].next = NILPTR;
   }
+  x->length--;
 }
 
 

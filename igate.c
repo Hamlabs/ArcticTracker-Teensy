@@ -206,11 +206,9 @@ void igate_activate(bool m)
       /* Turn on radio and decoder */
       /* FIXME: Need to turn on internet as well */
       radio_require();
-      afsk_rx_enable(); // ????
    } 
    if (tstop) {
       /* Turn off radio and decoder */
-      afsk_rx_disable();  // ????
       radio_release();
     
       /* Close internet connection */
@@ -221,7 +219,7 @@ void igate_activate(bool m)
       if (igtm!=NULL)
         chThdWait(igtm);
       igtm=NULL;
-      
+      hdlc_subscribe_rx(NULL, 2);
       tracker_setGate(NULL);
    }
 }

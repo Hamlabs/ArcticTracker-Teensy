@@ -198,9 +198,10 @@ static void add_bit(bool bit)
   
   if (bit_count == 8) 
   {        
+    chSysLock();
     if  (!iqIsFullI(&iq)) 
        iqPutI(&iq, octet);
- 
+    chSysUnlock();
     bit_count = 0;
   }
 }

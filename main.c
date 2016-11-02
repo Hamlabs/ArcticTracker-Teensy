@@ -41,8 +41,9 @@ static const EXTConfig extcfg = {
 };
 
 static void ext_init() {
-   setPinMode(BUTTON, BUTTON_MODE);
    extStart(&EXTD1, &extcfg);
+   setPinMode(BUTTON, BUTTON_MODE);
+   setPinMode(TRX_SQ, TRX_SQ_MODE);
    extChannelEnable(&EXTD1, 0);
    extChannelEnable(&EXTD1, 1);
 }

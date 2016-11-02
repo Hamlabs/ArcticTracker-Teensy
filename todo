@@ -80,6 +80,10 @@ IGATE_FILTER,           tbd     done
 
 * Digipeater
     DONE. Need testing. 
+    
+* Hardware mod on prototype to fix receiver
+
+* Check channel (squelch open) before transmitting. 
 
 * Web interface page for igate and digipeater related settings.
 
