@@ -15,6 +15,8 @@
 #include "fifo.h"
 #include "adc_input.h"
 
+#define ARM_MATH_CM4
+#include "arm_math.h"
 
 
 #define SAMPLERATE 9600                             // The rate at which we are sampling 
@@ -65,7 +67,9 @@ static AfskRx afsk;
 static void add_bit(bool bit);
 
 int8_t delay_buf[100];
-fifo_t fifo; 
+int8_t delay_buf1[100]; 
+
+fifo_t fifo, fifo1; 
 
 
 
@@ -78,10 +82,13 @@ input_queue_t* afsk_rx_init() {
   memset(&afsk, 0, sizeof(afsk));
   
   fifo_init(&fifo, delay_buf, sizeof(delay_buf));
+  fifo_init(&fifo1, delay_buf1, sizeof(delay_buf1));
   
   /* Fill sample FIFO with 0 */
-  for (int i = 0; i < SAMPLESPERBIT / 2; i++)
+  for (int i = 0; i < SAMPLESPERBIT / 2; i++) {
     fifo_push(&fifo, 0);
+    fifo_push(&fifo1, 0);
+  }
   
   iqObjectInit(&iq, _buf,  AFSK_RX_QUEUE_SIZE, NULL, NULL);
   return &iq;
@@ -111,6 +118,109 @@ void trx_sq_handler(EXTDriver *extp, expchannel_t channel) {
   
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
+
+#define FIR_MAX_TAPS 16
+
+
+/************************************************
+ * FIR filtering 
+ ************************************************/
+
+typedef struct FIR
+{
+  int8_t taps;
+  int8_t coef[FIR_MAX_TAPS];
+  int16_t mem[FIR_MAX_TAPS];
+} FIR;
+
+
+enum fir_filters
+{
+  FIR_1200_BP=0,
+  FIR_2200_BP=1,
+  FIR_1200_LP=2
+};
+
+
+static FIR fir_table[] =
+{
+  [FIR_1200_BP] = {
+    .taps = 11,
+    .coef = {
+      -12, -16, -15, 0, 20, 29, 20, 0, -15, -16, -12
+    },
+    .mem = {
+      0,
+    },
+  },
+  [FIR_2200_BP] = {
+    .taps = 11,
+    .coef = {
+      11, 15, -8, -26, 4, 30, 4, -26, -8, 15, 11
+    },
+    .mem = {
+      0,
+    },
+  },
+  [FIR_1200_LP] = {
+    .taps = 8,
+    .coef = {
+      -9, 3, 26, 47, 47, 26, 3, -9
+    },
+    .mem = {
+      0,
+    },
+  },
+};
+
+
+static int8_t fir_filter(int8_t s, enum fir_filters f)
+{
+  int8_t Q = fir_table[f].taps - 1;
+  int8_t *B = fir_table[f].coef;
+  int16_t *Bmem = fir_table[f].mem;
+  
+  int8_t i;
+  int16_t y;
+  
+  Bmem[0] = s;
+  y = 0;
+  
+  for (i = Q; i >= 0; i--)
+  {
+    y += Bmem[i] * B[i];
+    Bmem[i + 1] = Bmem[i];
+  }
+  
+  return (int8_t) (y / 128);
+}
+
+
+
+/******************************************************************************
+   Automatic gain control. 
+   
+*******************************************************************************/
+
+#define DECAY 5
+
+static uint8_t peak_mk = 250;
+static uint8_t peak_sp = 250;
+
+
+static int8_t agc (int8_t in, uint8_t *ppeak)
+{
+    if (*ppeak > 100) 
+       *ppeak -= DECAY; 
+    if (in*2 > *ppeak)
+       *ppeak = in*2;
+    
+    float factor = 250.0f / *ppeak;
+    return (int8_t) factor * (float) in;
+}
+
+
+
 /***************************************************************
   This routine should be called 9600
   times each second to analyze samples taken from
@@ -119,20 +229,18 @@ void trx_sq_handler(EXTDriver *extp, expchannel_t channel) {
 
 void afsk_process_sample(int8_t curr_sample) 
 { 
-#define DCD_LEVEL 5
-
-    /* Butterworth filter */
-    afsk.iirX[0] = afsk.iirX[1];
-    afsk.iirX[1] = (fifo_pop(&fifo) * curr_sample) >> 2;
-    afsk.iirY[0] = afsk.iirY[1];
-    afsk.iirY[1] = afsk.iirX[0] + afsk.iirX[1] + (afsk.iirY[0] >> 1) + (afsk.iirY[0] >> 3) + (afsk.iirY[0] >> 5);
+  
+    afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
+    afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
+    afsk.iirY[0] = ABS(afsk.iirY[0]);
+    afsk.iirY[1] = ABS(afsk.iirY[1]);
     
-    /* Save this sampled bit in a delay line */
+    afsk.iirY[0] = agc(afsk.iirY[0], &peak_mk);
+    afsk.iirY[1] = agc(afsk.iirY[1], &peak_sp);
+    
+    
     afsk.sampled_bits <<= 1;
-    afsk.sampled_bits |= (afsk.iirY[1] > 0) ? 1 : 0;
-    /* Store current ADC sample in the af->delay_fifo */
-    fifo_push(&fifo, curr_sample);
-    
+    afsk.sampled_bits |= fir_filter(afsk.iirY[1] - afsk.iirY[0], FIR_1200_LP) > 0;
     
     /* 
      * If there is a transition, adjust the phase of our sampler
