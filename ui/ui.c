@@ -257,6 +257,8 @@ static void onoffhandler(void* p) {
  
  void ui_init()
  {   
+   lcd_init(&SPID1);
+   
    rgb_led_off();   
    THREAD_START(ui_thread, NORMALPRIO+4, NULL);
    _ledstate.on = false; _ledstate.mix = false; _ledstate.pri_on = false; 

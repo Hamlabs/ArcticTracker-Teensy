@@ -26,6 +26,7 @@
 #include "tracker.h"
 #include "digipeater.h"
 #include "igate.h"
+#include "lcd.h"
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
@@ -65,6 +66,7 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[]);
 static void cmd_connect(Stream *chp, int argc, char* argv[]);
 static void cmd_digipeater(Stream *chp, int argc, char* argv[]);
 static void cmd_igate(Stream *chp, int argc, char* argv[]);
+static void cmd_lcd(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
@@ -157,6 +159,7 @@ static const ShellCommand shell_commands[] =
   { "digi-sar",   "Digipeater - Preemption on SAR alias",      6, cmd_DIGIP_SAR_ON },
   { "igate",      "Igate on/off",                              4, cmd_igate },
   { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
+  { "lcd",        "Test display",                              3, cmd_lcd },
   
   {NULL, NULL, 0, NULL}
 };
@@ -1079,6 +1082,31 @@ static void cmd_igate(Stream *chp, int argc, char* argv[])
       UINT_SETTING(chp, IGATE_PASSCODE, "IGATE_PASSCODE", 1, 0, 65000);
    }
 }
+
+
+static void cmd_lcd(Stream *chp, int argc, char* argv[]) 
+{   
+   lcd_init(&SPID1);
+   
+   // writeText(1,1, "Hello World");
+   //flush();
+   
+   clear();
+   label(0,0, "APRS");
+   flag(32,0, "i", false);
+   flag(41,0, "a", false);
+   flag(50,0, "g", false);
+   flag(59,0, "d", false);
+   battery(70,3,1);
+   hLine(0,10,66);
+   
+   writeText(0,15,"144.800 MHz");
+   writeText(0,26,"LA7ECA-7");
+   writeText(0,37,"W1,W2-1,SAR");  
+   
+   flush();
+}
+
 
 
 

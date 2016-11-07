@@ -30,6 +30,31 @@ extern SerialUSBDriver SDU1;
 fbq_t *outframes, *inframes;  
 
 
+
+/********************************
+ * Set up SPI 
+ ********************************/
+
+static const SPIConfig spicfg = {
+    NULL,                        /* Callback */
+    SPI_CS_PORT,                 /* Chip select line port */
+    SPI_CS_PIN,                  /* Chip select line pad number */
+    KINETIS_SPI_TAR_8BIT_SLOW    /* SPI initialization data. */
+};
+
+extern SPIDriver SPID1;
+
+
+static void spi_init() {
+  palSetPadMode(SPI_SCK_PORT, SPI_SCK_PIN, PAL_MODE_ALTERNATIVE_2);      /* SCK  */
+  palSetPadMode(SPI_MOSI_PORT, SPI_MOSI_PIN, PAL_MODE_ALTERNATIVE_2);    /* MOSI */
+  palSetPadMode(SPI_MISO_PORT, SPI_MISO_PIN, PAL_MODE_ALTERNATIVE_2);    /* MISO */
+  palSetPadMode(SPI_CS_PORT, SPI_CS_PIN, PAL_MODE_OUTPUT_PUSHPULL);      /* SS   */  
+  spiStart(&SPID1, &spicfg);
+}
+
+
+
 /*************************************************************
  * Set up interrupt driven GPIO
  *************************************************************/
@@ -60,6 +85,7 @@ int main(void)
    halInit();
    chSysInit();
    ext_init();
+   spi_init();
    usb_initialize();
    radio_init(&TRX_SERIAL);
    ui_init();
@@ -75,7 +101,8 @@ int main(void)
    digipeater_init();
    mon_init((Stream*) &SHELL_SERIAL);
    wifi_init(&WIFI_SERIAL);
-   igate_init(); 
+   igate_init();
+   
    shellInit();
 
    while (!chThdShouldTerminateX()) {

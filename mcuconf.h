@@ -39,6 +39,11 @@
 #define KINETIS_ADC_USE_ADC1                  TRUE
 #define KINETIS_ADC_USE_ADC0                  TRUE
 
+/*
+ * SPI 
+ */
+#define KINETIS_SPI_USE_SPI0                  TRUE
+
 
 
 // Must define

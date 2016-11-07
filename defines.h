@@ -61,6 +61,22 @@
 #define TRX_SERIAL_TXD         TEENSY_PIN8
 #define TRX_SERIAL_TXD_IOPORT  TEENSY_PIN8_IOPORT
 
+
+/* SPI and LCD display setup */
+#define SPI_SCK_PORT           TEENSY_PIN14_IOPORT
+#define SPI_SCK_PIN            TEENSY_PIN14
+#define SPI_MOSI_PORT          TEENSY_PIN11_IOPORT
+#define SPI_MOSI_PIN           TEENSY_PIN11
+#define SPI_MISO_PORT          TEENSY_PIN12_IOPORT
+#define SPI_MISO_PIN           TEENSY_PIN12
+#define SPI_CS_PORT            TEENSY_PIN15_IOPORT
+#define SPI_CS_PIN             TEENSY_PIN15
+#define LCD_RES_PORT           TEENSY_PIN23_IOPORT
+#define LCD_RES_PIN            TEENSY_PIN23
+#define LCD_DC_PORT            TEENSY_PIN22_IOPORT
+#define LCD_DC_PIN             TEENSY_PIN22
+
+
 /* APRS tracking FIXME */
 #define TRACKER_SLEEP_TIME 10
 #define TIMER_RESOLUTION   1000 
@@ -68,10 +84,12 @@
 #define COMMENT_PERIOD     4
 #define GPS_TIMEOUT        3 
 
+
 /* ESP-12 WIFI module */
 #define WIFI_ENABLE         TEENSY_PIN21
 #define WIFI_ENABLE_IOPORT  TEENSY_PIN21_IOPORT
 #define N_WIFIAP 6
+
 
 /* Radio transceiver module */
 /* 0 = 12.5 KHz, 1 = 25 KHz */
