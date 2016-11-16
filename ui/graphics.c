@@ -325,6 +325,7 @@ void line(int x0, int y0, int x1, int y1)
    }
 }
 
+
 /**********************************************************
  * Plot circle
  * Bresenhams algorithm. 
@@ -365,6 +366,13 @@ void box(int x, int y, int width, int height, bool fill)
    }
 }
 
+
+
+/********************************************************
+ * Battery indicator 
+ *  has 5 levels. 0 is empty, 4 is full
+ ********************************************************/
+
 void battery(int x, int y, int lvl) {
    vLine(x,y,6);
    hLine(x,y,11);
@@ -377,7 +385,6 @@ void battery(int x, int y, int lvl) {
    if (lvl >= 4) box(x+8,y+1,2,5, true);
    vLine(x+11,y+2,3);
 }
-
 
 
 /*********************************************************
@@ -403,6 +410,11 @@ void menu(const char* items[], int sel) {
    flush();
 }
 
+
+/***********************************************************
+ * Flag indicator
+ ***********************************************************/
+
 void flag(int x, int y, char *sign, bool on) {
   if (!on) return; 
   box(x, y, 7, 11, on); 
@@ -413,6 +425,12 @@ void flag(int x, int y, char *sign, bool on) {
     writeText(x+offs, y+2, sign);
   setPixel(x,y, false);
 }
+
+
+
+/*************************************************
+ * Label
+ *************************************************/
 
 void label(int x, int y, char* lbl) {
   box(x,y,27,11, true);

@@ -76,15 +76,17 @@ IGATE_FILTER,           tbd     done
     DONE.
 
 * Igate
-    DONE. Need more testing. inet2rf not implemented.
+    DONE. inet2rf not implemented.
 
 * Digipeater
-    DONE. Need testing. 
+    DONE.
     
 * Hardware mod on prototype to fix receiver
-
+    DONE. 
+    
 * Check channel (squelch open) before transmitting. 
-
+    DONE. 
+    
 * Web interface page for igate and digipeater related settings.
 
 * Position report logs. Store in ESP-12. 
@@ -92,6 +94,7 @@ IGATE_FILTER,           tbd     done
 * Power/battery/PA control? 
 
 * Get display up and running
+    DONE.
 
 * Design and implement display UI
 

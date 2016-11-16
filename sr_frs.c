@@ -167,13 +167,13 @@ void squelch_handler(EXTDriver *extp, expchannel_t channel) {
   chSysLock();
   if (!_sq_on && radio_rdy && !pinIsHigh(TRX_SQ)) {
     _sq_on = true;
-    rgb_led_on(true, true, false);
+    pri_rgb_led_on(true, true, false);
     afsk_rx_enable();
     channel_rdy = false;
   }
   else if (_sq_on) {
     _sq_on = false; 
-    rgb_led_off();
+    pri_rgb_led_off();
     afsk_rx_disable();
     channel_rdy = true;
     chCondBroadcastI(&_channel_rdy);
