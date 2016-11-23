@@ -1050,13 +1050,23 @@ static void cmd_digipeater(Stream *chp, int argc, char* argv[])
 
 
 /*****************************************************************************
- * Igate on/off
+ * Igate commands
  *****************************************************************************/
 
 static void cmd_igate(Stream *chp, int argc, char* argv[]) 
 {
    if (argc < 1) {
-      chprintf(chp, "Usage: webserver on|off|host|port|user|passcode|filter\r\n");
+      chprintf(chp, "Usage: webserver info|on|off|host|port|user|passcode|filter\r\n");
+   }
+   else if (strncasecmp("info", argv[0], 3) == 0) { 
+      chprintf(chp, "     Igate status : %s%s\r\n", 
+            (GET_BYTE_PARAM(IGATE_ON) ? "ON" : "OFF"),  igate_is_on() ? " (running)" : "");
+      if (igate_is_on()) {
+         chprintf(chp, "     Connected to : %s\r\n\r\n", inet_chost());
+         chprintf(chp, " Packets received : %d\r\n", igate_rxcount());
+         chprintf(chp, "Gated to internet : %d\r\n", igate_icount());
+         chprintf(chp, "     Tracker only : %d\r\n", igate_tr_count());
+      }
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
       chprintf(chp, "***** IGATE ON *****\r\n");
@@ -1086,18 +1096,13 @@ static void cmd_igate(Stream *chp, int argc, char* argv[])
 
 static void cmd_lcd(Stream *chp, int argc, char* argv[]) 
 {   
-   lcd_init(&SPID1);
-   
-   // writeText(1,1, "Hello World");
-   //flush();
-   
    clear();
    label(0,0, "APRS");
-   flag(32,0, "i", false);
+   flag(32,0, "i", true);
    flag(41,0, "a", false);
-   flag(50,0, "g", false);
-   flag(59,0, "d", false);
-   battery(70,3,1);
+   flag(50,0, "g", true);
+   flag(59,0, "d", true);
+   battery(70,3,2);
    hLine(0,10,66);
    
    writeText(0,15,"144.800 MHz");
