@@ -103,6 +103,7 @@ int main(void)
    wifi_init(&WIFI_SERIAL);
    igate_init();
    
+   lcd_init(&SPID1);
    shellInit();
 
    while (!chThdShouldTerminateX()) {

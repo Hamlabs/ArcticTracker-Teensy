@@ -17,71 +17,6 @@ bool _inverse = false;
 
 #define FONT_X_SIZE             5
 #define FONT_Y_SIZE             8
-#define SMALL_FONT_X_SIZE       3
-
-
-const uint8_t Fonts5x3 [][SMALL_FONT_X_SIZE] = 
-{
-  { 0x00, 0x00, 0x00 },   /* space */
-  { 0x00, 0x17, 0x00 },   /* ! */
-  { 0x00, 0x00, 0x00 },   /* " */
-  { 0x1F, 0x0A, 0x1F },   /* # */
-  { 0x00, 0x00, 0x00 },   /* $ */
-  { 0x19, 0x04, 0x13 },   /* % */
-  { 0x00, 0x00, 0x00 },   /* & */
-  { 0x00, 0x00, 0x00 },   /* ' */
-  { 0x00, 0x00, 0x00 },   /* ( */
-  { 0x00, 0x00, 0x00 },   /* ) */
-  { 0x00, 0x00, 0x00 },   /* * */
-  { 0x04, 0x0E, 0x04 },   /* + */
-  { 0x00, 0x30, 0x00 },   /* , */
-  { 0x04, 0x04, 0x04 },   /* - */
-  { 0x00, 0x10, 0x00 },   /* . */
-  { 0x08, 0x04, 0x02 },   /* / */
-  { 0x1F, 0x11, 0x1F },   /* 0 */
-  { 0x11, 0x1F, 0x10 },   /* 1 */
-  { 0x1D, 0x15, 0x17 },   /* 2 */
-  { 0x11, 0x15, 0x1F },   /* 3 */
-  { 0x07, 0x04, 0x1F },   /* 4 */
-  { 0x17, 0x15, 0x1D },   /* 5 */
-  { 0x1F, 0x15, 0x1D },   /* 6 */
-  { 0x01, 0x05, 0x1F },   /* 7 */
-  { 0x1F, 0x15, 0x1F },   /* 8 */
-  { 0x07, 0x05, 0x1F },   /* 9 */
-  { 0x00, 0x14, 0x00 },   /* : */
-  { 0x00, 0x34, 0x00 },   /* ; */
-  { 0x04, 0x0A, 0x11 },   /* < */
-  { 0x0A, 0x0A, 0x0A },   /* = */
-  { 0x11, 0x0A, 0x04 },   /* > */
-  { 0x01, 0x15, 0x02 },   /* ? */
-  { 0x1D, 0x15, 0x0E },   /* @ */ 
-  { 0x1E, 0x05, 0x1E },   /* A */
-  { 0x1F, 0x15, 0x0A },   /* B */
-  { 0x0E, 0x11, 0x11 },   /* C */
-  { 0x1F, 0x11, 0x0E },   /* D */
-  { 0x1F, 0x15, 0x11 },   /* E */
-  { 0x1F, 0x05, 0x01 },   /* F */
-  { 0x1F, 0x15, 0x1D },   /* G */
-  { 0x1F, 0x04, 0x1F },   /* H */
-  { 0x11, 0x1F, 0x11 },   /* I */
-  { 0x19, 0x11, 0x0F },   /* J */
-  { 0x1F, 0x04, 0x1B },   /* K */
-  { 0x1F, 0x10, 0x10 },   /* L */
-  { 0x1F, 0x06, 0x1F },   /* M */
-  { 0x1F, 0x0E, 0x1F },   /* N */
-  { 0x1F, 0x11, 0x1F },   /* O */
-  { 0x1F, 0x05, 0x07 },   /* P */
-  { 0x0E, 0x19, 0x1E },   /* Q */
-  { 0x1F, 0x05, 0x1A },   /* R */
-  { 0x16, 0x15, 0x0D },   /* S */
-  { 0x01, 0x1F, 0x01 },   /* T */
-  { 0x0F, 0x10, 0x1F },   /* U */
-  { 0x03, 0x0C, 0x1F },   /* V */
-  { 0x1F, 0x0C, 0x1F },   /* W */
-  { 0x1B, 0x04, 0x1B },   /* X */
-  { 0x07, 0x1C, 0x07 },   /* Y */
-  { 0x19, 0x15, 0x13 },   /* Z */
-};
 
 
 
@@ -184,27 +119,8 @@ const uint8_t  Fonts8x5 [][FONT_X_SIZE] =
 };
 
 
-void writeSmallText(int x, int y, const uint8_t * strp) {
-  
-  uint8_t i;
-  int offset = y % 8; 
-  changed[y/8] = true; 
-  if (offset > 0)
-      changed[y/8+1] = true;
-  while (*strp) {
-    char c = *strp;
-    for ( i = 0; i < SMALL_FONT_X_SIZE; i++ ) {
-      buffer[y/8][x] ^= Fonts5x3[c - 32][i] << offset;
-      if (offset > 0) 
-          buffer[y/8+1][x] ^= Fonts5x3[c - 32][i] >> (8-offset);
-      x++; 
-    }
-    strp++;
-    x++;
-  }
-}
 
-void writeText(int x, int y, const uint8_t * strp) {
+void gui_writeText(int x, int y, const uint8_t * strp) {
   
   uint8_t i;
   int offset = y % 8; 
@@ -234,7 +150,8 @@ void writeText(int x, int y, const uint8_t * strp) {
  * Synchronise buffer to physical screen
  ********************************************************/
 
-void flush() {
+void gui_flush() 
+{
   uint16_t i,j;
   lcd_setPosXY(0,0);
   for (i = 0; i < DISPLAY_HEIGHT/8; i++) 
@@ -250,7 +167,8 @@ void flush() {
  * Clear screen (in buffer)
  ********************************************************/
 
-void clear() { 
+void gui_clear() 
+{ 
   uint16_t i, j;
   for (i = 0; i < DISPLAY_HEIGHT/8; i++) {
     changed[i] = true;
@@ -264,7 +182,7 @@ void clear() {
  * Set one pixel at x,y to on or off (on=black)
  ********************************************************/
 
-void setPixel(int x, int y, bool on) 
+void gui_setPixel(int x, int y, bool on) 
 {
     changed[y/8] = true;
     uint8_t b = (0x01 << (y % 8));
@@ -279,7 +197,7 @@ void setPixel(int x, int y, bool on)
  * Set inverse graphics mode
  ********************************************************/
 
-void inverseMode(bool on)
+void gui_inverseMode(bool on)
 { _inverse = on; }
 
 
@@ -287,7 +205,8 @@ void inverseMode(bool on)
  * Draw vertical line starting at x,y with length len
  ********************************************************/
 
-void vLine(int x, int y, int len) {
+void gui_vLine(int x, int y, int len) 
+{
   int i;
   for (i=y; i<y+len; i++)
      setPixel(x, i, !_inverse);
@@ -298,7 +217,8 @@ void vLine(int x, int y, int len) {
  * Draw horizontal line starting at x,y with length len
  ********************************************************/
 
-void hLine(int x, int y, int len) {
+void gui_hLine(int x, int y, int len) 
+{
   int i;
   for (i=x; i<x+len; i++)
      setPixel(i,y, !_inverse);
@@ -310,7 +230,7 @@ void hLine(int x, int y, int len) {
  * Bresenhams algorithm. 
  *********************************************************/
 
-void line(int x0, int y0, int x1, int y1)
+void gui_line(int x0, int y0, int x1, int y1)
 {
    int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
    int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1; 
@@ -331,7 +251,7 @@ void line(int x0, int y0, int x1, int y1)
  * Bresenhams algorithm. 
  *********************************************************/
 
-void circle(int xm, int ym, int r)
+void gui_circle(int xm, int ym, int r)
 {
    int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
    do {
@@ -352,7 +272,7 @@ void circle(int xm, int ym, int r)
  * Draw box starting at x,y of width w and height h
  ********************************************************/
 
-void box(int x, int y, int width, int height, bool fill) 
+void gui_box(int x, int y, int width, int height, bool fill) 
 {
    int i;
    if (fill)
@@ -373,7 +293,8 @@ void box(int x, int y, int width, int height, bool fill)
  *  has 5 levels. 0 is empty, 4 is full
  ********************************************************/
 
-void battery(int x, int y, int lvl) {
+void gui_battery(int x, int y, int lvl) 
+{
    vLine(x,y,6);
    hLine(x,y,11);
    hLine(x,y+6,11);
@@ -393,8 +314,8 @@ void battery(int x, int y, int lvl) {
  *********************************************************/
 
  
-void menu(const char* items[], int sel) {
- 
+void gui_menu(const char* items[], int sel) 
+{ 
    clear();
    hLine(1,0,82);
    hLine(1,44,83);
@@ -415,7 +336,8 @@ void menu(const char* items[], int sel) {
  * Flag indicator
  ***********************************************************/
 
-void flag(int x, int y, char *sign, bool on) {
+void gui_flag(int x, int y, char *sign, bool on) 
+{
   if (!on) return; 
   box(x, y, 7, 11, on); 
   int offs = 1;
@@ -432,7 +354,8 @@ void flag(int x, int y, char *sign, bool on) {
  * Label
  *************************************************/
 
-void label(int x, int y, char* lbl) {
+void gui_label(int x, int y, char* lbl)
+{
   box(x,y,27,11, true);
   writeText(x+2, y+2, lbl);
   setPixel(x,y, false);

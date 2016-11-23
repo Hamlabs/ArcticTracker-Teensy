@@ -46,12 +46,6 @@ static SPIDriver *_spip;
    
    lcd_clear(); /* Clear LCD */
    lcd_setPosXY(1, 1);
-   
-   lcd_writeByte(0xFF, LCD_SEND_DATA);
-   lcd_writeByte(0xFF, LCD_SEND_DATA);
-   lcd_writeByte(0xFF, LCD_SEND_DATA);
-   lcd_writeByte(0xFF, LCD_SEND_DATA);
-   lcd_writeByte(0xFF, LCD_SEND_DATA);
  }
  
  
