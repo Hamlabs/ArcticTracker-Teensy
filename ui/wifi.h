@@ -31,6 +31,7 @@ char* wifi_doCommand(char*, char*);
 char* wifi_status(char* buf);
 bool  wifi_is_connected(void);
 
+char* inet_chost(void);
 int  inet_open(char* host, int port);
 void inet_close(void);
 bool inet_is_connected(void);

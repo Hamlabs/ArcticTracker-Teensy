@@ -47,6 +47,10 @@ static void inet2rf(FBUF *);
 
 static bool _igate_on = false;
 static bool _igate_run = false; 
+static uint32_t _icount = 0;
+static uint32_t _rcvd = 0;
+static uint32_t _tracker_icount = 0;
+
 
 static FBQ rxqueue;           /* Frames from radio or tracker */
 
@@ -59,8 +63,20 @@ static thread_t* igtm=NULL;
 
 
 
+bool igate_is_on() 
+  { return _igate_on; }
 
 
+uint32_t igate_icount()
+  { return _icount; }
+  
+uint32_t igate_rxcount()
+  { return _rcvd; }
+  
+uint32_t igate_tr_count()
+  { return _tracker_icount; }
+  
+  
 /********************************************
  * Radio thread
  * Listen for incoming packets from radio 
@@ -76,6 +92,7 @@ static THD_FUNCTION(igate_radio, arg)
     FBUF frame = fbq_get(&rxqueue);
     if (fbuf_length(&frame) > 2) {
       beeps("- ");
+      _rcvd++;
       rf2inet(&frame);
     }   
     fbuf_release(&frame);
@@ -221,6 +238,7 @@ void igate_activate(bool m)
       igtm=NULL;
       hdlc_subscribe_rx(NULL, 2);
       tracker_setGate(NULL);
+      _icount = _rcvd = _tracker_icount = 0;
    }
 }
 
@@ -233,8 +251,6 @@ void igate_activate(bool m)
 
 static void rf2inet(FBUF *frame) 
 {
-
-  
   FBUF newHdr;
   addr_t from, to, mycall; 
   addr_t digis[7];
@@ -276,6 +292,7 @@ static void rf2inet(FBUF *frame)
   /* Send to internet server */
   inet_writeFB(&newHdr);
   fbuf_release(&newHdr);
+  if (own) _tracker_icount++; else _icount++;
 }
 
 

@@ -184,10 +184,16 @@ static bool inet_connected = false;
 static bool read_disable = false;
 static FBQ* mon_queue;
 static FBQ  read_queue;
+static char chost[40];
 
 
+char* inet_chost()
+  {return chost; }
+
+  
 int inet_open(char* host, int port) {
   char res[10];
+  sprintf(chost, "%s:%d", host, port);
   sprintf(cbuf, "NET.OPEN %d %s", port, host);
   wifi_doCommand(cbuf, res);
   if (strncmp("OK", res, 2) != 0) 
@@ -201,13 +207,13 @@ void inet_close() {
    if (!inet_connected)
       return; 
    char res[10];
+   sprintf(chost, "");
    sprintf(cbuf, "NET.CLOSE");
    wifi_doCommand(cbuf, res);
    /*
     * FIXME: Do we need to call fbq_clear? If so, be sure 
     * that no other tread is blocking on queue 
     */
-//   fbq_clear(&read_queue);
 }
 
 bool inet_is_connected()
