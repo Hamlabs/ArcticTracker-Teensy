@@ -26,7 +26,9 @@
 #include "tracker.h"
 #include "digipeater.h"
 #include "igate.h"
-#include "lcd.h"
+#include "ui/lcd.h"
+#include "ui/gui.h"
+
 
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(STACK_SHELL)
@@ -411,12 +413,13 @@ static void cmd_setsquelch(Stream *chp, int argc, char *argv[]) {
 static void cmd_setmiclevel(Stream *chp, int argc, char *argv[]) {
   uint8_t vol=0;
   if (argc==0)
-    chprintf(chp, "ERRROR\r\n");
+    chprintf(chp, "Usage: miclevel <level>\r\n");
   else {
     if (argc > 0) 
       sscanf(argv[0], "%hhu", &vol);
     if (vol>8) vol=8;
-    radio_setMicLevel(vol);
+    if (radio_setMicLevel(vol))
+      chprintf(chp, "OK\r\n");
   }
   chprintf(chp, "MICLEVEL: %d\r\n", vol);
 }
@@ -1095,21 +1098,66 @@ static void cmd_igate(Stream *chp, int argc, char* argv[])
 
 
 static void cmd_lcd(Stream *chp, int argc, char* argv[]) 
-{   
-   clear();
-   label(0,0, "APRS");
-   flag(32,0, "i", true);
-   flag(41,0, "a", false);
-   flag(50,0, "g", true);
-   flag(59,0, "d", true);
-   battery(70,3,2);
-   hLine(0,10,66);
+{
+     gui_clear();
+     gui_label(0,0, "APRS");
+     gui_flag(32,0, "i", true);
+     gui_flag(41,0, "a", false);
+     gui_flag(50,0, "g", true);
+     gui_flag(59,0, "d", true);
+     gui_battery(70,3,2);
+     gui_hLine(0,10,66);
    
-   writeText(0,15,"144.800 MHz");
-   writeText(0,26,"LA7ECA-7");
-   writeText(0,37,"W1,W2-1,SAR");  
+     gui_writeText(0,15, "LE3WTF");
+     gui_writeText(0,26, "144.800 MHz");
+     gui_writeText(0,37, "W1,W2-1,SAR");  
+     gui_flush();
    
-   flush();
+  getch(chp);
+
+    gui_clear();
+    gui_label(0,0, "WIFI");
+    gui_flag(32,0, "i", true);
+    gui_flag(41,0, "a", false);
+    gui_flag(50,0, "g", true);
+    gui_flag(59,0, "d", true);
+    gui_battery(70,3,2);
+    gui_hLine(0,10,66);
+    
+    gui_writeText(0,15,"Online");
+    gui_writeText(0,26,"LA7ECA-WLAN");
+    gui_writeText(0,37,"228.239.220.200");    
+    gui_flush();
+  
+  getch(chp);
+  
+    gui_clear();
+    gui_label(0,0, "W-AP");
+    gui_flag(32,0, "i", true);
+    gui_flag(41,0, "a", false);
+    gui_flag(50,0, "g", true);
+    gui_flag(59,0, "d", true);
+    gui_battery(70,3,2);
+    gui_hLine(0,10,66);
+    
+    gui_writeText(0,15,"2 users");
+    gui_writeText(0,26,"AP-LA7ECA-7");
+    gui_writeText(0,37,"192.168.0.100");  
+    gui_flush();
+    
+  getch(chp);
+    gui_clear();
+    gui_battery(70,0,2);
+    gui_hLine(0,3,68);
+    gui_writeText(0,9,"LA3WTA>ALL ");
+    gui_writeText(0,19,"Det er gjort");
+    gui_writeText(0,29,"Funn. Aksjonen");
+    gui_writeText(0,39,"avsluttes ...");     
+    gui_flush();
+    
+  getch(chp);  
+    gui_welcome();
+    
 }
 
 

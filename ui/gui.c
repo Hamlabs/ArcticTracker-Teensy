@@ -2,11 +2,10 @@
 #include "hal.h"
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "ui/lcd.h"
-
-#define DISPLAY_WIDTH  84
-#define DISPLAY_HEIGHT 48
+#include "ui/gui.h"
 
 
 uint8_t buffer [DISPLAY_HEIGHT/8] [DISPLAY_WIDTH];
@@ -120,8 +119,8 @@ const uint8_t  Fonts8x5 [][FONT_X_SIZE] =
 
 
 
-void gui_writeText(int x, int y, const uint8_t * strp) {
-  
+void gui_writeText(int x, int y, const char * strp) 
+{
   uint8_t i;
   int offset = y % 8; 
   changed[y/8] = true; 
@@ -209,7 +208,7 @@ void gui_vLine(int x, int y, int len)
 {
   int i;
   for (i=y; i<y+len; i++)
-     setPixel(x, i, !_inverse);
+     gui_setPixel(x, i, !_inverse);
 }
 
 
@@ -221,7 +220,7 @@ void gui_hLine(int x, int y, int len)
 {
   int i;
   for (i=x; i<x+len; i++)
-     setPixel(i,y, !_inverse);
+     gui_setPixel(i,y, !_inverse);
 }
 
 
@@ -237,7 +236,7 @@ void gui_line(int x0, int y0, int x1, int y1)
    int err = dx+dy, e2; /* error value e_xy */
  
    for(;;){  /* loop */
-      setPixel(x0,y0, !_inverse);
+      gui_setPixel(x0,y0, !_inverse);
       if (x0==x1 && y0==y1) break;
       e2 = 2*err;
       if (e2 >= dy) { err += dy; x0 += sx; } /* e_xy+e_x > 0 */
@@ -255,10 +254,10 @@ void gui_circle(int xm, int ym, int r)
 {
    int x = -r, y = 0, err = 2-2*r; /* II. Quadrant */ 
    do {
-      setPixel(xm-x, ym+y, !_inverse); /*   I. Quadrant */
-      setPixel(xm-y, ym-x, !_inverse); /*  II. Quadrant */
-      setPixel(xm+x, ym-y, !_inverse); /* III. Quadrant */
-      setPixel(xm+y, ym+x, !_inverse); /*  IV. Quadrant */
+      gui_setPixel(xm-x, ym+y, !_inverse); /*   I. Quadrant */
+      gui_setPixel(xm-y, ym-x, !_inverse); /*  II. Quadrant */
+      gui_setPixel(xm+x, ym-y, !_inverse); /* III. Quadrant */
+      gui_setPixel(xm+y, ym+x, !_inverse); /*  IV. Quadrant */
       
       r = err;
       if (r <= y) err += ++y*2+1;           /* e_xy+e_y < 0 */
@@ -277,12 +276,12 @@ void gui_box(int x, int y, int width, int height, bool fill)
    int i;
    if (fill)
       for (i=0;i<width; i++)
-	 vLine(x+i, y, height);
+	 gui_vLine(x+i, y, height);
    else {
-      vLine(x,y,height);
-      vLine(x+width-1, y, height);
-      hLine(x,y,width);
-      hLine(x,y+height-1, width);
+      gui_vLine(x,y,height);
+      gui_vLine(x+width-1, y, height);
+      gui_hLine(x,y,width);
+      gui_hLine(x,y+height-1, width);
    }
 }
 
@@ -295,16 +294,16 @@ void gui_box(int x, int y, int width, int height, bool fill)
 
 void gui_battery(int x, int y, int lvl) 
 {
-   vLine(x,y,6);
-   hLine(x,y,11);
-   hLine(x,y+6,11);
-   vLine(x+10,y,2);
-   vLine(x+10,y+5,2);
-   if (lvl >= 1) box(x+1,y+1,3,5, true);
-   if (lvl >= 2) box(x+4,y+1,2,5, true);
-   if (lvl >= 3) box(x+6,y+1,2,5, true);
-   if (lvl >= 4) box(x+8,y+1,2,5, true);
-   vLine(x+11,y+2,3);
+   gui_vLine(x,y,6);
+   gui_hLine(x,y,11);
+   gui_hLine(x,y+6,11);
+   gui_vLine(x+10,y,2);
+   gui_vLine(x+10,y+5,2);
+   if (lvl >= 1) gui_box(x+1,y+1,3,5, true);
+   if (lvl >= 2) gui_box(x+4,y+1,2,5, true);
+   if (lvl >= 3) gui_box(x+6,y+1,2,5, true);
+   if (lvl >= 4) gui_box(x+8,y+1,2,5, true);
+   gui_vLine(x+11,y+2,3);
 }
 
 
@@ -316,19 +315,19 @@ void gui_battery(int x, int y, int lvl)
  
 void gui_menu(const char* items[], int sel) 
 { 
-   clear();
-   hLine(1,0,82);
-   hLine(1,44,83);
-   hLine(3,45,82);
-   vLine(0,0,45);
-   vLine(82,0,45);
-   vLine(83,3,41);
+   gui_clear();
+   gui_hLine(1,0,82);
+   gui_hLine(1,44,83);
+   gui_hLine(3,45,82);
+   gui_vLine(0,0,45);
+   gui_vLine(82,0,45);
+   gui_vLine(83,3,41);
 
-   box(0, sel*11, 83, 12, true);
+   gui_box(0, sel*11, 83, 12, true);
    int i;
    for (i=0; i<4; i++)
-     writeText(4, 2+i*11, items[i]); 
-   flush();
+     gui_writeText(4, 2+i*11, items[i]); 
+   gui_flush();
 }
 
 
@@ -339,13 +338,13 @@ void gui_menu(const char* items[], int sel)
 void gui_flag(int x, int y, char *sign, bool on) 
 {
   if (!on) return; 
-  box(x, y, 7, 11, on); 
+  gui_box(x, y, 7, 11, on); 
   int offs = 1;
   if (sign[0] == 'i')
     offs = 2;
   if (on)
-    writeText(x+offs, y+2, sign);
-  setPixel(x,y, false);
+    gui_writeText(x+offs, y+2, sign);
+  gui_setPixel(x,y, false);
 }
 
 
@@ -356,7 +355,31 @@ void gui_flag(int x, int y, char *sign, bool on)
 
 void gui_label(int x, int y, char* lbl)
 {
-  box(x,y,27,11, true);
-  writeText(x+2, y+2, lbl);
-  setPixel(x,y, false);
+  gui_box(x,y,27,11, true);
+  gui_writeText(x+2, y+2, lbl);
+  gui_setPixel(x,y, false);
 }
+
+
+
+/*************************************************
+ * Welcome message
+ *************************************************/
+
+void gui_welcome() 
+{
+  gui_clear();
+  gui_circle(40,24,10);
+  gui_line(40,2,40,55);
+  gui_line(14,24,66,24);
+  gui_writeText(2,7,"Arctic");
+  gui_writeText(43,36, "Tracker");
+  gui_flush();
+}
+
+
+
+
+
+
+
