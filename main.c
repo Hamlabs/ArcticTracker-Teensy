@@ -12,15 +12,20 @@
 #include "hdlc.h"
 #include "afsk.h"
 #include "defines.h"
+#include "ui/lcd.h"
 #include "ui/ui.h"
+#include "ui/gui.h"
 #include "ui/wifi.h"
 #include "ui/commands.h"
 #include "adc_input.h"
 #include "tracker.h"
 #include "digipeater.h"
+#include "igate.h"
+
 
 
 static void ext_init(void);
+static void spi_init(void);
 extern void usb_initialize(void);
 extern bool usb_active(void);
 extern void mon_init(Stream*);
@@ -104,6 +109,7 @@ int main(void)
    igate_init();
    
    lcd_init(&SPID1);
+   gui_welcome();
    shellInit();
 
    while (!chThdShouldTerminateX()) {
