@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include "hdlc.h"
 #include "hal.h"
+#include "radio.h"
+
 
 output_queue_t *outqueue; 
 FBQ encoder_queue; 
@@ -37,7 +39,6 @@ static bool hdlc_idle = true;
 // static msg_t hdlc_txencoder(void*);
 static void hdlc_encode_frames(void);
 static void hdlc_encode_byte(uint8_t txbyte, bool flag);
-static void wait_channel_ready(void);
 // static msg_t hdlc_testsignal(void *);
 
 

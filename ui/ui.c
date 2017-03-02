@@ -1,6 +1,9 @@
 #include "hal.h"
 #include "defines.h"
 #include "ui.h"
+#include "lcd.h"
+
+
 
 static void chandler(void *p);
 static void _rgb_led_off(void);
@@ -156,7 +159,7 @@ static void onoffhandler(void* p);
  
  
  /*********************************************************************
-  * DCD LED
+  * TX LED
   *********************************************************************/
  
  void tx_led_on() {

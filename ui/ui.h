@@ -6,6 +6,9 @@ void rgb_led_on(bool, bool, bool);
 void rgb_led_off(void);
 void rgb_led_mix(uint8_t red, uint8_t green, uint8_t blue, uint8_t off);
 
+void pri_rgb_led_on(bool red, bool green, bool blue);
+void pri_rgb_led_off(void);
+  
 void tx_led_on(void);
 void tx_led_off(void);
 

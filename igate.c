@@ -38,6 +38,7 @@
 #include "afsk.h"
 #include "radio.h"
 #include "heardlist.h"
+#include "tracker.h"
 #include "igate.h"
 
 

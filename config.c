@@ -13,13 +13,14 @@
 #include "hal.h"
 
 #define BYTEPTR(x) (uint8_t*)(uint32_t)(x)
+#define WORDPTR(x) (uint16_t*)(uint32_t)(x)
 #define PTR(x) (void*)(uint32_t)(x)
 
 void reset_param(uint16_t ee_addr)
 {   
    while (!eeprom_is_ready())
       t_yield();
-   eeprom_write_byte(BYTEPTR(ee_addr), 0xff);
+   eeprom_write_byte(WORDPTR(ee_addr), 0xff);
 }
 
 
@@ -39,7 +40,7 @@ void set_param(uint16_t ee_addr, void* ram_addr, const uint8_t size)
        checksum ^= byte;
    }
    eeprom_write_block(ram_addr, PTR(ee_addr), size);  
-   eeprom_write_byte(BYTEPTR(ee_addr+size), checksum);
+   eeprom_write_byte(WORDPTR(ee_addr+size), checksum);
 }
 
 
@@ -79,7 +80,7 @@ void set_byte_param(uint16_t ee_addr, uint8_t byte)
 {
     while (!eeprom_is_ready())
       t_yield();
-    eeprom_write_byte(BYTEPTR(ee_addr), byte);
+    eeprom_write_byte(WORDPTR(ee_addr), byte);
     eeprom_write_byte(PTR(ee_addr+1), (0x0f ^ byte));
 }
 
@@ -95,8 +96,8 @@ uint8_t get_byte_param(uint16_t ee_addr, const void* default_val)
 {
     while (!eeprom_is_ready())
       t_yield();
-    register uint8_t b1 = eeprom_read_byte(BYTEPTR(ee_addr));
-    register uint8_t b2 = eeprom_read_byte(BYTEPTR(ee_addr+1));
+    register uint8_t b1 = eeprom_read_byte(WORDPTR(ee_addr));
+    register uint8_t b2 = eeprom_read_byte(WORDPTR(ee_addr+1));
     if ((0x0f ^ b1) == b2)
        return b1;
     else

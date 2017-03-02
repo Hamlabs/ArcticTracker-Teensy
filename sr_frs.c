@@ -9,6 +9,8 @@
 #include "ui/commands.h"
 #include "ui/ui.h"
 #include "radio.h"
+#include "hdlc.h"
+#include "afsk.h"
 
 #define FLAG_BUSY_LOCK  0x01
 #define FLAG_COMP_EXP   0x02
@@ -30,7 +32,10 @@ static bool _handshake(void);
 static bool _setGroupParm(void);
 static void _initialize(void);
 
- 
+/*
+extern SerialUSBDriver SDU1;
+static Stream* out = (Stream*) &SDU1; 
+*/
 static const SerialConfig _serialConfig = {
    9600
 };
@@ -124,7 +129,7 @@ static void _initialize()
    _widebw = TRX_BANDWIDTH;
    _setGroupParm();  
    sleep(100);
-   radio_setMicLevel(8);
+//   radio_setMicLevel(8);
 }
   
   

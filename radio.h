@@ -15,6 +15,7 @@
  bool radio_setMicLevel(uint8_t level);
  bool radio_powerSave(bool on);
  bool radio_setLowTxPower(bool on); 
+ bool radio_isLowTxPower(void); 
  void squelch_handler(EXTDriver *extp, expchannel_t channel);
  void wait_channel_ready(void);
  

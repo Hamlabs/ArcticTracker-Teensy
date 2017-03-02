@@ -10,6 +10,9 @@
 #include "radio.h"
 
 
+extern char* strchrnul(char*, char);
+
+
 /*********************************************************************
  * Parse and set boolean (on/off) setting 
  *   ee_addr - address of setting in EEPROM

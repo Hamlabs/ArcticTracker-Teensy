@@ -23,6 +23,8 @@ static void cmd_setParm(char* p, char* val);
 static void wifi_start_server(bool);
 char* parseFreq(char* val, char* buf, bool tx);
 
+extern FBQ* mon_text_activate(bool m);
+
 
 MUTEX_DECL(wifi_mutex);
 #define MUTEX_LOCK chMtxLock(&wifi_mutex)
