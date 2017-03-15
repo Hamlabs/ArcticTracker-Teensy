@@ -22,8 +22,8 @@
 
 
 /* ADC ports for Teensy 3.1 */
-#define ADC_TEENSY_PIN10 ADC_DAD0
-#define ADC_TEENSY_PIN11 ADC_DAD1
+#define ADC_TEENSY_PIN10 ADC_AD18
+#define ADC_TEENSY_PIN11 ADC_AD19
 
 
 /* Queues for AFSK encoder/decoder */
@@ -94,17 +94,19 @@
 /* Radio transceiver module */
 /* 0 = 12.5 KHz, 1 = 25 KHz */
 #define TRX_BANDWIDTH  0
-#define TRX_PTT_IOPORT   TEENSY_PIN6_IOPORT
-#define TRX_PTT          TEENSY_PIN6
-#define TRX_PD_IOPORT    TEENSY_PIN5_IOPORT  
-#define TRX_PD           TEENSY_PIN5
-#define TRX_SQ_IOPORT    TEENSY_PIN19_IOPORT
-#define TRX_SQ           TEENSY_PIN19
-#define TRX_SQ_MODE      PAL_MODE_INPUT
-#define TRX_SQ_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, squelch_handler, PORTB, TRX_SQ}
+#define TRX_PTT_IOPORT      TEENSY_PIN17_IOPORT
+#define TRX_PTT             TEENSY_PIN17
+#define TRX_PTT_REV_IOPORT  TEENSY_PIN6_IOPORT
+#define TRX_PTT_REV         TEENSY_PIN6
+#define TRX_PD_IOPORT       TEENSY_PIN5_IOPORT  
+#define TRX_PD              TEENSY_PIN5
+#define TRX_SQ_IOPORT       TEENSY_PIN19_IOPORT
+#define TRX_SQ              TEENSY_PIN19
+#define TRX_SQ_MODE         PAL_MODE_INPUT
+#define TRX_SQ_EXTCFG       {EXT_CH_MODE_BOTH_EDGES, squelch_handler, PORTB, TRX_SQ}
 
-#define TRX_MIN_FREQUENCY  1440000
-#define TRX_MAX_FREQUENCY  1460000
+#define TRX_MIN_FREQUENCY   1440000
+#define TRX_MAX_FREQUENCY   1460000
 
 
 /* 
@@ -145,7 +147,7 @@
 #define BUTTON           TEENSY_PIN16
 #define BUTTON_IOPORT    TEENSY_PIN16_IOPORT
 #define BUTTON_MODE      PAL_MODE_INPUT_PULLUP
-#define BUTTON_EXTCFG    {EXT_CH_MODE_FALLING_EDGE, button_handler, PORTB, BUTTON}
+#define BUTTON_EXTCFG    {EXT_CH_MODE_BOTH_EDGES, button_handler, PORTB, BUTTON}
 
 
 /* LED blinking */

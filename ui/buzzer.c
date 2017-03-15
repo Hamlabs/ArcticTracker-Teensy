@@ -43,13 +43,13 @@ void _beep(uint16_t freq, uint16_t time) {
  **************************************************/
 
 void blipUp() {
-  lbeep(60);
   beep(60);
+  hbeep(60);
 }
 
 void blipDown() {
+  hbeep(60);
   beep(60);
-  lbeep(60);
 }
 
 

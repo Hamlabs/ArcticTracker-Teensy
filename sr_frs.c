@@ -109,7 +109,9 @@ void radio_init(SerialDriver* sd)
    _serial = (Stream*) sd;
    setPinMode(TRX_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
    setPinMode(TRX_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
+   setPinMode(TRX_PTT, PAL_MODE_OUTPUT_PUSHPULL);
    setPin(TRX_PTT);
+   clearPin(TRX_PTT_REV);
    sdStart(sd, &_serialConfig);  
 }
   
@@ -249,9 +251,11 @@ void radio_PTT(bool on)
     if (on) {
        WAIT_TX_OFF;
        clearPin(TRX_PTT);
+       setPin(TRX_PTT_REV);
        tx_led_on();
     }
     else {
+       clearPin(TRX_PTT_REV);
        setPin(TRX_PTT);
        tx_led_off();
        SIGNAL_TX_OFF;

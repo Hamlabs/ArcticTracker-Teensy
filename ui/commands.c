@@ -1,3 +1,4 @@
+
 /* 
  * Command shell 
  * Use modified version of ChibiOS shell (see util/shell.c)
@@ -517,7 +518,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
       chprintf(chp, "***** TEST TONE HIGH *****\r\n");
       tone_setHigh(true);
       if (!txtone_on) {
-	 radio_require();
+	     radio_require();
          radio_PTT(true); 
          tone_start();
          txtone_on = true;
@@ -527,7 +528,7 @@ static void cmd_txtone(Stream *chp, int argc, char *argv[]) {
       chprintf(chp, "***** TEST TONE LOW *****\r\n");
       tone_setHigh(false);
       if (!txtone_on) {
-	 radio_require();
+	     radio_require();
          radio_PTT(true);
          tone_start();
          txtone_on = true;
@@ -607,8 +608,11 @@ static void cmd_adc(Stream *chp, int argc, char* argv[])
    
    int32_t temp = adc_read_temp();
    chprintf(chp,"Temperature = %d\r\n", temp);
-   int32_t inp = adc_read_input();
+   int8_t inp = adc_read_input();
    chprintf(chp,"Input = %d\r\n", inp);
+   uint8_t dcoff = adc_dcoffset();
+   chprintf(chp,"DC offset = %d\r\n", dcoff);
+   
 }
 
 
@@ -1059,7 +1063,7 @@ static void cmd_digipeater(Stream *chp, int argc, char* argv[])
 static void cmd_igate(Stream *chp, int argc, char* argv[]) 
 {
    if (argc < 1) {
-      chprintf(chp, "Usage: webserver info|on|off|host|port|user|passcode|filter\r\n");
+      chprintf(chp, "Usage: igate info|on|off|host|port|username|passcode|filter\r\n");
    }
    else if (strncasecmp("info", argv[0], 3) == 0) { 
       chprintf(chp, "     Igate status : %s%s\r\n", 

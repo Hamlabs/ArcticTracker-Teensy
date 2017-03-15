@@ -98,7 +98,6 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
       bit = get_bit ();
    }  while (bit == HDLC_FLAG);
 
-   
    /* Receiving frame */
    uint8_t bit_count = 0;
    uint8_t ones_count = 0;
@@ -110,7 +109,8 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
    do {
       if (length > MAX_HDLC_FRAME_SIZE) 
          goto flag_sync; // Lost termination flag or only receiving noise?
-
+      
+          
       for (bit_count = 0; bit_count < 8; bit_count++) 
       {
          octet = (bit ? 0x80 : 0x00) | (octet >> 1);

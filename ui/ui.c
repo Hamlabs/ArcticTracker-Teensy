@@ -163,11 +163,11 @@ static void onoffhandler(void* p);
   *********************************************************************/
  
  void tx_led_on() {
-    setPin(LED_DCD);
+    pri_rgb_led_on(true, false, false);
  }
  
  void tx_led_off() {
-    clearPin(LED_DCD);
+    pri_rgb_led_off();
  }
  
  
@@ -195,7 +195,7 @@ static void onoffhandler(void* p);
    sleep(300);
    rgb_led_off();
    sleep(300);
-
+   beeps ("--.- .-. ...-");
    
    /* Blink LED */
    BLINK_NORMAL;
@@ -220,7 +220,7 @@ static void onoffhandler(void* p);
  void button_handler(EXTDriver *extp, expchannel_t channel) {
    (void)extp;
    (void)channel;
-   
+
    buttdown = !pinIsHigh(BUTTON); 
    chVTResetI(&vtb);
    chVTSetI(&vtb, MS2ST(10), bphandler, NULL);

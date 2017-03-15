@@ -12,7 +12,7 @@
 
 #define RADIO_ADC_SAMPLE_FREQ    9600 
 #define RADIO_ADC_NUM_CHANNELS   1
-#define RADIO_ADC_CHANNELS       ADC_TEENSY_PIN10
+#define RADIO_ADC_CHANNELS       ADC_TEENSY_PIN11
 #define RADIO_ADC_BUFSIZE        1
 #define RADIO_ADC_GPT            AFSK_RX_GPT
  
@@ -88,8 +88,8 @@ static uint8_t dcoffset = 0;
    ADCx_CFG1_MODE( ADCx_CFG1_MODE_8_OR_9_BITS ),
    
    /* SC3 Register - Average 4 readings per sample */
-   0 //ADCx_SC3_AVGE |
-   // ADCx_SC3_AVGS(ADCx_SC3_AVGS_AVERAGE_4_SAMPLES)
+   ADCx_SC3_AVGE |
+    ADCx_SC3_AVGS(ADCx_SC3_AVGS_AVERAGE_4_SAMPLES)
  };
  
  
@@ -110,9 +110,18 @@ void adc_init()
 {
    adcStart(&ADCD1, &adc_cfg);
    gptStart(&RADIO_ADC_GPT, &radio_gpt_cfg);
-   if (adcConvert(&ADCD1, &adc_grpcfg, samples, 1) == MSG_OK)
-     dcoffset = (uint8_t) samples[0];
+   adc_calibrate();
 }
+
+void adc_calibrate() {
+   if (adcConvert(&ADCD1, &adc_grpcfg, samples, 1) == MSG_OK)
+      dcoffset = (uint8_t) samples[0];
+}
+
+uint8_t adc_dcoffset() {
+    return dcoffset;
+}
+
 
 
 
