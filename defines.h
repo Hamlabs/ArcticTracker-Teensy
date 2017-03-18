@@ -161,6 +161,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_HDLCDECODER   600
 #define STACK_HDLCENCODER   500
 #define STACK_UI            164
+#define STACK_UI_SRV        256
 #define STACK_WIFI         1500
 #define STACK_SHELL        2700
 

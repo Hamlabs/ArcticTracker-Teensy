@@ -8,8 +8,9 @@
 static void chandler(void *p);
 static void _rgb_led_off(void);
 static void bphandler(void* p);
-static void onoffhandler(void* p);
-
+static void holdhandler(void* p);
+static void holdhandler2(void* p);
+static void clickhandler(void* p);
 
 
 /*****************************************************************
@@ -174,9 +175,12 @@ static void onoffhandler(void* p);
  /*********************************************************************
   * Main UI thread. LED blinking to indicate that it is alive
   *********************************************************************/
+ 
  uint16_t blink_length, blink_interval;
  
  THREAD_STACK(ui_thread, STACK_UI);
+
+ 
  
  __attribute__((noreturn))
  static THD_FUNCTION(ui_thread, arg)
@@ -208,51 +212,95 @@ static void onoffhandler(void* p);
  }
  
  
+ 
+ /*********************************************************************
+  * UI service thread to handle button events 
+  *********************************************************************/
+
+ THREAD_STACK(ui_service_thread, STACK_UI_SRV);
+  
+ BSEMAPHORE_DECL(ui_srv, true);
+ #define WAIT_BUTTON chBSemWait(&ui_srv)
+ #define SIGNAL_BUTTON chBSemSignalI(&ui_srv)
+ 
+ static int butt_event = 0; 
+ 
+ #define BUTT_EV_SHORT 1
+ #define BUTT_EV_LONG  2
+ 
+ 
+ 
+  __attribute__((noreturn))
+ static THD_FUNCTION(ui_service_thread, arg)
+ {
+    (void)arg;
+   
+    chRegSetThreadName("Button events");
+    while (true) {
+       WAIT_BUTTON;
+       if (butt_event == BUTT_EV_SHORT)
+          beep(10); 
+       else if (butt_event == BUTT_EV_LONG)
+          beeps("-"); 
+       butt_event = 0;
+    }
+ }  
+   
+ 
+ 
  /*************************************************************
-  * Pushbutton handler
+  * Pushbutton interrrupt and timer handling
   *************************************************************/
  
  static bool buttdown = false;
- static bool blight; 
- static virtual_timer_t vtb, vtOnoff; 
- 
+ static bool pressed, blight; 
+ static virtual_timer_t vtb, vtb1; 
 
+ 
+ 
  void button_handler(EXTDriver *extp, expchannel_t channel) {
    (void)extp;
    (void)channel;
 
    buttdown = !pinIsHigh(BUTTON); 
    chVTResetI(&vtb);
-   chVTSetI(&vtb, MS2ST(10), bphandler, NULL);
+   chVTResetI(&vtb1);
+   if (buttdown) {
+      chVTSetI(&vtb, MS2ST(10), bphandler, NULL);
+      chVTSetI(&vtb1, MS2ST(600), holdhandler, NULL);
+   }
+   else {
+      if (pressed) 
+         clickhandler(NULL);
+      pressed = false; 
+   }
  }
 
  
  static void bphandler(void* p)
  {
     (void) p;
-    
-    if (!pinIsHigh(BUTTON) && buttdown) {
-       chVTResetI(&vtOnoff);
-       chVTSetI(&vtb, MS2ST(1000), onoffhandler, NULL);
-    }
+    /* If the button has been pressed down for 10ms */
+    if (!pinIsHigh(BUTTON) && buttdown)
+       pressed = true;
  }
  
  
-static void onoffhandler(void* p) {
-   (void) p; 
-   
-   if (!pinIsHigh(BUTTON)) { 
-     if (!blight) {
-       blight = true; 
-       rgb_led_on(false, true, false);
-     }
-     else {
-       blight = false; 
-       rgb_led_off();
-     } 
-   }
+static void clickhandler(void* p) {
+    (void) p; 
+    butt_event = BUTT_EV_SHORT;
+    SIGNAL_BUTTON;
+
 }
  
+
+static void holdhandler(void* p) {
+    pressed = false;
+    butt_event = BUTT_EV_LONG;
+    SIGNAL_BUTTON;
+}
+
+
  
  /*****************************************
   * UI init
@@ -264,6 +312,7 @@ static void onoffhandler(void* p) {
    
    rgb_led_off();   
    THREAD_START(ui_thread, NORMALPRIO+4, NULL);
+   THREAD_START(ui_service_thread, NORMALPRIO+1, NULL);
    _ledstate.on = false; _ledstate.mix = false; _ledstate.pri_on = false; 
  }
  
