@@ -71,20 +71,23 @@ static void cmd_digipeater(Stream *chp, int argc, char* argv[]);
 static void cmd_igate(Stream *chp, int argc, char* argv[]);
 static void cmd_lcd(Stream *chp, int argc, char* argv[]);
 
-static void _parameter_setting_bool(Stream*, int, char**, uint16_t, const void*, char* );
-static void _parameter_setting_byte(Stream*, int, char**, uint16_t, const void*, char*, uint8_t, uint8_t );
+static void _parameter_setting_bool(Stream*, int, char**, int, uint16_t, const void*, char* );
+static void _parameter_setting_byte(Stream*, int, char**, int, uint16_t, const void*, char*, uint8_t, uint8_t );
 static void _parameter_setting_string(Stream*, int, char**, int, uint16_t, const void*, uint8_t, char*);
 static void _parameter_setting_uint(Stream*, int, char**, int, uint16_t, const void*, char*, uint16_t, uint16_t );
 
 
 #define CMD_BOOL_SETTING(x, name) \
    static inline void cmd_##x(Stream* out, int argc, char** argv) \
-      { _parameter_setting_bool(out, argc, argv, x##_offset, &x##_default, name); }
+      { _parameter_setting_bool(out, argc, argv, 0, x##_offset, &x##_default, name); }
 
 #define CMD_BYTE_SETTING(x, name, llimit, ulimit) \
       static inline void cmd_##x(Stream* out, int argc, char** argv) \
-      { _parameter_setting_byte(out, argc, argv, x##_offset, &x##_default, name, llimit, ulimit); }    
+      { _parameter_setting_byte(out, argc, argv, 0, x##_offset, &x##_default, name, llimit, ulimit); }    
 
+#define BOOL_SETTING(out, x, name, start) \
+      _parameter_setting_bool(out, argc, argv, start, x##_offset, &x##_default, name); 
+      
 #define STRING_SETTING(out, x, name, size, start) \
       _parameter_setting_string(out, argc, argv, start, x##_offset, x##_default, size, name);
    
@@ -144,7 +147,7 @@ static const ShellCommand shell_commands[] =
   { "mycall",     "Set/get tracker's APRS callsign",           3, cmd_mycall },
   { "dest",       "Set/get APRS destination address",          3, cmd_dest },
   { "symbol",     "Set/get APRS symbol",                       3, cmd_symbol },
-  { "digipath",   "Set/get APRS digipeater path",              5, cmd_digipath },  
+  { "path",       "Set/get APRS digipeater path",              4, cmd_digipath },  
   { "ip",         "Get IP address from WIFI module",           2, cmd_ip },
   { "macaddr",    "Get MAC address from WIFI module",          3, cmd_macaddr },
   { "timestamp",  "Timestamp on/off",                          5, cmd_TIMESTAMP_ON },
@@ -157,9 +160,7 @@ static const ShellCommand shell_commands[] =
   { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
   { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
   { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
-  { "digipeater", "Digipeater on/off",                         7, cmd_digipeater },
-  { "digi-wide1", "Digipeater - standard WIDE1 mode",          6, cmd_DIGIP_WIDE1_ON},
-  { "digi-sar",   "Digipeater - Preemption on SAR alias",      6, cmd_DIGIP_SAR_ON },
+  { "digipeater", "Digipeater on/off",                         4, cmd_digipeater },
   { "igate",      "Igate on/off",                              4, cmd_igate },
   { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
   { "lcd",        "Test display",                              3, cmd_lcd },
@@ -185,13 +186,13 @@ static ap_config_t wifiap;
  * Generic getter/setter method for boolean settings 
  **********************************************************/
 
-static void _parameter_setting_bool(Stream* out, int argc, char** argv, 
+static void _parameter_setting_bool(Stream* out, int argc, char** argv, int start,
                 uint16_t ee_addr, const void* default_val, char* name )
 {
-    if (argc < 1) 
+    if (argc < start+1) 
        chprintf(out,"%s %s\r\n", name, printBoolSetting(ee_addr, default_val, buf));
-    else
-       chprintf(out, "%s\r\n", parseBoolSetting(ee_addr, argv[0], buf));
+    else 
+       chprintf(out, "%s\r\n", parseBoolSetting(ee_addr, argv[start], buf));
 }
 
 
@@ -199,13 +200,13 @@ static void _parameter_setting_bool(Stream* out, int argc, char** argv,
  * Generic getter/setter method for byte numeric settings 
  **********************************************************/
 
-static void _parameter_setting_byte(Stream* out, int argc, char** argv, 
+static void _parameter_setting_byte(Stream* out, int argc, char** argv, int start,
                    uint16_t ee_addr, const void* default_val, char* name, uint8_t llimit, uint8_t ulimit )
 {
-  if (argc < 1) 
-    chprintf(out, "%s %u\r\n", name, get_byte_param(ee_addr, default_val));
-  else
-    chprintf(out, "%s\r\n", parseByteSetting(ee_addr, argv[0], llimit, ulimit, buf));
+   if (argc < start+1) 
+     chprintf(out, "%s %u\r\n", name, get_byte_param(ee_addr, default_val));
+   else 
+     chprintf(out, "%s\r\n", parseByteSetting(ee_addr, argv[start], llimit, ulimit, buf));
 }
 
 
@@ -414,13 +415,14 @@ static void cmd_setsquelch(Stream *chp, int argc, char *argv[]) {
 static void cmd_setmiclevel(Stream *chp, int argc, char *argv[]) {
   uint8_t vol=0;
   if (argc==0)
-    chprintf(chp, "Usage: miclevel <level>\r\n");
+    vol= GET_BYTE_PARAM(TRX_MICLEVEL);
   else {
     if (argc > 0) 
       sscanf(argv[0], "%hhu", &vol);
     if (vol>8) vol=8;
-    if (radio_setMicLevel(vol))
-      chprintf(chp, "OK\r\n");
+    
+    SET_BYTE_PARAM(TRX_MICLEVEL, vol);
+    radio_setMicLevel(vol);
   }
   chprintf(chp, "MICLEVEL: %d\r\n", vol);
 }
@@ -883,7 +885,9 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
     fbq_put(outframes, packet);
   }
   mon_activate(false);
+  sleep(100);
   radio_release();
+  sleep(100);
 }
 
 
@@ -1045,13 +1049,31 @@ static void cmd_connect(Stream *chp, int argc, char* argv[])
 static void cmd_digipeater(Stream *chp, int argc, char* argv[]) 
 {
    if (argc < 1) {
-     chprintf(chp, "Usage: digipeater on|off\r\n");
+     chprintf(chp, "Usage: digipeater info|on|off|wide1|sar\r\n");
      return;
    }
-   if (strncmp(argv[0], "on", 2) == 0)
-     digipeater_on(true);
-   else
-     digipeater_on(false);
+   else if (strncasecmp("info", argv[0], 3) == 0) { 
+      chprintf(chp,    "Digipeater status : %s\r\n", 
+            (GET_BYTE_PARAM(DIGIPEATER_ON) ? "ON" : "OFF"));
+      if (igate_is_on()) {
+         chprintf(chp, "      Wide-1 mode : %s\r\n", (GET_BYTE_PARAM(DIGIP_WIDE1_ON) ? "ON" : "OFF"));
+         chprintf(chp, "   SAR preemption : %s\r\n", (GET_BYTE_PARAM(DIGIP_SAR_ON) ? "ON" : "OFF"));
+      }
+   }
+   else if (strncasecmp("on", argv[0], 2) == 0) { 
+      chprintf(chp, "***** DIGIPEATER ON *****\r\n");
+      digipeater_on(true);
+   }
+   else if (strncasecmp("off", argv[0], 2) == 0) {
+      chprintf(chp, "***** DIGIPEATER OFF *****\r\n");
+      digipeater_on(false);
+   }
+   else if (strncasecmp("wide1", argv[0], 5) == 0) {
+      BOOL_SETTING( chp, DIGIP_WIDE1_ON, "DIGIP_WIDE1_ON", 1);
+   }
+   else if (strncasecmp("sar", argv[0], 3) == 0) {
+      BOOL_SETTING( chp, DIGIP_SAR_ON, "DIGIP_SAR_ON", 1);
+   }
 }
 
 

@@ -56,7 +56,7 @@ static uint32_t _tracker_icount = 0;
 static FBQ rxqueue;           /* Frames from radio or tracker */
 
 extern fbq_t* outframes;      /* Frames to be transmitted on radio */
-extern fbq_t* mon_q;          /* Do we need to monitor igate? */
+extern fbq_t* mon;          /* Do we need to monitor igate? */
 
 static char buf[128];
 static thread_t* igt=NULL;
@@ -275,9 +275,11 @@ static void rf2inet(FBUF *frame)
   fbuf_putstr(&newHdr, addr2str(buf,&from)); 
   fbuf_putstr(&newHdr, ">");
   fbuf_putstr(&newHdr, addr2str(buf,&to));
-  fbuf_putstr(&newHdr, ",");
-  fbuf_putstr(&newHdr, digis2str(buf, ndigis, digis));
-  if (own && strncmp(buf, "TCPIP", 5) == 0)
+  if (ndigis > 0) {
+     fbuf_putstr(&newHdr, ",");
+     fbuf_putstr(&newHdr, digis2str(buf, ndigis, digis)); 
+  }
+  if (own && strncmp(buf, ",TCPIP", 5) == 0)
      fbuf_putstr(&newHdr, "*");
   else {
      fbuf_putstr(&newHdr, ",qAR,");

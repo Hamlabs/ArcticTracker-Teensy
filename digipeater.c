@@ -45,7 +45,7 @@ static THD_FUNCTION(digipeater, arg)
 {
   (void) arg;
   chRegSetThreadName("Digipeater");
-  sleep(2000);
+  sleep(4000);
   beeps("-.. "); blipUp();
   while (digi_on)
   {
