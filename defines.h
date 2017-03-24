@@ -158,7 +158,7 @@ extern uint16_t blink_length, blink_interval;
 
 /* Stack sizes for static threads */
 #define STACK_NMEALISTENER 1500
-#define STACK_HDLCDECODER   600
+#define STACK_HDLCDECODER   640
 #define STACK_HDLCENCODER   500
 #define STACK_UI            164
 #define STACK_UI_SRV        256
