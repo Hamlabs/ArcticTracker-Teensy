@@ -9,7 +9,6 @@ static void chandler(void *p);
 static void _rgb_led_off(void);
 static void bphandler(void* p);
 static void holdhandler(void* p);
-static void holdhandler2(void* p);
 static void clickhandler(void* p);
 
 
@@ -224,6 +223,7 @@ static void clickhandler(void* p);
  #define SIGNAL_BUTTON chBSemSignalI(&ui_srv)
  
  static int butt_event = 0; 
+ static butthandler_t bhandler1 = NULL, bhandler2 = NULL; 
  
  #define BUTT_EV_SHORT 1
  #define BUTT_EV_LONG  2
@@ -238,14 +238,25 @@ static void clickhandler(void* p);
     chRegSetThreadName("Button events");
     while (true) {
        WAIT_BUTTON;
-       if (butt_event == BUTT_EV_SHORT)
-          beep(10); 
-       else if (butt_event == BUTT_EV_LONG)
+       if (butt_event == BUTT_EV_SHORT) {
+          beep(10);
+          if (bhandler1) bhandler1(NULL);
+       }
+       else if (butt_event == BUTT_EV_LONG) {
           beeps("-"); 
+          if (bhandler2) bhandler2(NULL);
+       }
        butt_event = 0;
     }
  }  
    
+ 
+ void register_button_handlers(butthandler_t h1, butthandler_t h2)
+ {
+     bhandler1 = h1; 
+     bhandler2 = h2;
+ }
+ 
  
  
  /*************************************************************
@@ -253,7 +264,7 @@ static void clickhandler(void* p);
   *************************************************************/
  
  static bool buttdown = false;
- static bool pressed, blight; 
+ static bool pressed; 
  static virtual_timer_t vtb, vtb1; 
 
  
@@ -295,6 +306,7 @@ static void clickhandler(void* p) {
  
 
 static void holdhandler(void* p) {
+    (void)p;
     pressed = false;
     butt_event = BUTT_EV_LONG;
     SIGNAL_BUTTON;

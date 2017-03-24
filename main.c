@@ -94,6 +94,8 @@ int main(void)
    usb_initialize();
    radio_init(&TRX_SERIAL);
    ui_init();
+   lcd_init(&SPID1);
+   gui_welcome();
    eeprom_initialize(); 
    adc_init();
    hdlc_init_decoder(afsk_rx_init());
@@ -108,10 +110,9 @@ int main(void)
    wifi_init(&WIFI_SERIAL);
    igate_init();
    
-   lcd_init(&SPID1);
-   gui_welcome();
+   menu_init();
    shellInit();
-
+   
    while (!chThdShouldTerminateX()) {
      if (!shelltp && usb_active()) {
         sleep(100);

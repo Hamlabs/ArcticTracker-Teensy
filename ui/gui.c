@@ -307,29 +307,6 @@ void gui_battery(int x, int y, int lvl)
 }
 
 
-/*********************************************************
- * Show a menu with one item highlighted
- * items is an array of strings of max length 4. 
- *********************************************************/
-
- 
-void gui_menu(const char* items[], int sel) 
-{ 
-   gui_clear();
-   gui_hLine(1,0,82);
-   gui_hLine(1,44,83);
-   gui_hLine(3,45,82);
-   gui_vLine(0,0,45);
-   gui_vLine(82,0,45);
-   gui_vLine(83,3,41);
-
-   gui_box(0, sel*11, 83, 12, true);
-   int i;
-   for (i=0; i<4; i++)
-     gui_writeText(4, 2+i*11, items[i]); 
-   gui_flush();
-}
-
 
 /***********************************************************
  * Flag indicator
@@ -360,6 +337,17 @@ void gui_label(int x, int y, char* lbl)
   gui_setPixel(x,y, false);
 }
 
+
+
+
+
+void gui_flags() 
+{
+    gui_flag(32,0, "i", true);
+    gui_flag(41,0, "a", false);
+    gui_flag(50,0, "g", true);
+    gui_flag(59,0, "d", true);
+}
 
 
 /*************************************************

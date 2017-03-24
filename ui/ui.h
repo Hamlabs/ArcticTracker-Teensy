@@ -16,7 +16,7 @@ void tx_led_on(void);
 void tx_led_off(void);
 
 void button_handler(EXTDriver *extp, expchannel_t channel);
-
+void register_button_handlers(butthandler_t h1, butthandler_t h2);
 
 void _beep(uint16_t freq, uint16_t time); 
 void beeps(char* s);
