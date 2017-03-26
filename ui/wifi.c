@@ -389,6 +389,40 @@ static void cmd_getParm(char* p) {
      GET_PARAM(HTTP_PASSWD, cbuf);
      chprintf(_serial, "%s\r", cbuf);
    }
+      
+   else if (strcmp("IGATE_ON", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(IGATE_ON, cbuf));
+   
+   else if (strcmp("IGATE_HOST", p) == 0) {
+     GET_PARAM(IGATE_HOST, cbuf);
+     chprintf(_serial, "%s\r", cbuf);
+   }
+    
+   else if (strcmp("IGATE_PORT", p) == 0) {
+      uint16_t x; 
+      GET_PARAM(IGATE_PORT, &x);
+      chprintf(_serial, "%u\r", x);
+   }
+   
+   else if (strcmp("IGATE_PASSCODE", p) == 0) {
+      uint16_t x; 
+      GET_PARAM(IGATE_PASSCODE, &x);
+      chprintf(_serial, "%u\r", x);
+   }
+   
+   else if (strcmp("IGATE_USERNAME", p) == 0) {
+     GET_PARAM(IGATE_USERNAME, cbuf);
+     chprintf(_serial, "%s\r", cbuf);
+   }   
+
+   else if (strcmp("DIGIPEATER_ON", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(DIGIPEATER_ON, cbuf));
+   
+   else if (strcmp("DIGIP_WIDE1_ON", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(DIGIP_WIDE1_ON, cbuf));
+
+   else if (strcmp("DIGIP_SAR_ON", p) == 0)
+     chprintf(_serial, "%s\r", PRINT_BOOL(DIGIP_SAR_ON, cbuf));
    
    else if (strncmp("WIFIAP", p, 6) == 0) {
       int i = atoi(p+6);
@@ -478,6 +512,40 @@ static void cmd_setParm(char* p, char* val) {
       SET_PARAM(HTTP_PASSWD, val);
       chprintf(_serial, "OK\r"); 
     }
+      
+    else if (strcmp("IGATE_ON", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(IGATE_ON, val, cbuf));  
+ 
+      
+    else if (strcmp("IGATE_HOST", p) == 0) {
+      SET_PARAM(IGATE_HOST, val);
+      chprintf(_serial, "OK\r"); 
+    }
+    
+    else if (strcmp("IGATE_PORT", p) == 0)
+       chprintf(_serial, "%s\r", PARSE_WORD(IGATE_PORT, val, 0, 65535, cbuf));
+       
+    else if (strcmp("IGATE_USERNAME", p) == 0) {
+      SET_PARAM(IGATE_USERNAME, val);
+      chprintf(_serial, "OK\r"); 
+    }
+    
+    else if (strcmp("IGATE_PASSCODE", p) == 0) 
+       chprintf(_serial, "%s\r", PARSE_WORD(IGATE_PASSCODE, val, 0, 65535, cbuf));
+    
+    else if (strcmp("IGATE_FILTER", p) == 0) {
+      SET_PARAM(IGATE_FILTER, val);
+      chprintf(_serial, "OK\r"); 
+    }
+      
+    else if (strcmp("DIGIPEATER_ON", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(DIGIPEATER_ON, val, cbuf));  
+    
+    else if (strcmp("DIGIP_WIDE1_ON", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(DIGIP_WIDE1_ON, val, cbuf)); 
+
+    else if (strcmp("DIGIP_SAR_ON", p) == 0)
+      chprintf(_serial, "%s\r", PARSE_BOOL(DIGIP_SAR_ON, val, cbuf));
     
     else if (strncmp("WIFIAP_RESET", p, 12) == 0) {
       ap_config_t x; 

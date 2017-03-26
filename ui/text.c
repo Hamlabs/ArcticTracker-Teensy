@@ -78,6 +78,29 @@ char* parseByteSetting(uint16_t ee_addr, char* val, uint8_t llimit, uint8_t ulim
    return buf;
 }
 
+/*****************************************************************************
+ * Parse and set word (16 bit) setting (numeric) with upper and lower bounds. 
+ *****************************************************************************/
+
+char* parseWordSetting(uint16_t ee_addr, char* val, uint16_t llimit, uint16_t ulimit, char* buf)
+{
+   uint16_t n = 0;
+   if (sscanf(val, "%hu", &n) == 1) {
+      if (n < llimit)
+         sprintf(buf, "ERROR: Value must be more than %hu", llimit);
+      else if (n > ulimit)
+         sprintf(buf, "ERROR. Value must be less than %hu", ulimit);
+      else { 
+         sprintf(buf, "OK");
+         set_param(ee_addr, &n, 2);
+      }
+   }
+   else
+      sprintf(buf, "ERROR. Couldn't parse input. Wrong format?");
+   
+   return buf;
+}
+
 
 
 /***********************************************************************

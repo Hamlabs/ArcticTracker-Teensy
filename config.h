@@ -92,7 +92,7 @@ DEFINE_PARAM ( DIGIP_WIDE1_ON,     201, Byte );
 DEFINE_PARAM ( DIGIP_SAR_ON,       203, Byte );
 DEFINE_PARAM ( DIGIPEATER_ON,      205, Byte );
 DEFINE_PARAM ( IGATE_ON,           207, Byte );
-DEFINE_PARAM ( IGATE_HOST,         289, inet_name); 
+DEFINE_PARAM ( IGATE_HOST,         209, inet_name); 
 DEFINE_PARAM ( IGATE_PORT,         250, Word );
 DEFINE_PARAM ( IGATE_USERNAME,     253, credential );               
 DEFINE_PARAM ( IGATE_PASSCODE,     286, Word );

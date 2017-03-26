@@ -8,6 +8,7 @@ TRX_TX_FREQ             done    done
 TRX_RX_FREQ             done    done
 TRX_SQUELCH             -       done
 TRX_VOLUME              -       done     Maybe not necessary
+TRX_MICLEVEL            -       done       "
 TXDELAY                 -       done
 TXTAIL                  -       done    
 MAXFRAME                -       done     Maybe not necessary
@@ -40,15 +41,15 @@ HTTP_USER               done    done
 HTTP_PASSWD             done    done
 SOFTAP_PASSWD           done    done
 WIFIAP                  done    done  
-DIGIPEATER_ON           tbd     done 
+DIGIPEATER_ON           tbd     done     
 DIGIP_WIDE1_ON          tbd     done
 DIGIP_SAR_ON            tbd     done
-IGATE_ON,               ?       done 
-IGATE_HOST,             tbd     done
-IGATE_PORT,             tbd     done
-IGATE_USERNAME,         tbd     done              
-IGATE_PASSCODE,         tbd     done
-IGATE_FILTER,           tbd     done   
+IGATE_ON,               done    done     Stored setting only. Need actual turning off/on.
+IGATE_HOST,             done    done
+IGATE_PORT,             done    done
+IGATE_USERNAME,         done    done              
+IGATE_PASSCODE,         done    done
+IGATE_FILTER,           -       done   
 --------------------------------------------------------
 
 * GPS data decoding.
@@ -88,6 +89,7 @@ IGATE_FILTER,           tbd     done
     DONE. 
     
 * Web interface page for igate and digipeater related settings.
+    IN PROGRESS.
 
 * Position report logs. Store in ESP-12. 
 
@@ -97,7 +99,7 @@ IGATE_FILTER,           tbd     done
     DONE.
 
 * Design and implement display UI
-
+    IN PROGRESS.
 
 
 
