@@ -29,6 +29,7 @@ static SPIDriver *_spip;
    
    _spip = spip;
    /* Reset LCD */
+   palSetPad(LCD_BL_PORT, LCD_BL_PIN);
    palClearPad(LCD_RES_PORT, LCD_RES_PIN);
    sleep(15);
    palSetPad(LCD_RES_PORT, LCD_RES_PIN);
@@ -47,6 +48,28 @@ static SPIDriver *_spip;
    lcd_clear(); /* Clear LCD */
    lcd_setPosXY(1, 1);
  }
+ 
+ 
+ 
+/************************************************************
+ * Turn on backlight and turn it off again after 10 seconds
+ ************************************************************/
+
+static virtual_timer_t vtbl;
+
+
+static void blhandler(void* p) {
+    (void) p;
+    palSetPad(LCD_BL_PORT, LCD_BL_PIN);
+    chVTResetI(&vtbl);  
+}
+ 
+ 
+void lcd_backlight() { 
+    chVTSet(&vtbl, S2ST(8), blhandler, NULL);
+    palClearPad(LCD_BL_PORT, LCD_BL_PIN);
+}    
+
  
  
  

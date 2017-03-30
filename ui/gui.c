@@ -339,17 +339,6 @@ void gui_label(int x, int y, char* lbl)
 
 
 
-
-
-void gui_flags() 
-{
-    gui_flag(32,0, "i", true);
-    gui_flag(41,0, "a", false);
-    gui_flag(50,0, "g", true);
-    gui_flag(59,0, "d", true);
-}
-
-
 /*************************************************
  * Welcome message
  *************************************************/

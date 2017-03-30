@@ -33,6 +33,7 @@
 
 
 void lcd_init(SPIDriver *spip);
+void lcd_backlight();
 void lcd_writeByte(uint8_t data, uint8_t cd);
 void lcd_contrast(uint8_t contrast);
 void lcd_clear(void);
