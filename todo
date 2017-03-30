@@ -23,7 +23,7 @@ TRACKER_TURN_LIMIT      done    done     Smart beaconing
 TRACKER_MAXPAUSE        done    done
 TRACKER_MINDIST         done    done
 TRACKER_MINPAUSE        done    done
-STATUS_TIME             ?       tbd      Maybe not necessary
+STATUS_TIME             -       tbd      Maybe not necessary
 TIMESTAMP_ON            done    done    
 COMPRESS_ON             done    done
 ALTITUDE_ON             done    done
@@ -41,15 +41,16 @@ HTTP_USER               done    done
 HTTP_PASSWD             done    done
 SOFTAP_PASSWD           done    done
 WIFIAP                  done    done  
-DIGIPEATER_ON           tbd     done     
-DIGIP_WIDE1_ON          tbd     done
-DIGIP_SAR_ON            tbd     done
+DIGIPEATER_ON           done    done     
+DIGIP_WIDE1_ON          done    done
+DIGIP_SAR_ON            done    done
 IGATE_ON,               done    done     Stored setting only. Need actual turning off/on.
 IGATE_HOST,             done    done
 IGATE_PORT,             done    done
 IGATE_USERNAME,         done    done              
 IGATE_PASSCODE,         done    done
 IGATE_FILTER,           -       done   
+IGATE_TRACK_ON          tbd     done
 --------------------------------------------------------
 
 * GPS data decoding.
@@ -89,7 +90,7 @@ IGATE_FILTER,           -       done
     DONE. 
     
 * Web interface page for igate and digipeater related settings.
-    IN PROGRESS.
+    DONE:
 
 * Position report logs. Store in ESP-12. 
 
@@ -99,7 +100,7 @@ IGATE_FILTER,           -       done
     DONE.
 
 * Design and implement display UI
-    IN PROGRESS.
+    DONE.
 
 
 

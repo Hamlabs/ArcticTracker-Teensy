@@ -17,10 +17,9 @@
  *   IGATE_PORT
  *   IGATE_PASSCODE
  *   IGATE_FILTER 
- *   IGATE_DIGIPATH
- * 
  * 
  * Add to config (later?):
+ *   IGATE_DIGIPATH
  *   IGATE_RF_ON  
  *   IGATE_OBJ_RADIUS 
  */ 
@@ -56,7 +55,7 @@ static uint32_t _tracker_icount = 0;
 static FBQ rxqueue;           /* Frames from radio or tracker */
 
 extern fbq_t* outframes;      /* Frames to be transmitted on radio */
-extern fbq_t* mon;          /* Do we need to monitor igate? */
+extern fbq_t* mon;            /* Do we need to monitor igate? */
 
 static char buf[128];
 static thread_t* igt=NULL;
@@ -92,7 +91,6 @@ static THD_FUNCTION(igate_radio, arg)
   while(_igate_run) {
     FBUF frame = fbq_get(&rxqueue);
     if (fbuf_length(&frame) > 2) {
-      beeps("- ");
       _rcvd++;
       rf2inet(&frame);
     }   
@@ -121,7 +119,8 @@ static THD_FUNCTION(igate_main, arg)
      GET_PARAM(IGATE_HOST, host);
      GET_PARAM(IGATE_PORT, &port);
      int res = -1, tries=0;
-    
+     wifi_enable();
+     sleep(1000);
      while (!wifi_is_connected() 
             || (res=inet_open(host, port) != 0 && tries++ < 3))
         sleep(10000);
@@ -262,6 +261,9 @@ static void rf2inet(FBUF *frame)
   char type = fbuf_getChar(frame);
   bool own = addrCmp(&mycall, &from); 
   
+  if (own && !GET_BYTE_PARAM(IGATE_TRACK_ON))
+    return;
+  
   if (hlist_duplicate(&from, &to, frame, ndigis))
     return;
   
@@ -269,7 +271,9 @@ static void rf2inet(FBUF *frame)
   if ( type == '?' /* QUERY */ ||
      ( !own && ax25_search_digis( digis, ndigis, (char**) nogate)))
     return;
-
+      
+  beeps("- ");
+      
   /* Write header in plain text -> newHdr */
   fbuf_new(&newHdr);
   fbuf_putstr(&newHdr, addr2str(buf,&from)); 

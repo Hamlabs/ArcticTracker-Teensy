@@ -96,13 +96,14 @@ DEFINE_PARAM ( IGATE_HOST,         209, inet_name);
 DEFINE_PARAM ( IGATE_PORT,         250, Word );
 DEFINE_PARAM ( IGATE_USERNAME,     253, credential );               
 DEFINE_PARAM ( IGATE_PASSCODE,     286, Word );
-DEFINE_PARAM ( IGATE_FILTER,       289, credential );   
-DEFINE_PARAM ( WIFI_ON,            322, Byte );
-DEFINE_PARAM ( HTTP_ON,            324, Byte );
-DEFINE_PARAM ( HTTP_USER,          326, credential );
-DEFINE_PARAM ( HTTP_PASSWD,        359, credential );
-DEFINE_PARAM ( SOFTAP_PASSWD,      392, credential ); // 380
-DEFINE_PARAM ( WIFIAP,             425, __aplist_t );   /* 6 instances = 390 bytes */
+DEFINE_PARAM ( IGATE_FILTER,       289, credential );
+DEFINE_PARAM ( IGATE_TRACK_ON,     322, Byte );
+DEFINE_PARAM ( WIFI_ON,            324, Byte );
+DEFINE_PARAM ( HTTP_ON,            326, Byte );
+DEFINE_PARAM ( HTTP_USER,          328, credential );
+DEFINE_PARAM ( HTTP_PASSWD,        361, credential );
+DEFINE_PARAM ( SOFTAP_PASSWD,      394, credential ); // 380
+DEFINE_PARAM ( WIFIAP,             427, __aplist_t );   /* 6 instances = 390 bytes */
 
 #if defined __CONFIG_C__
 
@@ -154,6 +155,7 @@ DEFAULT_PARAM( IGATE_PORT )          = 14582;
 DEFAULT_PARAM( IGATE_USERNAME )      = "nocall";
 DEFAULT_PARAM( IGATE_PASSCODE )      = 0; 
 DEFAULT_PARAM( IGATE_FILTER )        = "";
+DEFAULT_PARAM( IGATE_TRACK_ON )      = 0;
 DEFAULT_PARAM( WIFI_ON )             = 1;
 DEFAULT_PARAM( HTTP_ON )             = 1;
 DEFAULT_PARAM( HTTP_USER )           = "user";

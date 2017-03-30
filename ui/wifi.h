@@ -24,6 +24,7 @@ void  wifi_internal(void);
 void  wifi_enable(void);
 void  wifi_disable(void);
 bool  wifi_is_enabled(void);
+void  wifi_on(bool on);
 void  wifi_restart(void);
 void  wifi_shell(Stream* chp);
 void  wifi_init(SerialDriver* sd);

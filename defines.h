@@ -75,7 +75,8 @@
 #define LCD_RES_PIN            TEENSY_PIN23
 #define LCD_DC_PORT            TEENSY_PIN22_IOPORT
 #define LCD_DC_PIN             TEENSY_PIN22
-
+#define LCD_BL_PORT            TEENSY_PIN20_IOPORT
+#define LCD_BL_PIN             TEENSY_PIN20
 
 /* APRS tracking FIXME */
 #define TRACKER_SLEEP_TIME 10
@@ -159,10 +160,11 @@ extern uint16_t blink_length, blink_interval;
 /* Stack sizes for static threads */
 #define STACK_NMEALISTENER 1500
 #define STACK_HDLCDECODER   640
-#define STACK_HDLCENCODER   500
-#define STACK_UI            164
-#define STACK_UI_SRV        256
-#define STACK_WIFI         1500
+#define STACK_HDLCENCODER   512
+#define STACK_UI            256
+#define STACK_UI_SRV        512
+#define STACK_GUI           512
+#define STACK_WIFI         1600
 #define STACK_SHELL        2700
 
 /* Dynamic threads */

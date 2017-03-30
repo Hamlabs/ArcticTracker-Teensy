@@ -185,6 +185,7 @@ static void clickhandler(void* p);
  static THD_FUNCTION(ui_thread, arg)
  {
    (void)arg;
+   int cnt = 0;
    
    chRegSetThreadName("LED Blinker");
    
@@ -198,7 +199,7 @@ static void clickhandler(void* p);
    sleep(300);
    rgb_led_off();
    sleep(300);
-   beeps ("--.- .-. ...-");
+ //  beeps ("--.- .-. ...-");
    
    /* Blink LED */
    BLINK_NORMAL;

@@ -16,6 +16,7 @@
 static Stream*  _serial;
 static Stream*  _shell = NULL;
 static bool wifiEnabled = false;
+static bool startUp = true; 
 
 static void wifi_command(void);
 static void cmd_getParm(char* p);
@@ -59,6 +60,9 @@ static bool _running = false;
 
 void wifi_enable() {
    if (!wifiEnabled) {
+      if (!startUp) 
+        { beeps(".-- "); blipUp(); }
+      startUp = false;
       wifiEnabled = true;
       SET_BYTE_PARAM(WIFI_ON, 1);
       setPin(WIFI_ENABLE);
@@ -67,15 +71,27 @@ void wifi_enable() {
 }
 
 void wifi_disable() {
-  if (wifiEnabled)
+  if (wifiEnabled) {
+      if (igate_is_on()) {
+          igate_on(false);
+          sleep(3000);
+      }
+      beeps(".-- "); blipDown();
       clearPin(WIFI_ENABLE);
-  wifiEnabled = false; 
-  SET_BYTE_PARAM(WIFI_ON, 0);
+      wifiEnabled = false; 
+      SET_BYTE_PARAM(WIFI_ON, 0);
+  }
 }
 
 
 bool wifi_is_enabled() {
   return wifiEnabled;
+}
+
+
+void wifi_on(bool on) {
+    if (on) wifi_enable();
+    else wifi_disable();
 }
 
 
@@ -155,6 +171,10 @@ char* wifi_doCommand(char* cmd, char* buf) {
 char* wifi_status(char* buf) {
    char res[8];
    int n;
+   if (!wifi_is_enabled()) {
+       strcpy(buf, "Disabled");
+       return buf;
+   }
    wifi_doCommand("STATUS", res);
    n = atoi(res);
    switch(n) {
@@ -659,17 +679,17 @@ static THD_FUNCTION(wifi_monitor, arg)
          
          else if (c == '@') {
             /* Response to command from WIFI module */
-	    if (client_active) {
-	       readline(_serial, *client_buf, 128);
-	       SIGNAL_RESPONSE;
-	    }
+	        if (client_active) {
+	           readline(_serial, *client_buf, 128);
+	           SIGNAL_RESPONSE;
+	        }
          }
          
          else if (c == '#')             
              /* Command from WIFI module */
-	     wifi_command();
+	         wifi_command();
 	 
-	 else if (c == ':') {
+	     else if (c == ':') {
              /* Incoming data */
              FBUF input; 
              fbuf_new(&input);
@@ -693,7 +713,7 @@ static THD_FUNCTION(wifi_monitor, arg)
          else if (c == '*')
              /* Comment */
              readline(_serial, cbuf, 128);
-      }
+        }
    }
 }
 
@@ -701,13 +721,14 @@ static THD_FUNCTION(wifi_monitor, arg)
 
 void wifi_init(SerialDriver* sd)
 {
-  _serial = (Stream*) sd;
-  wifi_internal();
-  clearPin(WIFI_ENABLE);
-  sdStart(sd, &_serialConfig);  
-  FBQ_INIT(read_queue, INET_RX_QUEUE_SIZE);
-  THREAD_START(wifi_monitor, NORMALPRIO, NULL);
-  if (GET_BYTE_PARAM(WIFI_ON))
-     wifi_enable();
+   _serial = (Stream*) sd;
+   wifi_internal();
+   clearPin(WIFI_ENABLE);
+   sdStart(sd, &_serialConfig);  
+   FBQ_INIT(read_queue, INET_RX_QUEUE_SIZE);
+   THREAD_START(wifi_monitor, NORMALPRIO, NULL);
+   sleep(1000);
+   if (GET_BYTE_PARAM(WIFI_ON))
+      wifi_enable();
 }
 

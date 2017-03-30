@@ -130,7 +130,7 @@ static THD_FUNCTION(hdlc_rxdecoder, arg)
       length++;
    } while (bit != HDLC_FLAG);
 
-   if (crc_match(&fbuf, length)) 
+   if (length > AX25_HDR_LEN(0)+2 && crc_match(&fbuf, length)) 
    {     
       /* Send packets to subscribers, if any. 
        * Note that every receiver should release the buffers after use. 

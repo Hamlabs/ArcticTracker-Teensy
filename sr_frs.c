@@ -110,6 +110,7 @@ void radio_init(SerialDriver* sd)
    setPinMode(TRX_SERIAL_RXD, PAL_MODE_ALTERNATIVE_3);
    setPinMode(TRX_SERIAL_TXD, PAL_MODE_ALTERNATIVE_3);
    setPinMode(TRX_PTT, PAL_MODE_OUTPUT_PUSHPULL);
+   setPinMode(TRX_PTT_REV, PAL_MODE_OUTPUT_PUSHPULL);
    setPin(TRX_PTT);
    clearPin(TRX_PTT_REV);
    sdStart(sd, &_serialConfig);  

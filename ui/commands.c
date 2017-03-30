@@ -69,7 +69,6 @@ static void cmd_webserver(Stream *chp, int argc, char* argv[]);
 static void cmd_connect(Stream *chp, int argc, char* argv[]);
 static void cmd_digipeater(Stream *chp, int argc, char* argv[]);
 static void cmd_igate(Stream *chp, int argc, char* argv[]);
-static void cmd_lcd(Stream *chp, int argc, char* argv[]);
 
 static void _parameter_setting_bool(Stream*, int, char**, int, uint16_t, const void*, char* );
 static void _parameter_setting_byte(Stream*, int, char**, int, uint16_t, const void*, char*, uint8_t, uint8_t );
@@ -102,8 +101,8 @@ CMD_BOOL_SETTING(REPORT_BEEP_ON,  "REPORTBEEP");
 CMD_BOOL_SETTING(TXMON_ON,        "TXMON");
 CMD_BOOL_SETTING(REPEAT_ON,       "REPEAT");
 CMD_BOOL_SETTING(EXTRATURN_ON,    "EXTRATURN");
-CMD_BOOL_SETTING(DIGIP_WIDE1_ON,  "DIGIP_WIDE1");
-CMD_BOOL_SETTING(DIGIP_SAR_ON,    "DIGIP_SAR");
+CMD_BOOL_SETTING(IGATE_TRACK_ON,  "IGATE_TRACK");
+
 CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
 CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
 CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
@@ -160,10 +159,10 @@ static const ShellCommand shell_commands[] =
   { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
   { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
   { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
-  { "digipeater", "Digipeater on/off",                         4, cmd_digipeater },
-  { "igate",      "Igate on/off",                              4, cmd_igate },
+  { "digipeater", "Digipeater settings",                       4, cmd_digipeater },
+  { "igate",      "Igate settings",                            4, cmd_igate },
+  { "igtrack",    "Tracking through internet gate on/off",     4, cmd_IGATE_TRACK_ON },
   { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
-  { "lcd",        "Test display",                              3, cmd_lcd },
   
   {NULL, NULL, 0, NULL}
 };
@@ -1055,10 +1054,8 @@ static void cmd_digipeater(Stream *chp, int argc, char* argv[])
    else if (strncasecmp("info", argv[0], 3) == 0) { 
       chprintf(chp,    "Digipeater status : %s\r\n", 
             (GET_BYTE_PARAM(DIGIPEATER_ON) ? "ON" : "OFF"));
-      if (igate_is_on()) {
-         chprintf(chp, "      Wide-1 mode : %s\r\n", (GET_BYTE_PARAM(DIGIP_WIDE1_ON) ? "ON" : "OFF"));
-         chprintf(chp, "   SAR preemption : %s\r\n", (GET_BYTE_PARAM(DIGIP_SAR_ON) ? "ON" : "OFF"));
-      }
+      chprintf(chp, "      Wide-1 mode : %s\r\n", (GET_BYTE_PARAM(DIGIP_WIDE1_ON) ? "ON" : "OFF"));
+      chprintf(chp, "   SAR preemption : %s\r\n", (GET_BYTE_PARAM(DIGIP_SAR_ON) ? "ON" : "OFF"));
    }
    else if (strncasecmp("on", argv[0], 2) == 0) { 
       chprintf(chp, "***** DIGIPEATER ON *****\r\n");
@@ -1123,68 +1120,6 @@ static void cmd_igate(Stream *chp, int argc, char* argv[])
 }
 
 
-static void cmd_lcd(Stream *chp, int argc, char* argv[]) 
-{
-     gui_clear();
-     gui_label(0,0, "APRS");
-     gui_flag(32,0, "i", true);
-     gui_flag(41,0, "a", false);
-     gui_flag(50,0, "g", true);
-     gui_flag(59,0, "d", true);
-     gui_battery(70,3,2);
-     gui_hLine(0,10,66);
-   
-     gui_writeText(0,15, "LE3WTF");
-     gui_writeText(0,26, "144.800 MHz");
-     gui_writeText(0,37, "W1,W2-1,SAR");  
-     gui_flush();
-   
-  getch(chp);
-
-    gui_clear();
-    gui_label(0,0, "WIFI");
-    gui_flag(32,0, "i", true);
-    gui_flag(41,0, "a", false);
-    gui_flag(50,0, "g", true);
-    gui_flag(59,0, "d", true);
-    gui_battery(70,3,2);
-    gui_hLine(0,10,66);
-    
-    gui_writeText(0,15,"Online");
-    gui_writeText(0,26,"LA7ECA-WLAN");
-    gui_writeText(0,37,"228.239.220.200");    
-    gui_flush();
-  
-  getch(chp);
-  
-    gui_clear();
-    gui_label(0,0, "W-AP");
-    gui_flag(32,0, "i", true);
-    gui_flag(41,0, "a", false);
-    gui_flag(50,0, "g", true);
-    gui_flag(59,0, "d", true);
-    gui_battery(70,3,2);
-    gui_hLine(0,10,66);
-    
-    gui_writeText(0,15,"2 users");
-    gui_writeText(0,26,"AP-LA7ECA-7");
-    gui_writeText(0,37,"192.168.0.100");  
-    gui_flush();
-    
-  getch(chp);
-    gui_clear();
-    gui_battery(70,0,2);
-    gui_hLine(0,3,68);
-    gui_writeText(0,9,"LA3WTA>ALL ");
-    gui_writeText(0,19,"Det er gjort");
-    gui_writeText(0,29,"Funn. Aksjonen");
-    gui_writeText(0,39,"avsluttes ...");     
-    gui_flush();
-    
-  getch(chp);  
-    gui_welcome();
-    
-}
 
 
 
