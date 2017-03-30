@@ -214,10 +214,12 @@ char* inet_chost()
 
   
 int inet_open(char* host, int port) {
+  DMUTEX_LOCK;
   char res[10];
   sprintf(chost, "%s:%d", host, port);
   sprintf(cbuf, "NET.OPEN %d %s", port, host);
   wifi_doCommand(cbuf, res);
+  DMUTEX_UNLOCK;
   if (strncmp("OK", res, 2) != 0) 
       return atoi(res+6);
   inet_connected = true;
@@ -228,10 +230,12 @@ int inet_open(char* host, int port) {
 void inet_close() {
    if (!inet_connected)
       return; 
+   DMUTEX_LOCK;
    char res[10];
    sprintf(chost, "");
    sprintf(cbuf, "NET.CLOSE");
    wifi_doCommand(cbuf, res);
+   DMUTEX_UNLOCK;
    /*
     * FIXME: Do we need to call fbq_clear? If so, be sure 
     * that no other tread is blocking on queue 
@@ -254,19 +258,23 @@ void inet_disable_read(bool on) {
 
 
 void inet_write(char* text) {
+   DMUTEX_LOCK;
    char res[10];
    sprintf(cbuf, "NET.DATA %s", text);
    wifi_doCommand(cbuf, res);
+   DMUTEX_UNLOCK;
 }
 
 
 /* FIXME: Could this be done more efficiently */
 
 void inet_writeFB(FBUF *fb) {
+  DMUTEX_LOCK;
   char res[10];
   sprintf(cbuf, "NET.DATA ");
   fbuf_read(fb, 128, cbuf+9);
   wifi_doCommand(cbuf, res);
+  DMUTEX_UNLOCK;
 }
 
 
@@ -339,6 +347,7 @@ void wifi_shell(Stream* chp) {
  *****************************************************************/
 
 static void cmd_getParm(char* p) { 
+   DMUTEX_LOCK;
    if (strcmp("MYCALL", p) == 0) {
       addr_t x;
       GET_PARAM(MYCALL, &x);
@@ -448,6 +457,7 @@ static void cmd_getParm(char* p) {
       int i = atoi(p+6);
       if (i<0 || i>5) {
         chprintf(_serial, "ERROR. Index out of bounds\r");
+        DMUTEX_UNLOCK;
         return;
       }
       ap_config_t x; 
@@ -459,6 +469,7 @@ static void cmd_getParm(char* p) {
    }
    else
       chprintf(_serial, "ERROR. Unknown setting\r");
+   DMUTEX_UNLOCK;
 }
 
 
@@ -467,7 +478,8 @@ static void cmd_getParm(char* p) {
  * Process commands coming from WIFI module that write parameters
  *****************************************************************/
 
-static void cmd_setParm(char* p, char* val) { 
+static void cmd_setParm(char* p, char* val) {
+    DMUTEX_LOCK;
     if (strcmp("MYCALL", p) == 0) {
        addr_t x;
        str2addr(&x, val, false);
@@ -580,6 +592,7 @@ static void cmd_setParm(char* p, char* val) {
       int i = atoi(p+6);
       if (i<0 || i>5) {
         chprintf(_serial, "ERROR. Index out of bounds\r");
+        DMUTEX_UNLOCK;
         return; 
       }
       char* split = strchr(val, ',');
@@ -599,9 +612,9 @@ static void cmd_setParm(char* p, char* val) {
       SET_PARAM_I(WIFIAP, i, &x); 
       chprintf(_serial, "OK\r");
     }
-    
     else
        chprintf(_serial, "ERROR. Unknown setting\r");
+    DMUTEX_UNLOCK;
 }
 
  
@@ -633,21 +646,22 @@ static void cmd_checkAp(char* ssid) {
  * Get parameter: #R PARM
  * Set parameter: #W PARM VALUE 
  ***************************************************************************/
+static char tbuf[128];
 
 static void wifi_command() {
    char *tokp; 
    
    MUTEX_LOCK;
-   readline(_serial, cbuf, 128);
-   if (cbuf[0] == 'R') 
+   readline(_serial, tbuf, 128);
+   if (tbuf[0] == 'R') 
       /* Read parameter */
-      cmd_getParm((char*) _strtok((char*) cbuf+1, " ", &tokp));
-   else if (cbuf[0] == 'W')
+      cmd_getParm((char*) _strtok((char*) tbuf+1, " ", &tokp));
+   else if (tbuf[0] == 'W')
       /* Write parameter */
-      cmd_setParm((char*) _strtok((char*) cbuf+1, " ", &tokp), (char*) _strtok(NULL, "\0", &tokp));
-   else if (cbuf[0] == 'A')
+      cmd_setParm((char*) _strtok((char*) tbuf+1, " ", &tokp), (char*) _strtok(NULL, "\0", &tokp));
+   else if (tbuf[0] == 'A')
       /* Check access point */
-      cmd_checkAp((char*) _strtok((char*) cbuf+1, " ", &tokp));
+      cmd_checkAp((char*) _strtok((char*) tbuf+1, " ", &tokp));
      
    MUTEX_UNLOCK;
 }
@@ -671,8 +685,8 @@ static THD_FUNCTION(wifi_monitor, arg)
             streamPut(_shell, c);
          
          else if (c == '$') {
-            readline(_serial, cbuf, 10);
-            if (strcmp(cbuf, "__BOOT__") == 0) 
+            readline(_serial, tbuf, 10);
+            if (strcmp(tbuf, "__BOOT__") == 0) 
                 wifi_start_server(true);
          }
          else if (!_running) continue; 
@@ -712,7 +726,7 @@ static THD_FUNCTION(wifi_monitor, arg)
          }
          else if (c == '*')
              /* Comment */
-             readline(_serial, cbuf, 128);
+             readline(_serial, tbuf, 128);
         }
    }
 }
