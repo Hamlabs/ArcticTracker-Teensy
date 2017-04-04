@@ -103,13 +103,13 @@ CMD_BOOL_SETTING(REPEAT_ON,       "REPEAT");
 CMD_BOOL_SETTING(EXTRATURN_ON,    "EXTRATURN");
 CMD_BOOL_SETTING(IGATE_TRACK_ON,  "IGATE_TRACK");
 
-CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",  0, 100);
-CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",   0, 100);
-CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME", 1, 7);
-CMD_BYTE_SETTING(TRACKER_MAXPAUSE,"MAXPAUSE", 0, 100);
-CMD_BYTE_SETTING(TRACKER_MINPAUSE,"MINPAUSE", 0, 100);
-CMD_BYTE_SETTING(TRACKER_MINDIST, "MINDIST",  0, 250);
-
+CMD_BYTE_SETTING(TXDELAY,         "TXDELAY",      0, 100);
+CMD_BYTE_SETTING(TXTAIL,          "TXTAIL",       0, 100);
+CMD_BYTE_SETTING(MAXFRAME,        "MAXFRAME",     1, 7);
+CMD_BYTE_SETTING(TRACKER_MAXPAUSE,"MAXPAUSE",     0, 100);
+CMD_BYTE_SETTING(TRACKER_MINPAUSE,"MINPAUSE",     0, 100);
+CMD_BYTE_SETTING(TRACKER_MINDIST, "MINDIST",      0, 250);
+CMD_BYTE_SETTING(STATUS_TIME,     "STATUS_TIME",  0, 250);
 
 /*********************************************************************************
  * Shell config
@@ -156,13 +156,14 @@ static const ShellCommand shell_commands[] =
   { "repeat",     "Repeat posisition report (piggybacked)",    4, cmd_REPEAT_ON },
   { "extraturn",  "Extra report on turn (piggybacked)",        6, cmd_EXTRATURN_ON },
   { "turnlimit",  "Change in heading that trigger report",     5, cmd_turnlimit },
-  { "maxpause",   "Max pause (seconds) before report",         4, cmd_TRACKER_MAXPAUSE },
-  { "minpause",   "Min pause (seconds) before report",         4, cmd_TRACKER_MINPAUSE },
+  { "maxpause",   "Max pause (seconds/10) before report",      4, cmd_TRACKER_MAXPAUSE },
+  { "minpause",   "Min pause (seconds/10) before report",      4, cmd_TRACKER_MINPAUSE },
   { "mindist",    "Min moved distance (meters) before report", 4, cmd_TRACKER_MINDIST },
   { "digipeater", "Digipeater settings",                       4, cmd_digipeater },
   { "igate",      "Igate settings",                            4, cmd_igate },
   { "igtrack",    "Tracking through internet gate on/off",     4, cmd_IGATE_TRACK_ON },
   { "connect",    "Open internet connection (host,port)",      4, cmd_connect },
+  { "statustime", "Time (seconds/10) between status messages", 8, cmd_STATUS_TIME },
   
   {NULL, NULL, 0, NULL}
 };
@@ -883,8 +884,8 @@ static void cmd_converse(Stream *chp, int argc, char* argv[])
     fbuf_putstr(&packet, buf);                        
     fbq_put(outframes, packet);
   }
+  sleep(1000);
   mon_activate(false);
-  sleep(100);
   radio_release();
   sleep(100);
 }

@@ -23,7 +23,7 @@ TRACKER_TURN_LIMIT      done    done     Smart beaconing
 TRACKER_MAXPAUSE        done    done
 TRACKER_MINDIST         done    done
 TRACKER_MINPAUSE        done    done
-STATUS_TIME             -       tbd      Maybe not necessary
+STATUS_TIME             -       done     Maybe not necessary
 TIMESTAMP_ON            done    done    
 COMPRESS_ON             done    done
 ALTITUDE_ON             done    done
