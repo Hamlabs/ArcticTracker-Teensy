@@ -22,9 +22,11 @@ MUTEX_DECL(gui_mutex);
 static int current = 0;
 
 static void status_heading(char* label);
-static void status_screen1();
-static void status_screen2();
-static void status_screen3();
+static void status_screen1(void);
+static void status_screen2(void);
+static void status_screen3(void);
+
+
 
 void status_show() {
     GUI_MUTEX_LOCK;
@@ -73,7 +75,7 @@ static void status_screen1() {
     GET_PARAM(TRX_TX_FREQ, &f);
     gui_writeText(0, LINE1, buf);
     
-    sprintf(buf, "%03u.%03u MHz%c", f/10000, (f/10)%1000, '\0');
+    sprintf(buf, "%03lu.%03lu MHz%c", f/10000, (f/10)%1000, '\0');
     gui_writeText(0, LINE2, buf);
     gui_writeText(0, LINE3, "W1,W2-1,SAR");  
     gui_flush();

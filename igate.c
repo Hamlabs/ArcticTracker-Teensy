@@ -261,9 +261,6 @@ static void rf2inet(FBUF *frame)
   char type = fbuf_getChar(frame);
   bool own = addrCmp(&mycall, &from); 
   
-  if (own && !GET_BYTE_PARAM(IGATE_TRACK_ON))
-    return;
-  
   if (hlist_duplicate(&from, &to, frame, ndigis))
     return;
   

@@ -69,6 +69,7 @@ void tracker_setGate(FBQ* gt)
   { gate = gt; }
 
 
+  
 /***********************************************************
  * Force position report
  ***********************************************************/
@@ -490,16 +491,16 @@ static void report_station_position(posdata_t* pos, bool no_tx)
        }
        ccount = COMMENT_PERIOD; 
     }
-
+    
     /* Send packet.
      *   send it on radio if no_tx flag is not set
      *   put it on igate-queue (if igate is active)
      */
-    bool savetx = false; 
+    bool igtrack = GET_BYTE_PARAM(IGATE_TRACK_ON);
     
-    if (!no_tx || !savetx)
+    if (!no_tx)
        fbq_put(outframes, fbuf_newRef(&packet));
-    if (gate != NULL) 
+    if (gate != NULL && igtrack) 
        fbq_put(gate, packet);
     else
        fbuf_release(&packet);

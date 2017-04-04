@@ -229,7 +229,7 @@ static int8_t agc (int8_t in, uint8_t *ppeak)
 
 void afsk_process_sample(int8_t curr_sample) 
 { 
-  
+    chSysLock();
     afsk.iirY[0] = fir_filter(curr_sample, FIR_1200_BP);
     afsk.iirY[1] = fir_filter(curr_sample, FIR_2200_BP);
     afsk.iirY[0] = ABS(afsk.iirY[0]);
@@ -288,7 +288,8 @@ void afsk_process_sample(int8_t curr_sample)
          */
         add_bit( !TRANSITION_FOUND(afsk.found_bits) );
     }
-}
+    chSysUnlock();
+} 
 
 
 
@@ -306,10 +307,10 @@ static void add_bit(bool bit)
   
   if (bit_count == 8) 
   {        
-    chSysLock();
+//    chSysLock();
     if  (!iqIsFullI(&iq)) 
        iqPutI(&iq, octet);
-    chSysUnlock();
+//    chSysUnlock();
     bit_count = 0;
   }
 }

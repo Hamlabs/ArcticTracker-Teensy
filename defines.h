@@ -17,7 +17,7 @@
 
 
 /* Buffers */
-#define FBUF_SLOTS   1100
+#define FBUF_SLOTS   900
 #define FBUF_SLOTSIZE  32
 
 
@@ -165,7 +165,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_UI_SRV        512
 #define STACK_GUI           512
 #define STACK_WIFI         1600
-#define STACK_SHELL        2700
+#define STACK_SHELL        2800
 
 /* Dynamic threads */
 /* FIXME: Check sizes and order of startup to minimize memory 

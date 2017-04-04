@@ -24,7 +24,7 @@ bool menu_is_active(void);
 void menu_activate(void);
 void menu_increment(void);
 void menu_select(void);
-void menu_end();
+void menu_end(void);
 
 void status_show(void);
 void status_next(void);

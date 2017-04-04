@@ -10,6 +10,8 @@
 #include "commands.h"
 #include "text.h"
 #include "wifi.h"
+#include "igate.h"
+#include "ui/ui.h"
 
 
 // static bool mon_on = false;
@@ -37,10 +39,12 @@ MUTEX_DECL(data_mutex);
 
 BSEMAPHORE_DECL(response_pending, true);
 #define WAIT_RESPONSE chBSemWait(&response_pending)
+#define WAIT_RESPONSE_TIMEOUT chBSemWaitTimeout(&response_pending, MS2ST(500))
 #define SIGNAL_RESPONSE chBSemSignal(&response_pending)
 
 BSEMAPHORE_DECL(data_pending, true);
 #define WAIT_DATA chBSemWait(&data_pending)
+#define WAIT_DATA_TIMEOUT chBSemWaitTimeout(&data_pending, MS2ST(500))
 #define SIGNAL_DATA chBSemSignal(&data_pending)
 
 
@@ -158,7 +162,8 @@ char* wifi_doCommand(char* cmd, char* buf) {
      chprintf(_serial, "%s\r", cmd);
      client_active=true;
      client_buf = &buf; 
-     WAIT_RESPONSE;
+     if (WAIT_RESPONSE_TIMEOUT != MSG_OK)
+        sprintf(buf, "?");
      client_active=false;
      MUTEX_UNLOCK;
   }
@@ -232,7 +237,7 @@ void inet_close() {
       return; 
    DMUTEX_LOCK;
    char res[10];
-   sprintf(chost, "");
+   sprintf(chost, "%c", '\0');
    sprintf(cbuf, "NET.CLOSE");
    wifi_doCommand(cbuf, res);
    DMUTEX_UNLOCK;
