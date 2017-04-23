@@ -16,15 +16,16 @@
 #define RADIO_ADC_BUFSIZE        1
 #define RADIO_ADC_GPT            AFSK_RX_GPT
  
-#define TEMP_NUM_CHANNELS        2
-#define TEMP_NUM_BUFSIZE         1
-#define ADC_TEMP_ERROR           300000
+#define BATT_CHANNELS            ADC_TEENSY_PIN10 
+#define BATT_NUM_CHANNELS        2
+#define BATT_NUM_BUFSIZE         1
+
 
 static uint8_t dcoffset = 0; 
 
  /* Buffer */
  static adcsample_t samples[RADIO_ADC_NUM_CHANNELS * RADIO_ADC_BUFSIZE];
- static adcsample_t samples2[TEMP_NUM_CHANNELS * TEMP_NUM_BUFSIZE]; 
+ static adcsample_t samples2[BATT_NUM_CHANNELS * BATT_NUM_BUFSIZE]; 
  
  extern void afsk_process_sample(int8_t curr_sample);
  static void adc_sample(GPTDriver *gptp);
@@ -47,9 +48,9 @@ static uint8_t dcoffset = 0;
  
  static const ADCConversionGroup adc_grpcfg2 = {
    false,
-   TEMP_NUM_CHANNELS,
+   BATT_NUM_CHANNELS,
    NULL, NULL,
-   ADC_TEMP_SENSOR | ADC_BANDGAP,
+   BATT_CHANNELS | ADC_BANDGAP,
    /* CFG1 Regiser - ADCCLK = SYSCLK / 16, 16 bits per sample */
    ADCx_CFG1_ADIV(ADCx_CFG1_ADIV_DIV_8) |
    ADCx_CFG1_ADICLK(ADCx_CFG1_ADIVCLK_BUS_CLOCK_DIV_2) |
@@ -130,43 +131,16 @@ uint8_t adc_dcoffset() {
  * Taken from ChibiOS testhal example
  ***************************************************/
 
-int32_t adc_read_temp()
+uint16_t adc_read_batt()
 {
-  if (adcConvert(&ADCD1, &adc_grpcfg2, samples2, 2) != MSG_OK)
-    return ADC_TEMP_ERROR; 
+  if (adcConvert(&ADCD1, &adc_grpcfg2, samples2, 1) != MSG_OK)
+    return 0; 
  
-  /*
-   * The bandgap value represents the ADC reading for 1.0V
-   */
-  uint16_t sensor = samples2[0];
-  uint16_t bandgap = samples2[1];
-  
-  /*
-   * The v25 value is the voltage reading at 25C, it comes from the ADC
-   * electricals table in the processor manual. V25 is in millivolts.
-   */
-  int32_t v25 = 719;
-  
-  /*
-   * The m value is slope of the temperature sensor values, again from
-   * the ADC electricals table in the processor manual.
-   * M in microvolts per degree.
-   */
-  int32_t m = 1715;
-  
-  /*
-   * Divide the temperature sensor reading by the bandgap to get
-   * the voltage for the ambient temperature in millivolts.
-   */
-  int32_t vamb = ((int32_t) sensor * 1000) / (int32_t) bandgap;
-  
-  /*
-   * This formula comes from the reference manual.
-   * Temperature is in millidegrees C.
-   */
-  int32_t delta = (((vamb - v25) * 1000000) / m);
-  int32_t temp = 25000 - delta;
-  return temp;
+  uint16_t batt = (uint16_t) samples2[0];
+  uint16_t bandgap = (uint16_t) samples2[1];
+  uint32_t  vbatt = ((uint32_t) batt * 985) / (uint32_t) bandgap;
+    
+  return (uint16_t) vbatt * 3;
 }
 
 

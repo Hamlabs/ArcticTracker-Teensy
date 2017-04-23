@@ -22,7 +22,7 @@
 
 
 /* ADC ports for Teensy 3.1 */
-#define ADC_TEENSY_PIN10 ADC_AD18
+#define ADC_TEENSY_PIN10 ADC_DAD0
 #define ADC_TEENSY_PIN11 ADC_AD19
 
 
@@ -162,8 +162,8 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_HDLCDECODER   640
 #define STACK_HDLCENCODER   512
 #define STACK_UI            256
-#define STACK_UI_SRV        512
-#define STACK_GUI           512
+#define STACK_UI_SRV        640
+#define STACK_GUI           640
 #define STACK_WIFI         1600
 #define STACK_SHELL        2800
 
@@ -175,7 +175,7 @@ extern uint16_t blink_length, blink_interval;
 #define STACK_TRACKER      1536
 #define STACK_DIGIPEATER   1024
 #define STACK_IGATE         512
-#define STACK_IGATE_RADIO   512
+#define STACK_IGATE_RADIO   640
 #define STACK_HLIST_TICK    256  // NEED THIS? 
 
 

@@ -120,6 +120,18 @@ void gps_init(SerialDriver *str, Stream *sh)
  //   set_port(GPSON);
 }
 
+
+
+posdata_t*  gps_get_pos()
+  { return &current_pos; }
+
+timestamp_t gps_get_time()
+  { return current_time; } 
+
+date_t gps_get_date()
+  { return current_date; } 
+  
+
 void gps_on()
 {
  //  clear_port(GPSON);
@@ -187,7 +199,6 @@ uint16_t gps_bearing(posdata_t *from, posdata_t *to)
 }
 
 
-
 /****************************************************************
  * Monitoring control
  *   nmea_mon_pos - valid GPRMC position reports
@@ -224,7 +235,34 @@ static void str2coord(const uint8_t ndeg, const char* str, float* coord)
 }
 
 
+/****************************************************************
+ * Convert position to latlong format
+ ****************************************************************/
 
+char* pos2str_lat(char* buf, posdata_t *pos)
+{
+    /* Format latitude values, etc. */
+    char lat_sn = (pos->latitude < 0 ? 'S' : 'N');
+    float latf = fabs(pos->latitude);
+    
+    sprintf(buf, "%02d %05.2f %c%c", 
+	(int)latf, (latf - (int)latf) * 60, lat_sn,'\0');
+    return buf;
+}       
+ 
+char* pos2str_long(char* buf, posdata_t *pos)
+{
+    /* Format longitude values, etc. */
+    char long_we = (pos->longitude < 0 ? 'W' : 'E');
+    float longf = fabs(pos->longitude);
+    
+    sprintf(buf, "%03d %05.2f %c%c", 
+        (int)longf, (longf - (int)longf) * 60, long_we, '\0');
+    return buf;
+}  
+    
+       
+       
 /*****************************************************************
  * Convert date/time NMEA fields (timestamp + date)
  *****************************************************************/
@@ -240,6 +278,28 @@ static void nmea2time( timestamp_t* t, date_t* d, const char* timestr, const cha
          ((uint32_t) d->day-1) * 86400 +  ((uint32_t)hour) * 3600 + ((uint32_t)min) * 60 + sec;
 }
 
+
+char* datetime2str(char* buf, date_t d, timestamp_t time)
+{
+    switch (d.month) {
+        case  1: sprintf(buf, "Jan"); break;
+        case  2: sprintf(buf, "Feb"); break;
+        case  3: sprintf(buf, "Mar"); break;
+        case  4: sprintf(buf, "Apr"); break;
+        case  5: sprintf(buf, "May"); break;
+        case  6: sprintf(buf, "Jun"); break;
+        case  7: sprintf(buf, "Jul"); break;
+        case  8: sprintf(buf, "Aug"); break;
+        case  9: sprintf(buf, "Sep"); break;
+        case 10: sprintf(buf, "Oct"); break;
+        case 11: sprintf(buf, "Nov"); break;
+        case 12: sprintf(buf, "Dec"); break;
+        default:  sprintf(buf, "???"); ;
+    }
+    sprintf(buf+3, " %02u %02u:%02u UTC", d.day, 
+      (uint8_t) ((time / 3600) % 24), (uint8_t) ((time / 60) % 60));
+    return buf;
+}
 
 
 char* time2str(char* buf, timestamp_t time)

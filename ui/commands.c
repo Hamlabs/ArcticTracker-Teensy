@@ -608,8 +608,13 @@ static void cmd_adc(Stream *chp, int argc, char* argv[])
    (void)argc;
    (void)argv;
    
-   int32_t temp = adc_read_temp();
-   chprintf(chp,"Temperature = %d\r\n", temp);
+   uint16_t batt1 = adc_read_batt();
+   sleep(100);
+   uint16_t batt2 = adc_read_batt();
+   sleep(100);
+   uint16_t batt3 = adc_read_batt();
+     
+   chprintf(chp,"Batt = %d\r\n", (batt1+batt2+batt3)/3);
    int8_t inp = adc_read_input();
    chprintf(chp,"Input = %d\r\n", inp);
    uint8_t dcoff = adc_dcoffset();
@@ -851,8 +856,10 @@ static void cmd_listen(Stream *chp, int argc, char* argv[])
   radio_require();
   mon_activate(true);
   getch(chp);
+  sleep(1000);
   mon_activate(false);
   radio_release();
+  sleep(100);
 }
 
 

@@ -39,18 +39,24 @@ extern date_t current_date;
 
 
 /* API */
-void     gps_init(SerialDriver*, Stream*);
-uint32_t gps_distance(posdata_t*, posdata_t*);
-uint16_t gps_bearing(posdata_t *from, posdata_t *to);
-void     gps_mon_pos (void);
-void     gps_mon_raw (void);
-void     gps_mon_off (void);
-bool     gps_is_fixed (void);
-bool     gps_wait_fix (uint16_t);
-char*    time2str (char*, timestamp_t);
-char*    date2str (char*, date_t);
-void     gps_on(void);
-void     gps_off(void);
+void        gps_init(SerialDriver*, Stream*);
+posdata_t*  gps_get_pos(void);
+timestamp_t gps_get_time(void);
+date_t      gps_get_date(void);
+uint32_t    gps_distance(posdata_t*, posdata_t*);
+uint16_t    gps_bearing(posdata_t *from, posdata_t *to);
+void        gps_mon_pos (void);
+void        gps_mon_raw (void);
+void        gps_mon_off (void);
+bool        gps_is_fixed (void);
+bool        gps_wait_fix (uint16_t);
+char*       pos2str_lat(char*, posdata_t*);
+char*       pos2str_long(char*, posdata_t*);
+char*       datetime2str(char*, date_t, timestamp_t);
+char*       time2str (char*, timestamp_t);
+char*       date2str (char*, date_t);
+void        gps_on(void);
+void        gps_off(void);
 
 #endif
 
