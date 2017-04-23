@@ -58,7 +58,7 @@ static const SerialConfig _serialConfig = {
 
 
 /* FIXME: Should check thread safety when using this */
-static char cbuf[129]; 
+static char cbuf[255]; 
 static bool _running = false; 
 
 
@@ -277,7 +277,7 @@ void inet_writeFB(FBUF *fb) {
   DMUTEX_LOCK;
   char res[10];
   sprintf(cbuf, "NET.DATA ");
-  fbuf_read(fb, 128, cbuf+9);
+  fbuf_read(fb, 240, cbuf+9);
   wifi_doCommand(cbuf, res);
   DMUTEX_UNLOCK;
 }
