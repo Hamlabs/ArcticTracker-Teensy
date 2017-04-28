@@ -7,12 +7,12 @@
 #include "defines.h"
 #include "ch.h"
 #include "hal.h"
-#include "gps.h"
 #include "config.h"
 #include "radio.h"
 #include "hdlc.h"
 #include "ui/ui.h"
 #include "tracker.h"
+#include "adc_input.h"
 
 
 
@@ -40,7 +40,6 @@ static void report_object_position(posdata_t*, char*, bool);
 static void report_objects(bool);
 
 static void send_pos_report(FBUF*, posdata_t*, char, char, bool, bool);
-static void send_extra_report(FBUF* packet, posdata_t* pos, char sym, char symtab);
 static void send_header(FBUF*, bool);
 static void send_timestamp(FBUF* packet, posdata_t* pos);
 static void send_timestamp_z(FBUF* packet, posdata_t* pos);
@@ -418,14 +417,14 @@ static void report_status(posdata_t* pos)
      * Get battery voltage - This should perhaps not be here but in status message or
      * telemetry message instead. 
      */
- //   char vbatt[7];
- //   sprintf(vbatt, "%.1f%c", batt_voltage(), '\0');
+    char vbatt[7];
+    sprintf(vbatt, "%.1f%c", ((float) adc_read_batt()/1000 ), '\0');
     
     /* Send firmware version and battery voltage in status report */
     fbuf_putstr(&packet, "FW=AT ");
     fbuf_putstr(&packet, VERSION_STRING);
- //   fbuf_putstr(&packet, " / VBATT="); FIXME
- //   fbuf_putstr(&packet, vbatt);
+    fbuf_putstr(&packet, " / VBATT="); 
+    fbuf_putstr(&packet, vbatt);
    
     /* Send packet */
     fbq_put(outframes, packet);
@@ -474,6 +473,7 @@ static void report_station_position(posdata_t* pos, bool no_tx)
     if (!no_tx) 
        while (!posBuf_empty() && i++ <= 3) {
           posdata_t p = getPos();
+          fbuf_putstr(&packet, "/#\0");
           send_extra_report(&packet, &p, GET_BYTE_PARAM(SYMBOL), GET_BYTE_PARAM(SYMBOL_TAB));
        }
        
@@ -581,9 +581,8 @@ static void send_pos_report(FBUF* packet, posdata_t* pos,
 
 
 
-static void send_extra_report(FBUF* packet, posdata_t* pos, char sym, char symtab)
+void send_extra_report(FBUF* packet, posdata_t* pos, char sym, char symtab)
 {
-   fbuf_putstr(packet, "/#\0");
    send_timestamp_compressed(packet, pos);
    send_pos_report(packet, pos, sym, symtab, true, true);
 }

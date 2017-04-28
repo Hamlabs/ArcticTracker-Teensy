@@ -21,6 +21,7 @@ MUTEX_DECL(gui_mutex);
 #define GUI_MUTEX_UNLOCK chMtxUnlock(&gui_mutex)
 
 static int current = 0;
+static char buf[30];
 
 static void status_heading(char* label);
 static void status_screen1(void);
@@ -28,6 +29,11 @@ static void status_screen2(void);
 static void status_screen3(void);
 static void status_screen4(void);
 static void status_screen5(void);
+
+
+/****************************************************************
+ * Show current status screen 
+ ****************************************************************/
 
 void status_show() {
     GUI_MUTEX_LOCK;
@@ -49,6 +55,9 @@ void status_show() {
 }
 
 
+/****************************************************************
+ * Cycle to next status screen 
+ ****************************************************************/
 
 void status_next() { 
     current = (current + 1) % NSCREENS; 
@@ -57,19 +66,23 @@ void status_next() {
 
 
 
+/****************************************************************
+ * Display heading. 
+ ****************************************************************/
+
 static void status_heading(char* label) {
     gui_label(0,0, label);
     gui_flag(32,0, "i", GET_BYTE_PARAM(WIFI_ON));
-    gui_flag(41,0, "a", GET_BYTE_PARAM(WIFI_ON));
-    gui_flag(50,0, "g", GET_BYTE_PARAM(IGATE_ON));
-    gui_flag(59,0, "d", GET_BYTE_PARAM(DIGIPEATER_ON));
+    gui_flag(41,0, "g", GET_BYTE_PARAM(IGATE_ON)); 
+    gui_flag(50,0, "d", GET_BYTE_PARAM(DIGIPEATER_ON));
+//    Next position is 59,0 
     
     uint16_t batt = adc_read_batt(); 
     uint8_t bi; 
-    if (batt > 8200) bi = 4;
-    else if (batt > 8000) bi = 3; 
-    else if (batt > 7600) bi = 2;
-    else if (batt > 7400) bi = 1;
+    if (batt > 8000)      bi = 4;
+    else if (batt > 7800) bi = 3; 
+    else if (batt > 7400) bi = 2;  
+    else if (batt > 7200) bi = 1;  // Low
     else bi = 0;
              
     gui_battery(70,3,bi);
@@ -77,7 +90,11 @@ static void status_heading(char* label) {
 }
 
 
-static char buf[30];
+
+
+/****************************************************************
+ * 1. APRS status
+ ****************************************************************/
   
 static void status_screen1() {
     Dword f; 
@@ -96,6 +113,10 @@ static void status_screen1() {
 }
 
 
+/****************************************************************
+ * 2. GPS position status
+ ****************************************************************/
+
 static void status_screen2() {
     gui_clear();
     status_heading("GPS");
@@ -109,6 +130,11 @@ static void status_screen2() {
     gui_flush();
 }
 
+
+
+/****************************************************************
+ * 3. WIFI status
+ ****************************************************************/
 
 static void status_screen3() {
     gui_clear();
@@ -127,6 +153,10 @@ static void status_screen3() {
 }
 
 
+/****************************************************************
+ * 4. WIFI softap status
+ ****************************************************************/
+
 static void status_screen4() {
     gui_clear();
     status_heading("W-AP");
@@ -136,20 +166,35 @@ static void status_screen4() {
     gui_flush();
 }
 
+
+
+/****************************************************************
+ * 5. Battery status
+ ****************************************************************/
+
 static void status_screen5() {
     gui_clear();
     status_heading("BATT");
     uint16_t batt = adc_read_batt();
-    sprintf(buf, "%1.01f V%c", ((float)batt)/1000, '\0');
+    sprintf(buf, "%1.02f V%c", ((float)batt)/1000, '\0');
     gui_writeText(0, LINE1, buf);
-    if (batt > 8500) sprintf(buf, "Ext power");
-    else if (batt > 8400) sprintf(buf, "Charging..");
-    else if (batt > 8200) sprintf(buf, "Full.");
-    else if (batt > 7600) sprintf(buf, "Ok");
-    else if (batt > 7400) sprintf(buf, "Low. Need chg.");
-    else sprintf(buf, "Empty.");
-    gui_writeText(0, LINE2, buf);
-
-    if (batt > 8500) gui_writeText(0, LINE3, "Not charging.");    
+    if (batt > 8500) { 
+        gui_writeText(0, LINE2, "Ext power");
+        gui_writeText(0, LINE3, "Not charging.");
+    }
+    else if (batt > 8350)
+        gui_writeText(0, LINE2, "Max/Charging..");
+    else if (batt > 7800) 
+        gui_writeText(0, LINE2, "Full.");
+    else if (batt > 7400) 
+        gui_writeText(0, LINE2, "Ok.");
+    else if (batt > 7200) {
+        gui_writeText(0, LINE2, "Low.");  
+        gui_writeText(0, LINE3, "Need charging.");
+    }
+    else {
+        gui_writeText(0, LINE2, "Empty.");
+        gui_writeText(0, LINE3, "Charge ASAP!");
+    }    
     gui_flush();
 }
