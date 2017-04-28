@@ -37,6 +37,7 @@ extern date_t current_date;
 #define TIME_STR(buf) time2str((buf), current_time)
 #define DATE_STR(buf) date2str((buf), current_date)
 
+#define TIME_HOUR(time) (uint8_t) (((time) / 3600) % 24)
 
 /* API */
 void        gps_init(SerialDriver*, Stream*);
