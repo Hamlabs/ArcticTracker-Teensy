@@ -156,10 +156,16 @@ static char** client_buf;
 static bool client_active = false; 
 
 
-char* wifi_doCommand(char* cmd, char* buf) {
+char* wifi_doCommandN(char* cmd, uint16_t len, char* buf) {
   if (wifi_is_enabled()) {
      MUTEX_LOCK;
-     chprintf(_serial, "%s\r", cmd);
+     if (len == 0) 
+        chprintf(_serial, "%s\r", cmd);
+     else {
+        chnWrite(_serial, (uint8_t*) cmd, len);
+        chprintf(_serial, "\r");
+     }
+              
      client_active=true;
      client_buf = &buf; 
      if (WAIT_RESPONSE_TIMEOUT != MSG_OK)
@@ -173,6 +179,11 @@ char* wifi_doCommand(char* cmd, char* buf) {
 }
 
 
+char* wifi_doCommand(char* cmd, char* buf)
+    { return wifi_doCommandN(cmd, 0, buf); }
+
+    
+    
 char* wifi_status(char* buf) {
    char res[8];
    int n;
@@ -271,14 +282,16 @@ void inet_write(char* text) {
 }
 
 
-/* FIXME: Could this be done more efficiently */
+/* FIXME: Could this be done more efficiently? */
 
 void inet_writeFB(FBUF *fb) {
   DMUTEX_LOCK;
   char res[10];
   sprintf(cbuf, "NET.DATA ");
-  fbuf_read(fb, 240, cbuf+9);
-  wifi_doCommand(cbuf, res);
+  
+  // FIXME: Get length of read string. Do not null-terminate. 
+  int n = fbuf_read(fb, 240, cbuf+9);
+  wifi_doCommandN(cbuf, n, res);
   DMUTEX_UNLOCK;
 }
 

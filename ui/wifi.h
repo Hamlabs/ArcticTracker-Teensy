@@ -29,6 +29,7 @@ void  wifi_restart(void);
 void  wifi_shell(Stream* chp);
 void  wifi_init(SerialDriver* sd);
 char* wifi_doCommand(char*, char*); 
+char* wifi_doCommandN(char*, uint16_t, char*); 
 char* wifi_status(char* buf);
 bool  wifi_is_connected(void);
 
