@@ -33,7 +33,7 @@ static fbindex_t _free_slots = FBUF_SLOTS;
 
 static void(*memFullError)(void) = NULL;
 
-static fbindex_t _split(fbindex_t islot, uint8_t pos);
+static fbindex_t _split(fbindex_t islot, uint16_t pos);
 static fbindex_t _fbuf_newslot (void);
 
 
@@ -150,9 +150,9 @@ void fbuf_reset(FBUF* b)
     b->rpos = 0;
 }
 
-void fbuf_rseek(FBUF* b, const uint8_t pos)
+void fbuf_rseek(FBUF* b, const uint16_t pos)
 {
-   register uint8_t i=pos;
+   register uint16_t i=pos;
    if (pos > b->length)
        return;
    fbuf_reset(b);
@@ -208,9 +208,9 @@ void fbuf_putChar (FBUF* b, const char c)
  * are disallowed.
  *******************************************************/
  
-void fbuf_insert(FBUF* b, FBUF* x, uint8_t pos)
+void fbuf_insert(FBUF* b, FBUF* x, uint16_t pos)
 {
-    register uint8_t islot = b->head;    
+    register fbindex_t islot = b->head;    
     while (pos >= FBUF_SLOTSIZE) {
         pos -= _pool[islot].length; 
         if (pos > 0) 
@@ -245,10 +245,10 @@ void fbuf_insert(FBUF* b, FBUF* x, uint8_t pos)
  * is not allowed. 
  *****************************************************/
 
-void fbuf_connect(FBUF* b, FBUF* x, uint8_t pos)
+void fbuf_connect(FBUF* b, FBUF* x, uint16_t pos)
 {
     register fbindex_t islot = x->head;  
-    register uint8_t p = pos;
+    register uint16_t p = pos;
     while (p >= FBUF_SLOTSIZE) {
         p -= _pool[islot].length; 
         if (p > 0) 
@@ -274,7 +274,7 @@ void fbuf_connect(FBUF* b, FBUF* x, uint8_t pos)
 
 
 
-static fbindex_t _split(fbindex_t islot, uint8_t pos)
+static fbindex_t _split(fbindex_t islot, uint16_t pos)
 {
       if (pos == 0)
           return _pool[islot].next;
@@ -299,9 +299,9 @@ static fbindex_t _split(fbindex_t islot, uint8_t pos)
     Write a string to a buffer chain
  *******************************************************/
  
-void fbuf_write (FBUF* b, const char* data, const uint8_t size)
+void fbuf_write (FBUF* b, const char* data, const uint16_t size)
 {
-    register uint8_t i; 
+    register uint16_t i; 
     for (i=0; i<size; i++)
         fbuf_putChar(b, data[i]);
 }
@@ -376,9 +376,9 @@ void fbuf_streamRead(Stream *chp, FBUF* b)
   chain.    
  **************************************************************/
  
-char* fbuf_read (FBUF* b, uint8_t size, char *buf)
+uint16_t fbuf_read (FBUF* b, uint16_t size, char *buf)
 {
-    register uint8_t n; 
+    register uint16_t n; 
     register fbindex_t bb, r=0;
     
     if (b->length < size || size == 0)
@@ -396,8 +396,10 @@ char* fbuf_read (FBUF* b, uint8_t size, char *buf)
        if (r >= size ) 
            break;
     }
-    buf[r] = '\0';
-    return buf; 
+    // buf[r] = '\0';
+    // Should not null terminate. Return number of read characters. 
+    
+    return r; 
 }
 
 
