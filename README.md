@@ -1,5 +1,7 @@
 # ArcticTracker
 
+See also https://github.com/ohanssen/ArcticTracker-ESP32
+
 Arctic Tracker is an APRS tracker platform based on the Teensy 3.2
 MCU module, a SR_FRS_1W VHF transceiver module and a ESP8266 WIFI module
 (ESP-12) with NodeMCU. The ESP module will function as a WIFI interface, 
